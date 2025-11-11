@@ -63,39 +63,37 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.9, duration: 1 }}
-              className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-12 sm:mb-16 justify-center md:justify-start"
+              className="flex flex-col sm:flex-row gap-4 mb-12 sm:mb-16 justify-center md:justify-start"
             >
               {/* Shop Products Button */}
               <motion.div
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="w-full sm:w-auto sm:flex-shrink-0"
+                className="w-full sm:w-auto"
               >
                 <Button
-                  size="lg"
                   onClick={() => navigationActions.shop()}
-                  className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white text-sm sm:text-base px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-xl group transition-all duration-300 shadow-lg hover:shadow-xl border-0 font-medium whitespace-nowrap"
+                  className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-base font-bold px-8 py-6 h-14 rounded-2xl group transition-all duration-300 shadow-lg hover:shadow-2xl border-0 min-w-[160px]"
                 >
-                  <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Shop Products
-                  <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  <ShoppingBag className="h-5 w-5 mr-2.5" />
+                  Shop Now
+                  <ArrowRight className="h-4 w-4 ml-2.5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </motion.div>
 
               {/* Book Appointment Button */}
               <motion.div
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="w-full sm:w-auto sm:flex-shrink-0"
+                className="w-full sm:w-auto"
               >
                 <Button
-                  size="lg"
                   onClick={() => navigationActions.bookSalon()}
-                  className="w-full sm:w-auto bg-transparent border-2 border-orange-500 text-orange-400 hover:bg-orange-600 hover:text-white text-sm sm:text-base px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-xl group transition-all duration-300 font-medium whitespace-nowrap"
+                  className="w-full sm:w-auto bg-white/10 backdrop-blur-sm border-2 border-orange-400/50 text-white hover:bg-orange-500/20 hover:border-orange-400 hover:text-orange-200 text-base font-bold px-8 py-6 h-14 rounded-2xl group transition-all duration-300 min-w-[160px]"
                 >
-                  <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Book Appointment
-                  <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  <Calendar className="h-5 w-5 mr-2.5" />
+                  Book Salon
+                  <ArrowRight className="h-4 w-4 ml-2.5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </motion.div>
             </motion.div>

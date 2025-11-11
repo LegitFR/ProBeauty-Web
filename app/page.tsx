@@ -1,63 +1,10 @@
-"use client";
-import { useState } from "react";
-import { Header } from "../components/Header";
-import { Hero } from "../components/Hero";
-import { FeaturesOverview } from "../components/FeaturesOverview";
-import { Shop } from "../components/Shop";
-import { SalonBooking } from "../components/SalonBooking";
-import { BusinessListing } from "../components/BusinessListing";
-import { AppDownload } from "../components/AppDownload";
-import { Testimonials } from "../components/Testimonials";
-import { Newsletter } from "../components/Newsletter";
-import { Footer } from "../components/Footer";
-import { CartProvider } from "../components/CartContext";
-import { WishlistProvider } from "../components/WishlistContext";
-import { Toaster } from "../components/Toaster";
-import { BookingFlow } from "../components/BookingFlow";
+import { fetchProducts, transformProducts } from "../lib/api/products";
+import HomeClient from "./HomeClient";
 
-export default function Home() {
-  const [showBookingFlow, setShowBookingFlow] = useState(false);
-  const [selectedSalonId, setSelectedSalonId] = useState<number | null>(null);
+export default async function Home() {
+  // Fetch products server-side (API URL is not exposed to client)
+  const apiProducts = await fetchProducts(50);
+  const products = transformProducts(apiProducts);
 
-  const handleBookAppointment = (salonId: number) => {
-    setSelectedSalonId(salonId);
-    setShowBookingFlow(true);
-    // Scroll to top when opening booking flow
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleCloseBookingFlow = () => {
-    setShowBookingFlow(false);
-    setSelectedSalonId(null);
-  };
-
-  return (
-    <CartProvider>
-      <WishlistProvider>
-        <div className="min-h-screen bg-black overflow-x-hidden">
-          {!showBookingFlow && <Header />}
-          <main className="overflow-x-hidden">
-            {showBookingFlow ? (
-              <BookingFlow onClose={handleCloseBookingFlow} />
-            ) : (
-              <>
-                <Hero />
-                <FeaturesOverview />
-                <div className="bg-white">
-                  <Shop />
-                  <SalonBooking onBookAppointment={handleBookAppointment} />
-                  <BusinessListing />
-                  <AppDownload />
-                  <Testimonials />
-                  <Newsletter />
-                </div>
-              </>
-            )}
-          </main>
-          {!showBookingFlow && <Footer />}
-          <Toaster />
-        </div>
-      </WishlistProvider>
-    </CartProvider>
-  );
+  return <HomeClient products={products} />;
 }

@@ -4931,3 +4931,12 @@ html {
       rotate(var(--tw-exit-rotate, 0));
   }
 }
+
+/* Prevent layout shift when modal opens by reserving scrollbar space */
+/* html {
+  overflow-y: scroll;
+} */
+
+body {
+  overflow-x: hidden;
+}

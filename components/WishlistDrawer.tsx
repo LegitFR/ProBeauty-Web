@@ -23,7 +23,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
   const { items, removeFromWishlist, getTotalItems } = useWishlist();
   const { addToCart } = useCart();
 
-  const handleRemoveItem = (id: number, name: string) => {
+  const handleRemoveItem = (id: string | number, name: string) => {
     removeFromWishlist(id);
     toast.success(`${name} removed from wishlist`);
   };
@@ -43,8 +43,8 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-md bg-[linear-gradient(135deg,_#FFF7ED_0%,_#FFFBEB_15%,_#FFF1F2_35%,_#FFFFFF_50%,_#FFF1F2_65%,_#FFFBEB_85%,_#FEF2F2_100%)] backdrop-blur-3xl border-l border-orange-200/40 shadow-2xl">
-        <SheetHeader className="pb-3">
+      <SheetContent className="w-full sm:max-w-md bg-[linear-gradient(135deg,_#FFF7ED_0%,_#FFFBEB_15%,_#FFF1F2_35%,_#FFFFFF_50%,_#FFF1F2_65%,_#FFFBEB_85%,_#FEF2F2_100%)] backdrop-blur-3xl border-l border-orange-200/40 shadow-2xl p-6">
+        <SheetHeader className="pb-4">
           <SheetTitle className="flex items-center gap-2 font-display text-xl">
             <motion.div
               animate={{ scale: [1, 1.15, 1] }}
@@ -66,9 +66,9 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex flex-col h-full mt-3">
+        <div className="flex flex-col h-full mt-4">
           {items.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -97,7 +97,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
           ) : (
             <>
               <ScrollArea className="flex-1 -mx-6 px-6">
-                <div className="space-y-3 py-2">
+                <div className="space-y-4 py-2">
                   <AnimatePresence>
                     {items.map((item, index) => (
                       <motion.div
@@ -106,7 +106,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ duration: 0.3, delay: index * 0.05 }}
-                        className="group relative bg-white/80 backdrop-blur-md rounded-xl p-3 shadow-md hover:shadow-lg transition-all duration-300 border border-orange-100/70"
+                        className="group relative bg-white/80 backdrop-blur-md rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 border border-orange-100/70"
                       >
                         {/* Remove Button */}
                         <button
@@ -116,13 +116,13 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                           <X className="h-3.5 w-3.5 text-red-500" />
                         </button>
 
-                        <div className="flex items-start space-x-3">
+                        <div className="flex items-start space-x-4">
                           {/* Product Image */}
                           <div className="relative flex-shrink-0">
                             <img
                               src={item.image}
                               alt={item.name}
-                              className="h-16 w-16 rounded-lg object-cover ring-2 ring-orange-100 group-hover:ring-orange-300 transition-all duration-300"
+                              className="h-20 w-20 rounded-lg object-cover ring-2 ring-orange-100 group-hover:ring-orange-300 transition-all duration-300"
                             />
                             {item.discount && (
                               <div className="absolute -top-1 -left-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg">
@@ -192,7 +192,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                 </div>
               </ScrollArea>
 
-              <div className="border-t border-orange-100/60 pt-4 space-y-3 pb-2">
+              <div className="border-t border-orange-100/60 -mx-6 px-6 pt-6 mt-5 space-y-3">
                 {/* Summary */}
                 <div className="bg-gradient-to-r from-orange-50 to-red-50 backdrop-blur-md rounded-xl p-3 border border-orange-100/70">
                   <div className="flex items-center justify-between mb-1.5">

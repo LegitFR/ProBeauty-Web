@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface WishlistItem {
-  id: number;
+  id: string | number; // Support both string (API) and number (fallback)
   name: string;
   price: number;
   originalPrice?: number;
@@ -15,8 +15,8 @@ interface WishlistItem {
 interface WishlistContextType {
   items: WishlistItem[];
   addToWishlist: (product: WishlistItem) => void;
-  removeFromWishlist: (id: number) => void;
-  isInWishlist: (id: number) => boolean;
+  removeFromWishlist: (id: string | number) => void;
+  isInWishlist: (id: string | number) => boolean;
   clearWishlist: () => void;
   getTotalItems: () => number;
 }
@@ -38,11 +38,11 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const removeFromWishlist = (id: number) => {
+  const removeFromWishlist = (id: string | number) => {
     setItems((current) => current.filter((item) => item.id !== id));
   };
 
-  const isInWishlist = (id: number) => {
+  const isInWishlist = (id: string | number) => {
     return items.some((item) => item.id === id);
   };
 

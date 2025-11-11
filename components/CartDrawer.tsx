@@ -1,12 +1,20 @@
-import { useState } from 'react';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/sheet';
-import { Separator } from './ui/separator';
-import { ScrollArea } from './ui/scroll-area';
-import { Minus, Plus, X, ShoppingBag, CreditCard, Truck } from 'lucide-react';
-import { useCart } from './CartContext';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "./ui/sheet";
+import { Separator } from "./ui/separator";
+import { ScrollArea } from "./ui/scroll-area";
+import { Minus, Plus, X, ShoppingBag, CreditCard, Truck } from "lucide-react";
+import { useCart } from "./CartContext";
+import { toast } from "sonner";
+import { motion } from "motion/react";
+import { navigationActions } from "./ScrollManager";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -14,13 +22,37 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { items, updateQuantity, removeFromCart, getTotalPrice, getTotalItems } = useCart();
+  const {
+    items,
+    updateQuantity,
+    removeFromCart,
+    getTotalPrice,
+    getTotalItems,
+  } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [clickedItemId, setClickedItemId] = useState<string | number | null>(
+    null
+  );
 
-  const handleQuantityChange = (id: number, newQuantity: number) => {
+  const handleProductClick = (productId: string | number) => {
+    // Close the cart drawer
+    onClose();
+
+    // Small delay to ensure cart closes before scrolling
+    setTimeout(() => {
+      // Dispatch event to Shop component to highlight the product
+      window.dispatchEvent(
+        new CustomEvent("highlightProduct", {
+          detail: { productId },
+        })
+      );
+    }, 100);
+  };
+
+  const handleQuantityChange = (id: string | number, newQuantity: number) => {
     if (newQuantity === 0) {
       removeFromCart(id);
-      toast.success('Item removed from cart');
+      toast.success("Item removed from cart");
     } else {
       updateQuantity(id, newQuantity);
     }
@@ -28,13 +60,15 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   const handleCheckout = () => {
     setIsCheckingOut(true);
-    
+
     // Simulate checkout process
     setTimeout(() => {
       setIsCheckingOut(false);
-      toast.success('Order placed successfully! Thank you for shopping with ProBeauty');
+      toast.success(
+        "Order placed successfully! Thank you for shopping with ProBeauty"
+      );
       // Clear cart after successful checkout
-      items.forEach(item => removeFromCart(item.id));
+      items.forEach((item) => removeFromCart(item.id));
       onClose();
     }, 2000);
   };
@@ -44,15 +78,13 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-md">
-        <SheetHeader>
+      <SheetContent className="w-full sm:max-w-md p-6 min-h-screen overflow-y-auto">
+        <SheetHeader className="pb-4">
           <SheetTitle className="flex items-center gap-2 font-display">
             <ShoppingBag className="h-5 w-5 text-[#FF7A00]" />
             Shopping Cart
             {totalItems > 0 && (
-              <Badge className="bg-[#FF7A00] text-white">
-                {totalItems}
-              </Badge>
+              <Badge className="bg-[#FF7A00] text-white">{totalItems}</Badge>
             )}
           </SheetTitle>
           <SheetDescription>
@@ -60,13 +92,17 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full mt-4">
           {items.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
               <ShoppingBag className="h-16 w-16 text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
-              <p className="text-gray-500 mb-6">Add some beautiful products to get started</p>
-              <Button 
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Your cart is empty
+              </h3>
+              <p className="text-gray-500 mb-6">
+                Add some beautiful products to get started
+              </p>
+              <Button
                 onClick={onClose}
                 className="bg-[#FF7A00] hover:bg-[#e66900]"
               >
@@ -76,13 +112,19 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           ) : (
             <>
               <ScrollArea className="flex-1 -mx-6 px-6">
-                <div className="space-y-4 py-6">
+                <div className="space-y-4 py-2">
                   {items.map((item) => (
-                    <div key={item.id} className="flex items-center space-x-4 bg-gray-50 rounded-lg p-4">
+                    <motion.div
+                      key={item.id}
+                      className="flex items-center space-x-4 bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleProductClick(item.id)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="h-16 w-16 rounded-md object-cover"
+                        className="h-20 w-20 rounded-md object-cover"
                       />
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-medium text-gray-900 truncate">
@@ -96,7 +138,9 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             variant="outline"
                             size="sm"
                             className="h-8 w-8 p-0"
-                            onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                            onClick={() =>
+                              handleQuantityChange(item.id, item.quantity - 1)
+                            }
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
@@ -107,7 +151,9 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             variant="outline"
                             size="sm"
                             className="h-8 w-8 p-0"
-                            onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                            onClick={() =>
+                              handleQuantityChange(item.id, item.quantity + 1)
+                            }
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -117,7 +163,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         <button
                           onClick={() => {
                             removeFromCart(item.id);
-                            toast.success('Item removed from cart');
+                            toast.success("Item removed from cart");
                           }}
                           className="text-gray-400 hover:text-red-500 transition-colors mb-2"
                         >
@@ -127,12 +173,12 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           ${(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </ScrollArea>
 
-              <div className="border-t pt-[24px] space-y-4 pr-[17px] pb-[0px] pl-[17px]">
+              <div className="border-t -mx-6 px-6 pt-6 mt-6 space-y-4 pb-2">
                 {/* Order Summary */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -143,8 +189,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     <span>Shipping</span>
                     <span className="text-green-600">Free</span>
                   </div>
-                  <Separator />
-                  <div className="flex justify-between font-medium">
+                  <div className="border-t -mx-6 px-6 pt-6 mt-6 flex justify-between font-medium">
                     <span>Total</span>
                     <span>${totalPrice.toFixed(2)}</span>
                   </div>
@@ -175,11 +220,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   )}
                 </Button>
 
-                <Button
-                  variant="outline"
-                  onClick={onClose}
-                  className="w-full"
-                >
+                <Button variant="outline" onClick={onClose} className="w-full">
                   Continue Shopping
                 </Button>
               </div>

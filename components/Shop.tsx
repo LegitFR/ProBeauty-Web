@@ -1,4 +1,6 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -32,13 +34,71 @@ import { motion } from "motion/react";
 import { useCart } from "./CartContext";
 import { useWishlist } from "./WishlistContext";
 import { toast } from "sonner";
+import { DisplayProduct } from "../lib/api/products";
 
-export function Shop() {
+interface ShopProps {
+  apiProducts?: DisplayProduct[];
+}
+
+export function Shop({ apiProducts = [] }: ShopProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
+  const [addedItems, setAddedItems] = useState<Set<string | number>>(new Set());
+  const [highlightedProductId, setHighlightedProductId] = useState<
+    string | number | null
+  >(null);
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+
+  useEffect(() => {
+    const handleHighlightProduct = (event: any) => {
+      const { productId } = event.detail;
+      setHighlightedProductId(productId);
+
+      // First, ensure the Shop section is visible
+      const scrollToShopSection = () => {
+        const shopSection = document.getElementById("shop");
+        if (shopSection) {
+          shopSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      };
+
+      // Then scroll to the specific product card
+      const scrollToProduct = () => {
+        const productElement = document.getElementById(`product-${productId}`);
+        if (productElement) {
+          const headerOffset = 100; // Account for fixed header
+          const elementPosition = productElement.getBoundingClientRect().top;
+          const offsetPosition =
+            elementPosition + window.scrollY - headerOffset;
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth",
+          });
+        } else {
+          console.log(`Product element not found: product-${productId}`);
+        }
+      };
+
+      // Step 1: Navigate to shop section first
+      setTimeout(scrollToShopSection, 200);
+
+      // Step 2: Multiple scroll attempts to the specific product
+      setTimeout(scrollToProduct, 1000);
+      setTimeout(scrollToProduct, 1600);
+      setTimeout(scrollToProduct, 2200);
+
+      // Remove highlight after animation
+      setTimeout(() => {
+        setHighlightedProductId(null);
+      }, 4000);
+    };
+
+    window.addEventListener("highlightProduct", handleHighlightProduct);
+    return () =>
+      window.removeEventListener("highlightProduct", handleHighlightProduct);
+  }, []);
 
   const handleAddToCart = (product: any) => {
     addToCart({
@@ -90,8 +150,8 @@ export function Shop() {
     { id: "wellness", name: "Wellness", icon: "🌿" },
   ];
 
-  // Enhanced product data matching the special offers design from your image
-  const products = [
+  // Fallback products (used when API products are not available)
+  const fallbackProducts = [
     {
       id: 1,
       name: "De Fabulous Marula Oil Shampoo with Quinoa ultimate...",
@@ -231,6 +291,9 @@ export function Shop() {
     },
   ];
 
+  // Use API products if available, otherwise use fallback products
+  const products = apiProducts.length > 0 ? apiProducts : fallbackProducts;
+
   const filteredProducts = products.filter((product) => {
     const categoryMatch =
       selectedCategory === "all" || product.category === selectedCategory;
@@ -329,18 +392,42 @@ export function Shop() {
           {filteredProducts.map((product, index) => {
             const isAdded = addedItems.has(product.id);
             const isFavorite = isInWishlist(product.id);
+            const isHighlighted = highlightedProductId === product.id;
 
             return (
               <motion.div
                 key={product.id}
+                id={`product-${product.id}`}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
                 whileHover={{ y: -8, scale: 1.02 }}
-                className="group h-full"
+                animate={{
+                  backgroundColor: isHighlighted
+                    ? [
+                        "rgba(255, 255, 255, 0.9)",
+                        "rgba(255, 122, 0, 0.15)",
+                        "rgba(255, 255, 255, 0.9)",
+                      ]
+                    : "rgba(255, 255, 255, 0.9)",
+                  boxShadow: isHighlighted
+                    ? [
+                        "0 10px 30px rgba(0, 0, 0, 0.1)",
+                        "0 20px 60px rgba(255, 122, 0, 0.3)",
+                        "0 10px 30px rgba(0, 0, 0, 0.1)",
+                      ]
+                    : "0 10px 30px rgba(0, 0, 0, 0.1)",
+                  y: isHighlighted ? [0, -4, 0] : 0,
+                  scale: isHighlighted ? [1, 1.03, 1] : 1,
+                }}
+                transition={{
+                  duration: isHighlighted ? 0.8 : 0.6,
+                  delay: isHighlighted ? 0 : index * 0.1,
+                  ease: "easeInOut",
+                }}
+                className="group h-full rounded-3xl"
               >
-                <Card className="h-full bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden">
+                <Card className="h-full bg-transparent backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden">
                   {/* Image Section - Matching your card design */}
                   <div className="relative aspect-[4/3] overflow-hidden">
                     <img
