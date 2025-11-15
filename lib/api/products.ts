@@ -4,7 +4,7 @@
  * to keep the API URL secure and not exposed to the client
  */
 
-const API_BASE_URL = "https://probeauty-backend.onrender.com/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || "";
 
 interface ApiProduct {
   id: string;
