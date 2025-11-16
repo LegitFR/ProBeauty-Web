@@ -216,10 +216,12 @@
     font-feature-settings: var(--default-font-feature-settings, normal);
     font-variation-settings: var(--default-font-variation-settings, normal);
     -webkit-tap-highlight-color: transparent;
+    scrollbar-gutter: stable;
   }
 
   body {
     line-height: inherit;
+    overflow-x: hidden;
   }
 
   hr {
@@ -4930,13 +4932,4 @@ html {
       )
       rotate(var(--tw-exit-rotate, 0));
   }
-}
-
-/* Prevent layout shift when modal opens by reserving scrollbar space */
-/* html {
-  overflow-y: scroll;
-} */
-
-body {
-  overflow-x: hidden;
 }

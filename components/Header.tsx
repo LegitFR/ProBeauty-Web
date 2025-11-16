@@ -312,7 +312,7 @@ export function Header() {
                         handleLogout();
                         setIsOpen(false);
                       }}
-                      className="block w-full text-left text-red-400 hover:text-red-300 transition-colors text-sm font-medium mb-3 flex items-center gap-2"
+                      className="block w-full text-left text-orange-400 hover:text-orange-600 transition-colors text-sm font-medium mb-3 flex items-center gap-2"
                     >
                       <LogOut className="h-4 w-4" />
                       Sign Out
