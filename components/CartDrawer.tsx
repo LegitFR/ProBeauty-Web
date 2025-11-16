@@ -34,20 +34,20 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     null
   );
 
-  const handleProductClick = (productId: string | number) => {
-    // Close the cart drawer
-    onClose();
+  // const handleProductClick = (productId: string | number) => {
+  //   // Close the cart drawer
+  //   onClose();
 
-    // Small delay to ensure cart closes before scrolling
-    setTimeout(() => {
-      // Dispatch event to Shop component to highlight the product
-      window.dispatchEvent(
-        new CustomEvent("highlightProduct", {
-          detail: { productId },
-        })
-      );
-    }, 100);
-  };
+  //   // Small delay to ensure cart closes before scrolling
+  //   setTimeout(() => {
+  //     // Dispatch event to Shop component to highlight the product
+  //     window.dispatchEvent(
+  //       new CustomEvent("highlightProduct", {
+  //         detail: { productId },
+  //       })
+  //     );
+  //   }, 100);
+  // };
 
   const handleQuantityChange = (id: string | number, newQuantity: number) => {
     if (newQuantity === 0) {
@@ -117,7 +117,6 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     <motion.div
                       key={item.id}
                       className="flex items-center space-x-4 bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => handleProductClick(item.id)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
