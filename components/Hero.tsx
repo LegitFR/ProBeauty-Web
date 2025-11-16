@@ -38,7 +38,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 1 }}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6 text-left"
             >
               <span className="text-white font-display">AI-Powered</span>
               <br />
@@ -52,7 +52,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 1 }}
-              className="text-base sm:text-lg md:text-xl text-gray-300 mb-8 sm:mb-12 max-w-lg mx-auto md:mx-0 leading-relaxed"
+              className="text-base sm:text-lg md:text-xl text-gray-300 mb-8 sm:mb-12 max-w-lg leading-relaxed text-left"
             >
               Discover personalized beauty products and book premium salon
               services with our intelligent recommendation system.
