@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import {
@@ -22,6 +23,7 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
+  const router = useRouter();
   const {
     items,
     updateQuantity,
@@ -59,18 +61,11 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   };
 
   const handleCheckout = () => {
-    setIsCheckingOut(true);
+    // Close the drawer
+    onClose();
 
-    // Simulate checkout process
-    setTimeout(() => {
-      setIsCheckingOut(false);
-      toast.success(
-        "Order placed successfully! Thank you for shopping with ProBeauty"
-      );
-      // Clear cart after successful checkout
-      items.forEach((item) => removeFromCart(item.id));
-      onClose();
-    }, 2000);
+    // Navigate to checkout page
+    router.push("/checkout");
   };
 
   const totalItems = getTotalItems();
@@ -78,8 +73,8 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-md p-6 min-h-screen overflow-y-auto">
-        <SheetHeader className="pb-4">
+      <SheetContent className="w-full sm:max-w-md p-6 min-h-screen overflow-y-auto bg-[#ECE3DC]">
+        <SheetHeader className="pb-4 border-b-[#CBCBCB] border-b-2">
           <SheetTitle className="flex items-center gap-2 font-display">
             <ShoppingBag className="h-5 w-5 text-[#FF7A00]" />
             Shopping Cart
@@ -116,7 +111,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   {items.map((item) => (
                     <motion.div
                       key={item.id}
-                      className="flex items-center space-x-4 bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="flex items-center space-x-4 bg-transparent rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -136,7 +131,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 rounded-full bg-transparent"
                             onClick={() =>
                               handleQuantityChange(item.id, item.quantity - 1)
                             }
@@ -149,7 +144,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 rounded-full bg-transparent"
                             onClick={() =>
                               handleQuantityChange(item.id, item.quantity + 1)
                             }
@@ -168,7 +163,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         >
                           <X className="h-4 w-4" />
                         </button>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm text-[#616161]">
                           ${(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
@@ -180,11 +175,11 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <div className="border-t -mx-6 px-6 pt-6 mt-6 space-y-4 pb-2">
                 {/* Order Summary */}
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm text-[#717171]">
                     <span>Subtotal ({totalItems} items)</span>
                     <span>${totalPrice.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm text-[#717171]">
                     <span>Shipping</span>
                     <span className="text-green-600">Free</span>
                   </div>
@@ -195,7 +190,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
 
                 {/* Shipping Info */}
-                <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-3 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-green-600 p-3 rounded-lg">
                   <Truck className="h-4 w-4" />
                   <span>Free shipping on all orders</span>
                 </div>
@@ -204,7 +199,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <Button
                   onClick={handleCheckout}
                   disabled={isCheckingOut}
-                  className="w-full bg-[#FF7A00] hover:bg-[#e66900] text-white py-6"
+                  className="w-full bg-[#F44A01] hover:bg-[#e66900] text-white py-6"
                 >
                   {isCheckingOut ? (
                     <div className="flex items-center gap-2">

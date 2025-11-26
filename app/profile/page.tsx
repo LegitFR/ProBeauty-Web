@@ -31,8 +31,11 @@ export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "orders" | "wishlist" | "settings"
+    "overview" | "appointments" | "orders" | "wishlist" | "settings"
   >("overview");
+  const [appointmentFilter, setAppointmentFilter] = useState<
+    "upcoming" | "past" | "cancelled"
+  >("upcoming");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -79,7 +82,7 @@ export default function ProfilePage() {
           <Header />
 
           {/* Hero Section with Cover */}
-          <div className="relative pt-16 sm:pt-20">
+          <div className="relative">
             {/* Cover Image */}
             <div className="h-48 sm:h-64 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 relative overflow-hidden">
               <div className="absolute inset-0 bg-black/20"></div>
@@ -87,7 +90,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Profile Card - Overlapping */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
               <Card className="bg-white shadow-2xl rounded-2xl overflow-hidden">
                 <CardContent className="p-8">
                   <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -176,6 +179,11 @@ export default function ProfilePage() {
               <div className="mt-8 flex gap-2 border-b border-gray-200 overflow-x-scroll">
                 {[
                   { key: "overview", label: "Overview", icon: User },
+                  {
+                    key: "appointments",
+                    label: "Appointments",
+                    icon: Calendar,
+                  },
                   { key: "orders", label: "My Orders", icon: ShoppingBag },
                   { key: "wishlist", label: "Wishlist", icon: Heart },
                   { key: "settings", label: "Settings", icon: Edit },
@@ -199,8 +207,39 @@ export default function ProfilePage() {
               <div className="mt-8 mb-16">
                 {activeTab === "overview" && (
                   <div className="grid md:grid-cols-2 gap-6">
+                    {/* Your Appointments - Preview */}
+                    <Card className="hover:shadow-lg transition-shadow md:col-span-2">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <Calendar className="h-5 w-5 text-orange-500" />
+                            Your Appointments
+                          </h3>
+                          <Button
+                            onClick={() => setActiveTab("appointments")}
+                            variant="ghost"
+                            className="text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+                          >
+                            View All
+                          </Button>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="text-center py-8 text-gray-500">
+                            <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                            <p>No upcoming appointments</p>
+                            <Button
+                              onClick={() => (window.location.href = "/#book")}
+                              className="mt-4 bg-orange-500 hover:bg-orange-600"
+                            >
+                              Book Appointment
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
                     {/* Recent Activity */}
-                    <Card className="hover:shadow-lg transition-shadow">
+                    <Card className="hover:shadow-lg transition-shadow md:col-span-2">
                       <CardContent className="p-6">
                         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                           <Clock className="h-5 w-5 text-orange-500" />
@@ -222,33 +261,6 @@ export default function ProfilePage() {
                     </Card>
 
                     {/* Rewards & Points */}
-                    <Card className="hover:shadow-lg transition-shadow bg-gradient-to-br from-orange-50 to-pink-50">
-                      <CardContent className="p-6">
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                          <Award className="h-5 w-5 text-orange-500" />
-                          Rewards & Points
-                        </h3>
-                        <div className="text-center py-6">
-                          <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center mb-4">
-                            <span className="text-3xl font-bold text-white">
-                              0
-                            </span>
-                          </div>
-                          <p className="text-2xl font-bold text-gray-900 mb-2">
-                            Points Balance
-                          </p>
-                          <p className="text-sm text-gray-600 mb-4">
-                            Earn points with every purchase
-                          </p>
-                          <Button
-                            variant="outline"
-                            className="border-orange-500 text-orange-600 hover:bg-orange-50"
-                          >
-                            Learn More
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
 
                     {/* Favorite Salons */}
                     <Card className="hover:shadow-lg transition-shadow md:col-span-2">
@@ -269,6 +281,321 @@ export default function ProfilePage() {
                         </div>
                       </CardContent>
                     </Card>
+                  </div>
+                )}
+
+                {activeTab === "appointments" && (
+                  <div className="space-y-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Your Appointments
+                      </h2>
+                      <Button
+                        onClick={() => (window.location.href = "/#book")}
+                        className="bg-orange-500 hover:bg-orange-600"
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Book New
+                      </Button>
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="flex gap-2">
+                      {[
+                        {
+                          key: "upcoming" as const,
+                          label: "Upcoming",
+                          count: 2,
+                        },
+                        { key: "past" as const, label: "Past", count: 5 },
+                        {
+                          key: "cancelled" as const,
+                          label: "Cancelled",
+                          count: 1,
+                        },
+                      ].map((filter) => (
+                        <button
+                          key={filter.key}
+                          onClick={() => setAppointmentFilter(filter.key)}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            appointmentFilter === filter.key
+                              ? "bg-orange-500 text-white"
+                              : "bg-orange-50 text-orange-600 hover:bg-orange-100"
+                          }`}
+                        >
+                          {filter.label}
+                          <span className="ml-2 text-xs opacity-75">
+                            ({filter.count})
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Appointments Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {/* Appointment Card 1 - Upcoming */}
+                      {appointmentFilter === "upcoming" && (
+                        <Card className="hover:shadow-lg transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="flex gap-4">
+                              {/* Salon Image */}
+                              <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                                <img
+                                  src="https://images.unsplash.com/photo-1562322140-8baeececf3df?w=400"
+                                  alt="Salon"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+
+                              {/* Appointment Details */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="min-w-0 flex-1">
+                                    <h4 className="font-semibold text-gray-900 truncate">
+                                      Vurve Salon
+                                    </h4>
+                                    <p className="text-xs text-gray-600 flex items-center gap-1">
+                                      <MapPin className="h-3 w-3 flex-shrink-0" />
+                                      <span className="truncate">
+                                        Nungambakkam
+                                      </span>
+                                    </p>
+                                  </div>
+                                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs flex-shrink-0">
+                                    Confirmed
+                                  </Badge>
+                                </div>
+
+                                <div className="space-y-1 text-sm mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
+                                    <span className="font-medium">
+                                      Tomorrow, Nov 27
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-gray-600">
+                                    <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                                    <span>3:00 PM - 4:30 PM</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-wrap gap-1.5 mb-3">
+                                  <Badge variant="outline" className="text-xs">
+                                    Hair Styling
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    Color
+                                  </Badge>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="bg-orange-500 hover:bg-orange-600 flex-1"
+                                  >
+                                    Details
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-gray-300 flex-1"
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Appointment Card 2 - Upcoming */}
+                      {appointmentFilter === "upcoming" && (
+                        <Card className="hover:shadow-lg transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="flex gap-4">
+                              {/* Salon Image */}
+                              <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                                <img
+                                  src="https://images.unsplash.com/photo-1633681926035-ec90e342ced9?w=400"
+                                  alt="Salon"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+
+                              {/* Appointment Details */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="min-w-0 flex-1">
+                                    <h4 className="font-semibold text-gray-900 truncate">
+                                      Glam Studio Pro
+                                    </h4>
+                                    <p className="text-xs text-gray-600 flex items-center gap-1">
+                                      <MapPin className="h-3 w-3 flex-shrink-0" />
+                                      <span className="truncate">T. Nagar</span>
+                                    </p>
+                                  </div>
+                                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs flex-shrink-0">
+                                    Pending
+                                  </Badge>
+                                </div>
+
+                                <div className="space-y-1 text-sm mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
+                                    <span className="font-medium">
+                                      Dec 2, 2025
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-gray-600">
+                                    <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                                    <span>11:00 AM - 1:00 PM</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-wrap gap-1.5 mb-3">
+                                  <Badge variant="outline" className="text-xs">
+                                    Bridal Makeup
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    Pre-Wedding
+                                  </Badge>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="bg-orange-500 hover:bg-orange-600 flex-1"
+                                  >
+                                    Details
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-gray-300 flex-1"
+                                  >
+                                    Reschedule
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Past Appointment Card */}
+                      {appointmentFilter === "past" && (
+                        <Card className="hover:shadow-lg transition-shadow opacity-60 hover:opacity-100">
+                          <CardContent className="p-4">
+                            <div className="flex gap-4">
+                              {/* Salon Image */}
+                              <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                                <img
+                                  src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=400"
+                                  alt="Salon"
+                                  className="w-full h-full object-cover grayscale"
+                                />
+                              </div>
+
+                              {/* Appointment Details */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="min-w-0 flex-1">
+                                    <h4 className="font-semibold text-gray-900 truncate">
+                                      Zen Wellness Spa
+                                    </h4>
+                                    <p className="text-xs text-gray-600 flex items-center gap-1">
+                                      <MapPin className="h-3 w-3 flex-shrink-0" />
+                                      <span className="truncate">Adyar</span>
+                                    </p>
+                                  </div>
+                                  <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100 text-xs flex-shrink-0">
+                                    Completed
+                                  </Badge>
+                                </div>
+
+                                <div className="space-y-1 text-sm text-gray-600 mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                                    <span>Nov 20, 2025</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                                    <span>5:30 PM - 6:30 PM</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-wrap gap-1.5 mb-3">
+                                  <Badge variant="outline" className="text-xs">
+                                    Massage
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    Aromatherapy
+                                  </Badge>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="bg-orange-500 hover:bg-orange-600 flex-1"
+                                  >
+                                    <Star className="h-3 w-3 mr-1" />
+                                    Review
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-gray-300 flex-1"
+                                  >
+                                    Book Again
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Cancelled Appointments - Empty State */}
+                      {appointmentFilter === "cancelled" && (
+                        <Card className="lg:col-span-2">
+                          <CardContent className="p-12">
+                            <div className="text-center text-gray-500">
+                              <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                              <p className="text-lg font-medium">
+                                No cancelled appointments
+                              </p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+
+                    {/* Empty State for No Appointments */}
+                    {/* <Card>
+                      <CardContent className="p-6">
+                        <div className="text-center py-12 text-gray-500">
+                          <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                          <h3 className="text-xl font-semibold mb-2">
+                            No appointments yet
+                          </h3>
+                          <p className="mb-6">
+                            Book your first appointment and experience premium beauty services
+                          </p>
+                          <Button
+                            onClick={() => (window.location.href = "/#book")}
+                            className="bg-orange-500 hover:bg-orange-600"
+                          >
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Browse Salons
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card> */}
                   </div>
                 )}
 

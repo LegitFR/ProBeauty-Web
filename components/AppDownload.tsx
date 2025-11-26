@@ -32,22 +32,18 @@ export function AppDownload() {
   ];
 
   const stats = [
-    { value: "4.8★", label: "App Store Rating" },
+    { value: "4.7★", label: `App Store Rating` },
     { value: "100K+", label: "Downloads" },
-    { value: "5K+", label: "Reviews" },
+    { value: "3K+", label: "Reviews" },
   ];
 
   return (
     <section
       id="app"
-      className="py-20 bg-gradient-to-br from-[#FF6A00] via-orange-600 to-red-600 relative overflow-hidden"
+      className="py-16 sm:py-20 lg:py-24 bg-linear-to-r from-[#4D1C00] via-[#792800] to-[#F44A01] relative overflow-hidden"
     >
-      {/* Background decorative elements */}
-      <div className="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-20 left-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Content Side */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -63,16 +59,16 @@ export function AppDownload() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-                Get the ProBeauty{" "}
-                <span className="text-orange-200">
-                  Mobile App
-                </span>
+              <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight text-[#F8F7FA]">
+                Get the ProBeauty
+              </h2>
+              <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                <span className="text-[#F44A01]">Mobile App</span>
               </h2>
 
-              <p className="text-xl text-orange-100 mb-10 leading-relaxed">
-                Take your beauty journey with you. Shop, book,
-                and discover new looks wherever you are.
+              <p className="text-base sm:text-lg text-[#F1E5D5] mb-8 sm:mb-10 leading-relaxed max-w-lg">
+                Take your beauty journey with you! Shop, book, and discover new
+                looks wherever you are.
               </p>
             </motion.div>
 
@@ -82,7 +78,7 @@ export function AppDownload() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="space-y-6 mb-10"
+              className="space-y-4 sm:space-y-5 mb-8 sm:mb-10"
             >
               {features.map((feature, index) => (
                 <motion.div
@@ -94,21 +90,16 @@ export function AppDownload() {
                     duration: 0.6,
                     delay: 0.6 + index * 0.1,
                   }}
-                  whileHover={{ x: 10, scale: 1.02 }}
-                  className="flex items-start space-x-4 p-4 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300 cursor-pointer group"
+                  className="flex items-start gap-3 sm:gap-4"
                 >
-                  <motion.div
-                    whileHover={{ rotate: 360, scale: 1.1 }}
-                    transition={{ duration: 0.6 }}
-                    className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-white/30 transition-all duration-300"
-                  >
-                    <feature.icon className="h-6 w-6 text-white" />
+                  <motion.div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#FFFFFF1A] rounded-full flex items-center justify-center flex-shrink-0 p-2">
+                    <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-[#F44A01]" />
                   </motion.div>
                   <div>
-                    <h3 className="font-bold text-lg text-white mb-1 group-hover:text-orange-200 transition-colors duration-300">
+                    <h3 className="font-semibold text-base sm:text-lg text-[#ECE3DC] mb-1">
                       {feature.title}
                     </h3>
-                    <p className="text-orange-100 text-sm">
+                    <p className="text-[#B8B8B8] text-sm">
                       {feature.description}
                     </p>
                   </div>
@@ -122,42 +113,30 @@ export function AppDownload() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.8 }}
-              className="flex flex-col sm:flex-row gap-4 mb-10"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8 sm:mb-10"
             >
               <Button
                 size="lg"
-                onClick={() =>
-                  toast.info("Redirecting to App Store...")
-                }
-                className="bg-white text-black hover:bg-gray-100 px-6 py-4 rounded-2xl group transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+                onClick={() => toast.info("Redirecting to App Store...")}
+                className="bg-[#FFFFFF1A] text-white hover:bg-black px-5 py-3 sm:px-6 sm:py-4 rounded-2xl group transition-all duration-300 transform hover:scale-105 shadow-lg h-auto"
               >
-                <Download className="h-6 w-6 mr-3 text-[#FF6A00]" />
+                <Download className="h-5 w-5 sm:h-6 sm:w-6 mr-2.5 sm:mr-3 text-white flex-shrink-0" />
                 <div className="text-left">
-                  <div className="text-xs text-gray-600">
-                    Download for
-                  </div>
-                  <div className="text-sm font-semibold">
-                    iOS
-                  </div>
+                  <div className="text-xs text-gray-300">Download for iOS</div>
                 </div>
               </Button>
 
               <Button
                 size="lg"
                 onClick={() =>
-                  toast.info(
-                    "Redirecting to Google Play Store...",
-                  )
+                  toast.info("Redirecting to Google Play Store...")
                 }
-                className="bg-white text-black hover:bg-gray-100 px-6 py-4 rounded-2xl group transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+                className="bg-[#FFFFFF1A] text-white hover:bg-black px-5 py-3 sm:px-6 sm:py-4 rounded-2xl group transition-all duration-300 transform hover:scale-105 shadow-lg h-auto"
               >
-                <Download className="h-6 w-6 mr-3 text-[#FF6A00]" />
+                <Download className="h-5 w-5 sm:h-6 sm:w-6 mr-2.5 sm:mr-3 text-white flex-shrink-0" />
                 <div className="text-left">
-                  <div className="text-xs text-gray-600">
-                    Download for
-                  </div>
-                  <div className="text-sm font-semibold">
-                    Android
+                  <div className="text-xs text-gray-300">
+                    Download for Android
                   </div>
                 </div>
               </Button>
@@ -169,7 +148,7 @@ export function AppDownload() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 1 }}
-              className="grid grid-cols-3 gap-6"
+              className="flex flex-wrap gap-6 sm:gap-8"
             >
               {stats.map((stat, index) => (
                 <motion.div
@@ -181,13 +160,12 @@ export function AppDownload() {
                     duration: 0.6,
                     delay: 1.2 + index * 0.1,
                   }}
-                  whileHover={{ scale: 1.1 }}
-                  className="text-center"
+                  className="text-left"
                 >
-                  <div className="text-2xl font-bold text-white mb-1">
+                  <div className="text-xl sm:text-2xl font-bold font-display text-[#F44A01] mb-0.5">
                     {stat.value}
                   </div>
-                  <div className="text-sm text-orange-200">
+                  <div className="text-xs sm:text-sm text-white/90">
                     {stat.label}
                   </div>
                 </motion.div>
@@ -201,128 +179,83 @@ export function AppDownload() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="relative"
+            className="relative mt-12 lg:mt-0"
           >
-            <div className="relative max-w-sm mx-auto">
-              {/* Main Phone Frame */}
+            <div className="relative max-w-lg mx-auto flex items-center justify-center">
+              {/* Center Phone with Logo */}
               <motion.div
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                whileInView={{ scale: 1, opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: 0.3 }}
-                whileHover={{ y: -10, rotateY: 5 }}
-                className="relative bg-gray-900 p-3 rounded-[2.5rem] shadow-2xl"
-                style={{ transform: "perspective(1000px)" }}
+                className="relative z-20 bg-black p-2.5 sm:p-3 rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl w-64 sm:w-80 mx-4"
               >
-                <div className="bg-white rounded-[2rem] overflow-hidden shadow-inner">
+                <div className="bg-gradient-to-br from-[#FF6A00] to-[#FF8A00] rounded-[2.2rem] sm:rounded-[2.7rem] overflow-hidden shadow-inner aspect-[9/19]">
                   {/* Status Bar */}
-                  <div className="flex justify-between items-center px-6 py-3 bg-white">
-                    <span className="text-black text-sm font-medium">
+                  <div className="flex justify-between items-center px-4 sm:px-6 py-2 sm:py-3 bg-black/20">
+                    <span className="text-white text-xs sm:text-sm font-medium">
                       9:41
                     </span>
-                    <div className="flex items-center space-x-1">
-                      <div className="w-4 h-2 bg-green-500 rounded-sm"></div>
-                      <div className="w-6 h-2 bg-gray-300 rounded-sm"></div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 sm:w-4 h-1.5 sm:h-2 bg-white/80 rounded-sm"></div>
+                      <div className="w-4 sm:w-5 h-1.5 sm:h-2 bg-white/60 rounded-sm"></div>
                     </div>
                   </div>
 
-                  {/* App Header */}
-                  <div className="px-6 py-4 bg-gradient-to-r from-[#FF6A00] to-orange-600">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-display text-xl font-bold text-white">
-                        ProBeauty
-                      </h3>
-                      <div className="w-8 h-8 bg-white/20 rounded-full"></div>
-                    </div>
-                  </div>
+                  {/* ProBeauty Logo Center */}
+                  <div className="flex items-center justify-center h-[calc(100%-60px)] sm:h-[calc(100%-70px)]">
+                    <motion.div
+                      initial={{ scale: 0, rotate: -180 }}
+                      whileInView={{ scale: 1, rotate: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, delay: 0.6 }}
+                      className="relative"
+                    >
+                      {/* Circular background */}
+                      <motion.div
+                        animate={{
+                          rotate: 360,
+                        }}
+                        transition={{
+                          duration: 20,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white/30 border-dashed"
+                      ></motion.div>
 
-                  {/* App Content */}
-                  <div className="px-6 py-6 bg-white h-96 relative">
-                    {/* Product Grid */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      {[...Array(4)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          whileInView={{ opacity: 1, scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{
-                            duration: 0.4,
-                            delay: 0.8 + i * 0.1,
-                          }}
-                          className="bg-gray-50 rounded-xl p-3 aspect-square"
-                        >
-                          <div className="w-full h-16 bg-gradient-to-br from-[#FF6A00]/20 to-orange-300/20 rounded-lg mb-2"></div>
-                          <div className="text-xs font-medium text-black mb-1">
-                            Product {i + 1}
-                          </div>
-                          <div className="text-xs text-[#FF6A00] font-semibold">
-                            ₹{299 + i * 100}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    {/* Bottom Navigation */}
-                    <div className="absolute bottom-4 left-4 right-4 bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
-                      <div className="flex justify-around">
-                        {[
-                          "Home",
-                          "Shop",
-                          "Book",
-                          "Profile",
-                        ].map((item, i) => (
-                          <div
-                            key={item}
-                            className="text-center"
-                          >
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              whileInView={{ scale: 1 }}
-                              viewport={{ once: true }}
-                              transition={{
-                                duration: 0.3,
-                                delay: 1.2 + i * 0.1,
-                              }}
-                              className={`w-6 h-6 rounded-md mx-auto mb-1 ${
-                                i === 0
-                                  ? "bg-[#FF6A00]"
-                                  : "bg-gray-300"
-                              }`}
-                            ></motion.div>
-                            <div
-                              className={`text-xs ${
-                                i === 0
-                                  ? "text-[#FF6A00] font-medium"
-                                  : "text-gray-500"
-                              }`}
-                            >
-                              {item}
-                            </div>
-                          </div>
-                        ))}
+                      {/* P Logo */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/20 backdrop-blur-sm border-4 border-white flex items-center justify-center">
+                          <span className="text-white font-display text-4xl sm:text-5xl font-bold">
+                            P
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    </motion.div>
                   </div>
+
+                  {/* Bottom notch */}
+                  <div className="h-1.5 sm:h-2 bg-black/20"></div>
                 </div>
               </motion.div>
 
-              {/* Second Phone (Background) */}
+              {/* Left Phone (Background) */}
               <motion.div
-                initial={{ y: 100, opacity: 0 }}
-                whileInView={{ y: 20, opacity: 0.8 }}
+                initial={{ x: -50, opacity: 0, rotate: -15 }}
+                whileInView={{ x: 0, opacity: 0.9, rotate: -12 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: 0.5 }}
-                className="absolute top-10 -right-8 w-48 h-80 bg-gray-800 rounded-[2rem] shadow-xl z-[-1] transform rotate-12"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black p-2 sm:p-2.5 rounded-[2rem] sm:rounded-[2.5rem] shadow-xl w-48 sm:w-60 hidden sm:block"
               >
-                <div className="bg-gradient-to-b from-white to-gray-100 rounded-[1.5rem] m-2 h-[calc(100%-1rem)]">
-                  <div className="p-4">
-                    <div className="w-full h-20 bg-gradient-to-r from-[#FF6A00]/30 to-orange-300/30 rounded-lg mb-4"></div>
-                    <div className="space-y-2">
+                <div className="bg-white rounded-[1.7rem] sm:rounded-[2.2rem] overflow-hidden aspect-[9/19]">
+                  <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+                    <div className="w-full h-16 sm:h-20 bg-gradient-to-br from-[#FF6A00]/20 to-[#FF8A00]/20 rounded-lg"></div>
+                    <div className="grid grid-cols-2 gap-2">
                       {[...Array(4)].map((_, i) => (
                         <div
                           key={i}
-                          className="w-full h-4 bg-gray-200 rounded"
+                          className="aspect-square bg-gray-100 rounded-lg"
                         ></div>
                       ))}
                     </div>
@@ -330,34 +263,47 @@ export function AppDownload() {
                 </div>
               </motion.div>
 
-              {/* Floating Elements */}
+              {/* Right Phone (Background) */}
+              <motion.div
+                initial={{ x: 50, opacity: 0, rotate: 15 }}
+                whileInView={{ x: 0, opacity: 0.9, rotate: 12 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black p-2 sm:p-2.5 rounded-[2rem] sm:rounded-[2.5rem] shadow-xl w-48 sm:w-60 hidden sm:block"
+              >
+                <div className="bg-white rounded-[1.7rem] sm:rounded-[2.2rem] overflow-hidden aspect-[9/19]">
+                  <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-br from-[#FF6A00]/30 to-[#FF8A00]/30 rounded-full"></div>
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-2 bg-gray-200 rounded w-2/3"></div>
+                        <div className="h-2 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {[...Array(6)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="h-2 bg-gray-100 rounded w-full"
+                        ></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Floating circle animation */}
               <motion.div
                 animate={{
-                  y: [0, -20, 0],
-                  rotate: [0, 5, 0],
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.6, 0.3],
                 }}
                 transition={{
                   duration: 4,
                   repeat: Infinity,
                   ease: "easeInOut",
                 }}
-                className="absolute -top-6 -left-6 w-16 h-16 bg-white/20 rounded-2xl backdrop-blur-sm flex items-center justify-center"
-              >
-                <CheckCircle className="h-8 w-8 text-white" />
-              </motion.div>
-
-              <motion.div
-                animate={{
-                  y: [0, 15, 0],
-                  rotate: [0, -5, 0],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1,
-                }}
-                className="absolute -bottom-6 -right-6 w-20 h-20 bg-white/20 rounded-full backdrop-blur-sm"
+                className="absolute inset-0 rounded-full border-2 border-white/20 z-0"
               ></motion.div>
             </div>
           </motion.div>

@@ -18,6 +18,9 @@ import {
   Search,
   Heart,
   Sparkles,
+  Filter,
+  Funnel,
+  ArrowRight,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -164,11 +167,8 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
   });
 
   return (
-    <section
-      id="book"
-      className="py-24 bg-gradient-to-br from-gray-50 via-white to-orange-50/30"
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="book" className="py-24 bg-[#ECE3DC]">
+      <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -177,9 +177,9 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
           transition={{ duration: 0.8 }}
           className="text-center mb-20"
         >
-          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-6">
+          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-black mb-10">
             Book Your Perfect{" "}
-            <span className="bg-gradient-to-r from-[#FF7A00] via-orange-500 to-[#FF7A00] bg-clip-text text-transparent bg-[length:400%_400%]">
+            <span className="bg-gradient-to-r from-orange-600 via-red-500 to-orange-600 bg-clip-text text-transparent bg-[length:400%_400%]">
               Beauty Experience
             </span>
           </h2>
@@ -195,23 +195,27 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white/20 mb-16"
+          className="bg-[#ECE3DC] backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 mb-12 sm:mb-16"
         >
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
-            <div className="relative group">
-              <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#FF7A00] transition-colors" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-4">
+            <div className="relative group w-full">
+              <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#000000] group-focus-within:text-[#FF7A00] transition-colors" />
               <Input
                 type="text"
                 placeholder="Search location or salon..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-14 rounded-2xl border-gray-200 focus:border-[#FF7A00] focus:ring-[#FF7A00] transition-all bg-white/50"
+                className="pl-12 h-12 sm:h-14 rounded-xl sm:rounded-2xl border-[#616161] border-2 focus:border-[#FF7A00] focus:ring-[#FF7A00] transition-all bg-transparent text-sm sm:text-base placeholder:text-[#1e1e1e]"
               />
             </div>
 
             <Select value={selectedService} onValueChange={setSelectedService}>
-              <SelectTrigger className="h-14 rounded-2xl border-gray-200 bg-white/50">
-                <SelectValue placeholder="Select service" />
+              <SelectTrigger className="h-12 sm:h-14 rounded-xl sm:rounded-2xl border-[#616161] border-2 bg-transparent text-sm sm:text-base w-full">
+                <Filter className="h-4 w-4 mr-2 text-[#1e1e1e]" />
+                <SelectValue
+                  placeholder="Select service"
+                  className="placeholder:text[#1e1e1e]"
+                />
               </SelectTrigger>
               <SelectContent>
                 {services.map((service) => (
@@ -223,29 +227,32 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
               </SelectContent>
             </Select>
 
-            <div className="relative group">
-              <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#FF7A00] transition-colors" />
-              <Input
-                type="date"
-                className="pl-12 h-14 rounded-2xl border-gray-200 focus:border-[#FF7A00] focus:ring-[#FF7A00] bg-white/50"
-              />
-            </div>
-
             <Button
               onClick={() =>
                 toast.success("AI is finding the perfect salons for you...")
               }
-              className="h-14 bg-gradient-to-r from-[#FF7A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group"
+              className="h-12 sm:h-14 bg-gradient-to-r from-[#FF7A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group w-full text-sm sm:text-base"
             >
-              <Search className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
+              <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-2 group-hover:scale-110 transition-transform" />
               AI Search
-              <Sparkles className="h-4 w-4 ml-2" />
+              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 ml-2" />
             </Button>
           </div>
         </motion.div>
 
+        {/* View All Button */}
+        <div className="flex justify-end mb-6">
+          <Button
+            variant="ghost"
+            className="text-black hover:text-orange-600 hover:bg-orange-50 font-medium"
+          >
+            <p className="text-[#000000]">View All</p>
+            <ArrowRight />
+          </Button>
+        </div>
+
         {/* Filter Tags */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -268,141 +275,112 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
               {filter}
             </motion.button>
           ))}
-        </motion.div>
+        </motion.div> */}
 
-        {/* Salon Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredSalons.map((salon, index) => (
-            <motion.div
-              key={salon.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className="group"
-            >
-              <Card className="h-full bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden">
-                {/* Image Section */}
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={salon.image}
-                    alt={salon.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
+        {/* Salon Grid - Responsive layout */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-4">
+          {filteredSalons.slice(0, 3).map((salon, index) => {
+            const isFavorite = favorites.has(salon.id);
 
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-                  {/* Category Badge */}
-                  <Badge className="absolute top-4 left-4 bg-black/70 text-white border-0 backdrop-blur-sm rounded-lg px-3 py-1">
-                    {salon.badge}
-                  </Badge>
-
-                  {/* Favorite Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => toggleFavorite(salon.id)}
-                    className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30"
-                  >
-                    <Heart
-                      className={`h-5 w-5 transition-colors ${
-                        favorites.has(salon.id)
-                          ? "fill-red-500 text-red-500"
-                          : "text-white"
-                      }`}
+            return (
+              <motion.div
+                key={salon.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{
+                  duration: 0.6,
+                  delay: index * 0.1,
+                }}
+                className="group h-full rounded-3xl"
+              >
+                <Card className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] shadow-md hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden flex flex-col">
+                  {/* Image Section - More rectangular */}
+                  <div className="relative aspect-[16/9] overflow-hidden bg-transparent p-4">
+                    <img
+                      src={salon.image}
+                      alt={salon.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-lg"
                     />
-                  </motion.button>
 
-                  {/* Special Offer Banner */}
-                  {salon.specialOffer && (
-                    <div className="absolute bottom-4 left-4 bg-[#FF7A00] text-white px-3 py-1 rounded-full text-sm font-medium">
-                      {salon.specialOffer}
-                    </div>
-                  )}
-                </div>
+                    {/* Wishlist Button - Top Right (Temporarily commented) */}
+                    {/* <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => toggleFavorite(salon.id)}
+                      className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md z-10 border border-gray-200"
+                    >
+                      <Heart
+                        className={`h-3 w-3 transition-colors ${
+                          isFavorite
+                            ? "fill-red-500 text-red-500"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      />
+                    </motion.button> */}
 
-                <CardContent className="p-6">
-                  {/* Salon Info */}
-                  <div className="mb-4">
-                    <CardTitle className="text-xl font-bold text-black mb-2 group-hover:text-[#FF7A00] transition-colors">
+                    {/* Discount Badge - Removed for cleaner look */}
+                    {/* {salon.specialOffer && (
+                      <div className="absolute bottom-2 left-2 bg-[#F44A01] text-white px-1.5 py-0.5 rounded text-[10px] font-medium">
+                        {salon.specialOffer}
+                      </div>
+                    )} */}
+                  </div>
+
+                  <CardContent className="p-3 flex flex-col flex-grow">
+                    {/* Salon Name */}
+                    <CardTitle className="text-base font-semibold text-[#1E1E1E] leading-tight line-clamp-2 mb-2">
                       {salon.name}
                     </CardTitle>
 
                     {/* Rating */}
-                    <div className="flex items-center space-x-2 mb-2">
-                      <div className="flex items-center space-x-1">
+                    <div className="flex items-center gap-1 mb-2">
+                      <span className="text-sm font-medium text-[#1E1E1E]">
+                        {salon.rating}
+                      </span>
+                      <div className="flex items-center gap-0.5">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-4 w-4 ${
+                            className={`h-3.5 w-3.5 ${
                               i < Math.floor(salon.rating)
-                                ? "fill-[#FF7A00] text-[#FF7A00]"
-                                : "text-gray-300"
+                                ? "fill-[#F44A01] text-[#F44A01]"
+                                : "fill-gray-300 text-gray-300"
                             }`}
                           />
                         ))}
                       </div>
-                      <span className="text-sm font-medium text-gray-700">
-                        {salon.rating} ({salon.reviews})
+                      <span className="text-xs text-[#616161]">
+                        ({salon.reviews})
                       </span>
                     </div>
 
                     {/* Location */}
-                    <CardDescription className="flex items-center text-gray-600">
-                      <MapPin className="h-4 w-4 mr-1" />
+                    <CardDescription className="text-sm text-[#1E1E1E] mb-2">
                       {salon.location}
                     </CardDescription>
-                  </div>
 
-                  {/* Services */}
-                  <div className="mb-4">
-                    <div className="flex flex-wrap gap-2">
-                      {salon.services.slice(0, 3).map((service, i) => (
-                        <Badge
-                          key={i}
-                          variant="secondary"
-                          className="text-xs bg-orange-50 text-orange-700 border-orange-200"
-                        >
-                          {service}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+                    {/* Badge */}
+                    <p className="text-xs text-[#616161] mb-2">{salon.badge}</p>
+                  </CardContent>
 
-                  {/* Price and Availability */}
-                  <div className="space-y-2 mb-4">
-                    <div className="text-sm text-gray-600">
-                      <span className="font-semibold text-[#FF7A00]">
-                        {salon.priceRange}
-                      </span>
-                    </div>
-                    <div className="flex items-center text-sm text-green-600">
-                      <Clock className="h-4 w-4 mr-1" />
-                      {salon.nextAvailable}
-                    </div>
-                  </div>
-
-                  {/* Book Button */}
+                  {/* Book Button - Edge-to-edge at bottom */}
                   <Button
                     onClick={() => onBookAppointment?.(salon.id)}
-                    className="w-full h-12 rounded-2xl bg-gradient-to-r from-[#FF7A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 relative overflow-hidden group"
+                    className="w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 bg-[#1E1E1E] hover:bg-[#2a2a2a] text-[#ECE3DC] font-medium text-xs"
                   >
-                    <div className="relative z-10 flex items-center justify-center">
-                      <Calendar className="h-5 w-5 mr-2" />
-                      Book Appointment
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    <Calendar className="h-3 w-3 mr-1" />
+                    Book Appointment
                   </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Popular Services */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -432,7 +410,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
               </motion.div>
             ))}
           </div>
-        </motion.div>
+        </motion.div> */}
       </div>
     </section>
   );

@@ -29,6 +29,7 @@ import {
   Zap,
   Tag,
   Camera,
+  ArrowRight,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useCart } from "./CartContext";
@@ -294,21 +295,23 @@ export function Shop({ apiProducts = [] }: ShopProps) {
   // Use API products if available, otherwise use fallback products
   const products = apiProducts.length > 0 ? apiProducts : fallbackProducts;
 
-  const filteredProducts = products.filter((product) => {
-    const categoryMatch =
-      selectedCategory === "all" || product.category === selectedCategory;
-    const searchMatch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchTerm.toLowerCase());
-    return categoryMatch && searchMatch;
-  });
+  const filteredProducts = products
+    .filter((product) => {
+      const categoryMatch =
+        selectedCategory === "all" || product.category === selectedCategory;
+      const searchMatch =
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.brand.toLowerCase().includes(searchTerm.toLowerCase());
+      return categoryMatch && searchMatch;
+    })
+    .slice(0, 4); // Show only first 4 products
 
   return (
     <section
       id="shop"
-      className="py-12 sm:py-16 lg:py-24 bg-gradient-to-br from-gray-50 via-white to-orange-50/30 overflow-hidden"
+      className="py-12 sm:py-16 lg:py-24 bg-[#ECE3DC] overflow-hidden"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 overflow-hidden">
         {/* Enhanced Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -318,18 +321,18 @@ export function Shop({ apiProducts = [] }: ShopProps) {
           className="text-center mb-12 sm:mb-16 lg:mb-20"
         >
           <motion.h2
-            className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-4 sm:mb-6 px-4"
+            className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-black mb-4 sm:mb-6 px-4"
             animate={{
               backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
             }}
             transition={{ duration: 8, repeat: Infinity }}
           >
-            <span className="block mb-2">Special Offers</span>
+            <span className="mr-4">Special Offers</span>
             <span className="bg-gradient-to-r from-orange-600 via-red-500 to-orange-600 bg-clip-text text-transparent bg-[length:400%_400%]">
               Beauty Products
             </span>
           </motion.h2>
-          <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4 py-10">
             Discover premium beauty products with AI-powered recommendations and
             exclusive offers curated just for you
           </p>
@@ -341,54 +344,65 @@ export function Shop({ apiProducts = [] }: ShopProps) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 mb-12 sm:mb-16"
+          className="bg-[#ECE3DC] backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 mb-12 sm:mb-16"
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 items-center">
-            <div className="relative group">
-              <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 group-focus-within:text-[#FF7A00] transition-colors" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 items-stretch">
+            <div className="relative group flex">
+              <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-[#1e1e1e] group-focus-within:text-[#FF7A00] transition-colors z-10" />
               <Input
                 type="text"
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 sm:pl-12 h-12 sm:h-14 rounded-xl sm:rounded-2xl border-gray-200 focus:border-[#FF7A00] focus:ring-[#FF7A00] bg-white/50 text-sm sm:text-base"
+                className="w-full pl-10 sm:pl-12 h-12 sm:h-14 rounded-xl sm:rounded-2xl border-[#1E1E1E] focus:border-[#F44A01] focus:ring-[#F44A01] bg-transparent text-sm sm:text-base placeholder:text-[#1e1e1e]"
               />
             </div>
 
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger className="h-12 sm:h-14 rounded-xl sm:rounded-2xl border-gray-200 bg-white/50 text-sm sm:text-base">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    <span className="mr-2">{category.icon}</span>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex">
+              <Select
+                value={selectedCategory}
+                onValueChange={setSelectedCategory}
+              >
+                <SelectTrigger className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl border-[#1E1E1E] bg-transparent text-sm sm:text-base">
+                  <Filter className="h-4 w-4 mr-2 text-[#1e1e1e]" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      <span className="mr-2">{category.icon}</span>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <Button
               onClick={() =>
                 toast.success("AI is finding the best deals for you...")
               }
-              className="h-12 sm:h-14 bg-gradient-to-r from-[#FF7A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group text-sm sm:text-base"
+              className="h-12 sm:h-14 bg-gradient-to-r from-[#F44A01] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group text-sm sm:text-base w-full"
             >
               <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 mr-2 group-hover:rotate-12 transition-transform" />
-              <span className="hidden sm:inline">AI Recommendations</span>
-              <span className="sm:hidden">AI Suggest</span>
-              <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-2" />
+              <span className="">AI Suggestions</span>
             </Button>
           </div>
         </motion.div>
 
-        {/* Products Grid - Matching the special offers design */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+        {/* View All Button */}
+        <div className="flex justify-end mb-6">
+          <Button
+            variant="ghost"
+            className="text-[#000000] hover:text-orange-600 hover:bg-orange-50 font-medium"
+          >
+            <p className="text-[#000000]"> View All </p>
+            <ArrowRight />
+          </Button>
+        </div>
+
+        {/* Products Grid - Responsive layout */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-4">
           {filteredProducts.map((product, index) => {
             const isAdded = addedItems.has(product.id);
             const isFavorite = isInWishlist(product.id);
@@ -427,13 +441,13 @@ export function Shop({ apiProducts = [] }: ShopProps) {
                 }}
                 className="group h-full rounded-3xl"
               >
-                <Card className="h-full bg-transparent backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden">
-                  {/* Image Section - Matching your card design */}
-                  <div className="relative aspect-[4/3] overflow-hidden">
+                <Card className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] shadow-md hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden flex flex-col">
+                  {/* Image Section - Matching reference design */}
+                  <div className="relative aspect-[4/3] overflow-hidden bg-transparent p-4">
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-lg"
                     />
 
                     {/* Wishlist Button - Top Right */}
@@ -441,108 +455,69 @@ export function Shop({ apiProducts = [] }: ShopProps) {
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => toggleFavorite(product)}
-                      className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg z-10"
+                      className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md z-10 border border-gray-200"
                     >
                       <Heart
-                        className={`h-5 w-5 transition-colors ${
+                        className={`h-3 w-3 transition-colors ${
                           isFavorite
                             ? "fill-red-500 text-red-500"
-                            : "text-gray-600 hover:text-red-500"
+                            : "text-gray-400 hover:text-gray-600"
                         }`}
                       />
                     </motion.button>
 
-                    {/* Discount Badge - Exactly matching your image */}
-                    {product.isSpecialOffer && (
-                      <div className="absolute top-4 left-4 bg-[#FF7A00] text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                    {/* Discount Badge - Matching reference image */}
+                    {/* {product.isSpecialOffer && (
+                      <div className="absolute bottom-2 left-2 bg-[#F44A01] text-white px-1.5 py-0.5 rounded text-[10px] font-medium">
                         {product.badge}
                       </div>
-                    )}
-
-                    {/* Quick Add Button - Bottom of image */}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleAddToCart(product)}
-                      className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-6 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm shadow-lg"
-                    >
-                      <ShoppingCart className="h-4 w-4 mr-2 inline" />
-                      Quick Add
-                    </motion.button>
+                    )} */}
                   </div>
 
-                  <CardContent className="p-6 flex flex-col h-full">
-                    {/* Brand and Product Name */}
-                    <div className="mb-3">
-                      <p className="text-sm text-gray-500 mb-1">
-                        {product.brand}
-                      </p>
-                      <CardTitle className="text-lg font-bold text-black leading-tight line-clamp-2 group-hover:text-[#FF7A00] transition-colors">
-                        {product.name}
-                      </CardTitle>
-                    </div>
+                  <CardContent className="p-2 flex flex-col flex-grow gap-y-2">
+                    {/* Brand Name in Orange */}
+                    <p className="font-normal text-[#F44A01] mb-0 text-xs">
+                      {product.brand}
+                    </p>
 
-                    {/* Rating */}
-                    <div className="flex items-center space-x-2 mb-3">
-                      <div className="flex items-center space-x-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-4 w-4 ${
-                              i < Math.floor(product.rating)
-                                ? "fill-[#FF7A00] text-[#FF7A00]"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm text-gray-600">
-                        ({product.reviews})
+                    {/* Product Name */}
+                    <CardTitle className="text-sm font-medium text-[#1E1E1E] leading-tight line-clamp-2 mb-1">
+                      {product.name}
+                    </CardTitle>
+
+                    {/* Price Section - Matching reference image */}
+                    <div className="flex items-baseline gap-1.5 flex-wrap">
+                      <span className="text-md font-body font-medium text-[#1E1E1E]">
+                        ₹{product.finalPrice.toLocaleString()}
+                      </span>
+                      <span className="text-md text-[#616161] line-through">
+                        ₹{product.originalPrice.toLocaleString()}
+                      </span>
+                      <span className="text-sm text-[#1E1E1E] font-normal">
+                        ({product.discount}% off)
                       </span>
                     </div>
-
-                    {/* Price Section - Exactly matching your image layout */}
-                    <div className="mb-4">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-2xl font-bold text-black">
-                          ₹{product.finalPrice.toLocaleString()}
-                        </span>
-                        <span className="text-lg text-gray-400 line-through">
-                          ₹{product.originalPrice.toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-green-600 font-medium">
-                        ({product.discount}% off)
-                      </p>
-                    </div>
-
-                    {/* Enhanced Add to Cart Button - Matching your image style */}
-                    <div className="mt-auto">
-                      <Button
-                        onClick={() => handleAddToCart(product)}
-                        disabled={isAdded}
-                        className={`w-full h-12 rounded-2xl transition-all duration-300 transform font-semibold ${
-                          isAdded
-                            ? "bg-green-500 hover:bg-green-600 text-white"
-                            : "bg-black hover:bg-gray-800 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
-                        } relative overflow-hidden group`}
-                      >
-                        <div className="relative z-10 flex items-center justify-center">
-                          {isAdded ? (
-                            <>
-                              <Check className="h-5 w-5 mr-2" />
-                              Added to Cart
-                            </>
-                          ) : (
-                            <>Select Size</>
-                          )}
-                        </div>
-                        {!isAdded && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                        )}
-                      </Button>
-                    </div>
                   </CardContent>
+
+                  {/* Add to Cart Button - At bottom edge-to-edge like reference */}
+                  <Button
+                    onClick={() => handleAddToCart(product)}
+                    disabled={isAdded}
+                    className={`w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 font-medium text-xs ${
+                      isAdded
+                        ? "bg-green-500 hover:bg-green-600 text-white"
+                        : "bg-[#1E1E1E] hover:bg-[#2a2a2a] text-white"
+                    }`}
+                  >
+                    {isAdded ? (
+                      <>
+                        <Check className="h-3 w-3 mr-1" />
+                        Added
+                      </>
+                    ) : (
+                      "Select Size"
+                    )}
+                  </Button>
                 </Card>
               </motion.div>
             );
@@ -550,7 +525,7 @@ export function Shop({ apiProducts = [] }: ShopProps) {
         </div>
 
         {/* Enhanced AI Recommendations Section */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -586,7 +561,7 @@ export function Shop({ apiProducts = [] }: ShopProps) {
               </Button>
             </div>
           </div>
-        </motion.div>
+        </motion.div> */}
       </div>
     </section>
   );

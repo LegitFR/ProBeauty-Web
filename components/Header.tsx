@@ -24,7 +24,7 @@ import { CartDrawer } from "./CartDrawer";
 import { WishlistDrawer } from "./WishlistDrawer";
 import { getUser, logout } from "@/lib/api/auth";
 import Link from "next/link";
-import logoImage from "@/public/c47ce653b66f9a1b6cef07bf4525cc7986e0af24.png";
+import logoImage from "@/public/probeauty-header.png";
 
 export function Header() {
   const pathname = usePathname();
@@ -103,7 +103,7 @@ export function Header() {
           isScrolled || needsSolidBg
             ? "bg-black/95 backdrop-blur-md border-b border-gray-800"
             : "bg-transparent"
-        }`}
+        } py-2 sm:py-4`}
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
@@ -213,7 +213,7 @@ export function Header() {
               </button>
               <Button
                 onClick={() => navigationActions.shop()}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                className="bg-linear-to-r from-[#E66B02] to-[#F44A01] hover:bg-orange-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200"
               >
                 Get Started
               </Button>

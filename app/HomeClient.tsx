@@ -49,7 +49,7 @@ export default function HomeClient({ products }: HomeClientProps) {
               <>
                 <Hero />
                 <FeaturesOverview />
-                <div className="bg-white">
+                <div className="bg-body">
                   <Shop apiProducts={products} />
                   <SalonBooking onBookAppointment={handleBookAppointment} />
                   <BusinessListing />

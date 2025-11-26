@@ -1,19 +1,19 @@
-import { useState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Mail, Gift, Star, CheckCircle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Mail, Gift, Star, CheckCircle } from "lucide-react";
+import { motion } from "motion/react";
 
 export function Newsletter() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      console.log('Newsletter subscription:', email);
+      console.log("Newsletter subscription:", email);
       setIsSubscribed(true);
-      setEmail('');
+      setEmail("");
       // Reset after 3 seconds for demo
       setTimeout(() => setIsSubscribed(false), 3000);
     }
@@ -23,29 +23,25 @@ export function Newsletter() {
     {
       icon: Gift,
       title: "10% Off First Order",
-      description: "Exclusive welcome discount"
+      description: "Exclusive welcome discount",
     },
     {
       icon: Star,
       title: "Early Access",
-      description: "Be first to try new products"
+      description: "Be first to try new products",
     },
     {
       icon: Mail,
       title: "Beauty Tips",
-      description: "Weekly expert advice"
-    }
+      description: "Weekly expert advice",
+    },
   ];
 
-  const letterBadges = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+  const letterBadges = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
   return (
-    <section className="py-20 bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 relative overflow-hidden">
-      {/* Background decorative elements */}
-      <div className="absolute top-10 left-10 w-32 h-32 bg-orange-200/30 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-10 right-10 w-40 h-40 bg-pink-200/30 rounded-full blur-3xl"></div>
-      
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section className="py-20 bg-[#ECE3DC] relative overflow-hidden">
+      <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -65,7 +61,7 @@ export function Newsletter() {
           </motion.div>
 
           {/* Header */}
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -74,15 +70,15 @@ export function Newsletter() {
           >
             Stay in the Beauty Loop
           </motion.h2>
-          
-          <motion.p 
+
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed mb-12"
+            className="text-md text-gray-600 max-w-2xl mx-auto leading-relaxed mb-20"
           >
-            Subscribe to our newsletter and get exclusive beauty tips, product 
+            Subscribe to our newsletter and get exclusive beauty tips, product
             launches, and special offers delivered to your inbox.
           </motion.p>
 
@@ -92,7 +88,7 @@ export function Newsletter() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
+            className="flex flex-col justify-between items-center gap-8 mb-20 md:flex-row"
           >
             {benefits.map((benefit, index) => (
               <motion.div
@@ -107,16 +103,14 @@ export function Newsletter() {
                 <motion.div
                   whileHover={{ rotate: 360, scale: 1.1 }}
                   transition={{ duration: 0.6 }}
-                  className="w-16 h-16 bg-gradient-to-br from-[#FF6A00] to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  className="w-16 h-16 bg-[#FFEEE580] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300"
                 >
-                  <benefit.icon className="h-8 w-8 text-white" />
+                  <benefit.icon className="h-8 w-8 text-[#F44A01]" />
                 </motion.div>
-                <h3 className="font-bold text-black mb-2 group-hover:text-[#FF6A00] transition-colors duration-300">
+                <h3 className="font-medium text-[#020000] mb-2 group-hover:text-[#FF6A00] transition-colors duration-300">
                   {benefit.title}
                 </h3>
-                <p className="text-gray-600 text-sm">
-                  {benefit.description}
-                </p>
+                <p className="text-[#616161] text-sm">{benefit.description}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -130,7 +124,10 @@ export function Newsletter() {
             className="max-w-md mx-auto mb-8"
           >
             {!isSubscribed ? (
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
+              <form
+                onSubmit={handleSubmit}
+                className="flex flex-col sm:flex-row gap-4"
+              >
                 <div className="relative flex-1">
                   <Input
                     type="email"
@@ -141,9 +138,9 @@ export function Newsletter() {
                     required
                   />
                 </div>
-                
-                <Button 
-                  type="submit" 
+
+                <Button
+                  type="submit"
                   className="h-12 px-8 bg-[#FF6A00] hover:bg-orange-600 text-white rounded-xl font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
                 >
                   Subscribe
@@ -157,10 +154,12 @@ export function Newsletter() {
                 className="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 shadow-lg"
               >
                 <CheckCircle className="h-16 w-16 text-[#FF6A00] mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-black mb-2">Welcome to ProBeauty!</h3>
+                <h3 className="text-2xl font-bold text-black mb-2">
+                  Welcome to ProBeauty!
+                </h3>
                 <p className="text-gray-600">
-                  Check your email for your exclusive discount code. 
-                  Get ready to discover amazing beauty products!
+                  Check your email for your exclusive discount code. Get ready
+                  to discover amazing beauty products!
                 </p>
               </motion.div>
             )}
@@ -174,12 +173,12 @@ export function Newsletter() {
             transition={{ duration: 0.6, delay: 0.8 }}
             className="text-sm text-gray-500 mb-8"
           >
-            By subscribing, you agree to our Privacy Policy and Terms of Service.
-            Unsubscribe anytime.
+            By subscribing, you agree to our Privacy Policy and Terms of
+            Service. Unsubscribe anytime.
           </motion.p>
 
           {/* Subscriber Count */}
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -189,8 +188,8 @@ export function Newsletter() {
             <p className="text-gray-600 mb-4">
               Join 25,000+ beauty enthusiasts already subscribed
             </p>
-            
-            {/* Letter Badges */}
+
+            Letter Badges
             <div className="flex justify-center items-center space-x-2">
               {letterBadges.map((letter, index) => (
                 <motion.div
@@ -206,7 +205,7 @@ export function Newsletter() {
                 </motion.div>
               ))}
             </div>
-          </motion.div>
+          </motion.div> */}
         </motion.div>
       </div>
     </section>
