@@ -107,7 +107,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.1, duration: 1 }}
-              className="grid grid-cols-3 gap-6 sm:gap-12"
+              className="flex justify-center items-center md:grid md:grid-cols-3 gap-6 sm:gap-12 mb-10"
             >
               <div className="text-left">
                 <div className="text-2xl sm:text-3xl md:text-4xl font-regular text-white mb-1">

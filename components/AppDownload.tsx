@@ -148,7 +148,7 @@ export function AppDownload() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 1 }}
-              className="flex flex-wrap gap-6 sm:gap-8"
+              className="flex flex-wrap justify-center sm:justify-start items-center gap-6 sm:gap-8"
             >
               {stats.map((stat, index) => (
                 <motion.div

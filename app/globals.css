@@ -4098,6 +4098,12 @@
   }
 
   @media (width >= 40rem) {
+    .sm\:justify-start {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (width >= 40rem) {
     .sm\:justify-end {
       justify-content: flex-end;
     }
@@ -4112,6 +4118,12 @@
   @media (width >= 40rem) {
     .sm\:text-left {
       text-align: left;
+    }
+  }
+
+  @media (width >= 48rem) {
+    .md\:grid {
+      display: grid;
     }
   }
 
