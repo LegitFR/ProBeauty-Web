@@ -234,6 +234,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
 
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
+    setCurrentStep("professional");
   };
 
   const handleProfessionalSelect = (professional: Professional) => {
@@ -283,7 +284,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
 
   // Render booking summary sidebar
   const renderBookingSummary = () => (
-    <Card className="bg-white shadow-lg rounded-2xl overflow-hidden sticky top-6">
+    <Card className="bg-[#ECE3DC] shadow-lg rounded-2xl overflow-hidden sticky top-6">
       <CardContent className="p-6">
         {/* Salon Info */}
         <div className="flex items-start space-x-3 mb-6 pb-6 border-b">
@@ -330,7 +331,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                   {selectedService.duration}
                 </span>
                 <span className="font-semibold text-black">
-                  LKR {selectedService.price.toLocaleString()}
+                  £{selectedService.price.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -387,11 +388,11 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
 
         {/* Total */}
         {selectedService && (
-          <div className="bg-gray-50 -mx-6 -mb-6 px-6 py-4">
+          <div className="bg-[#ECE3DC] -mx-6 -mb-6 px-6 py-4">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-black">Total</span>
               <span className="font-bold text-xl text-[#FF7A00]">
-                LKR {selectedService.price.toLocaleString()}
+                £{selectedService.price.toLocaleString()}
               </span>
             </div>
           </div>
@@ -402,7 +403,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-[#ECE3DC] py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header with Close Button */}
           <div className="flex items-center justify-between mb-8">
@@ -410,36 +411,39 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
               <Button
                 variant="ghost"
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-full"
+                className="p-2 hover:bg-gray-100 hover:text-[#1e1e1e] rounded-full"
               >
                 <X className="h-6 w-6" />
               </Button>
-              <h1 className="text-2xl font-bold text-black">
+              <h1 className="text-2xl font-bold text-black font-display">
                 Book Appointment
               </h1>
             </div>
           </div>
 
           {/* Progress Breadcrumb */}
-          <div className="mb-8 bg-white p-4 rounded-xl shadow-sm">
-            <div className="flex items-center justify-center space-x-2 text-sm flex-wrap">
+          <div className="mb-8 bg-[#ECE3DC] py-6 px-4 rounded-xl shadow-sm">
+            <div className="flex items-center justify-center text-sm flex-wrap gap-y-3">
               {steps.map((step, index) => (
-                <div key={step.key} className="flex items-center">
+                <>
                   <span
-                    className={`px-3 py-1 rounded-full transition-colors ${
+                    key={step.key}
+                    className={`px-4 py-3 rounded-full transition-colors ${
                       step.active
-                        ? "bg-[#FF7A00] text-white font-medium"
+                        ? "bg-linear-to-r from-[#FD7501] to-[#F65000] text-white font-medium"
                         : step.completed
-                        ? "bg-green-100 text-green-700"
-                        : "text-gray-400"
+                        ? "text-[#26D55A]"
+                        : "text-[#1E1E1E]"
                     }`}
                   >
                     {step.label}
                   </span>
                   {index < steps.length - 1 && (
-                    <span className="mx-2 text-gray-400">→</span>
+                    <span className="text-[#1E1E1E] text-lg mx-4 sm:mx-6 md:mx-8">
+                      →
+                    </span>
                   )}
-                </div>
+                </>
               ))}
             </div>
           </div>
@@ -457,13 +461,13 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-6"
                   >
-                    <div className="bg-white p-6 rounded-2xl shadow-sm">
-                      <h2 className="text-2xl font-bold text-black mb-2">
+                    <div className="bg-[#ECE3DC] p-6 rounded-2xl shadow-sm">
+                      <h2 className="text-2xl font-medium text-black mb-8">
                         Services
                       </h2>
-                      <p className="text-gray-600 mb-6">
+                      {/* <p className="text-gray-600 mb-6">
                         Choose the services you'd like to book
-                      </p>
+                      </p> */}
 
                       {/* Service Categories */}
                       <div className="flex flex-wrap gap-2 mb-6">
@@ -479,8 +483,8 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                             onClick={() => setSelectedCategory(category)}
                             className={`rounded-full ${
                               selectedCategory === category
-                                ? "bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white"
-                                : "text-gray-600 hover:text-white hover:border-[#FF7A00]"
+                                ? "bg-[#1E1E1E] hover:bg-[#FF7A00]/90 text-[#ECE3DC]"
+                                : "text-[#1E1E1E] hover:text-white hover:border-[#FF7A00] bg-transparent border-none"
                             }`}
                           >
                             {category}
@@ -496,7 +500,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                             className={`p-5 cursor-pointer transition-all duration-200 border-2 ${
                               selectedService?.id === service.id
                                 ? "border-[#FF7A00] bg-orange-50"
-                                : "border-gray-200 hover:border-gray-300 bg-white"
+                                : "border-[#CBCBCB] hover:border-gray-300 bg-transparent"
                             }`}
                             onClick={() => handleServiceSelect(service)}
                           >
@@ -514,7 +518,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                               </div>
                               <div className="text-right flex flex-col items-end ml-4">
                                 <div className="font-semibold text-black mb-3">
-                                  LKR {service.price.toLocaleString()}
+                                  £{service.price.toLocaleString()}
                                 </div>
                                 <Button
                                   variant={
@@ -525,8 +529,8 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                                   size="sm"
                                   className={
                                     selectedService?.id === service.id
-                                      ? "bg-[#FF7A00] hover:bg-[#FF7A00]/90"
-                                      : ""
+                                      ? "bg-orange-500 hover:bg-[#FF7A00]/90 rounded-xl px-6 py-2"
+                                      : "bg-linear-to-r from-[#FD7501] to-[#F65000] rounded-xl px-6 py-2"
                                   }
                                 >
                                   {selectedService?.id === service.id
@@ -539,14 +543,14 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                         ))}
                       </div>
 
-                      {selectedService && (
+                      {/* {selectedService && (
                         <Button
                           onClick={() => setCurrentStep("professional")}
                           className="w-full bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white py-6 rounded-xl mt-6"
                         >
                           Continue
                         </Button>
-                      )}
+                      )} */}
                     </div>
                   </motion.div>
                 )}
@@ -560,17 +564,17 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-6"
                   >
-                    <div className="bg-white p-6 rounded-2xl shadow-sm">
+                    <div className="bg-[#ECE3DC] p-6 rounded-2xl shadow-sm">
                       <div className="flex items-center space-x-4 mb-6">
                         <Button
                           variant="ghost"
                           onClick={goBack}
-                          className="p-2 hover:bg-gray-100 rounded-full"
+                          className="p-2 hover:bg-gray-100 hover:text-[#1e1e1e] rounded-full"
                         >
                           <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div>
-                          <h2 className="text-2xl font-bold text-black">
+                          <h2 className="text-2xl font-medium text-black">
                             Select professional
                           </h2>
                         </div>
@@ -580,7 +584,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                         {professionals.map((professional) => (
                           <Card
                             key={professional.id}
-                            className="p-5 cursor-pointer hover:border-gray-300 transition-all duration-200 bg-white border-2 border-gray-200"
+                            className="p-5 cursor-pointer hover:border-gray-300 transition-all duration-200 bg-transparent border-2 border-[#CBCBCCBC]"
                             onClick={() =>
                               handleProfessionalSelect(professional)
                             }
@@ -619,7 +623,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                               </div>
                               <Button
                                 variant="outline"
-                                className="hover:bg-[#FF7A00] hover:text-white hover:border-[#FF7A00]"
+                                className="hover:bg-[#FF7A00] hover:text-white hover:border-[#FF7A00] bg-transparent border-[#1E1E1E] px-6 py-4 rounded-2xl"
                               >
                                 Select
                               </Button>
@@ -640,12 +644,12 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-6"
                   >
-                    <div className="bg-white p-6 rounded-2xl shadow-sm">
+                    <div className="bg-[#ECE3DC] p-6 rounded-2xl shadow-sm">
                       <div className="flex items-center space-x-4 mb-6">
                         <Button
                           variant="ghost"
                           onClick={goBack}
-                          className="p-2 hover:bg-gray-100 rounded-full"
+                          className="p-2 hover:bg-gray-100 hover:text-[#1e1e1e] rounded-full"
                         >
                           <ArrowLeft className="h-5 w-5" />
                         </Button>
@@ -674,7 +678,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                                     ? "bg-[#FF7A00] text-white shadow-lg scale-105"
                                     : dateObj.isToday
                                     ? "bg-blue-600 text-white"
-                                    : "hover:bg-gray-100 text-gray-700 bg-white border-2 border-gray-200"
+                                    : "hover:shadow-lg text-gray-700 bg-transparent border-2 border-gray-200"
                                 }`}
                                 disabled={index >= 7}
                               >
@@ -746,7 +750,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-6"
                   >
-                    <div className="bg-white p-6 rounded-2xl shadow-sm">
+                    <div className="bg-[#ECE3DC] p-6 rounded-2xl shadow-sm">
                       <div className="flex items-center space-x-4 mb-6">
                         <Button
                           variant="ghost"
@@ -786,7 +790,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-6"
                   >
-                    <div className="bg-white p-8 rounded-2xl shadow-sm text-center">
+                    <div className="bg-[#ECE3DC] p-8 rounded-2xl shadow-sm text-center">
                       <div className="w-16 h-16 bg-[#FF7A00]/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <User className="h-8 w-8 text-[#FF7A00]" />
                       </div>
@@ -802,7 +806,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                       <div className="space-y-4 max-w-md mx-auto">
                         <Button
                           onClick={handleLoginAndBook}
-                          className="w-full bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white py-6 rounded-xl font-semibold text-lg"
+                          className="w-full bg-[#F44A01] hover:bg-[#FF7A00]/90 text-white py-6 rounded-xl font-semibold text-lg"
                         >
                           Login / Sign up to continue
                         </Button>
@@ -810,7 +814,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                         <Button
                           onClick={handleGuestCheckout}
                           variant="outline"
-                          className="w-full py-6 rounded-xl font-semibold text-lg border-2 border-gray-300 hover:border-[#FF7A00] hover:text-[#FFFFFF]"
+                          className="w-full py-6 rounded-xl font-semibold text-lg border-2 border-gray-300 hover:border-[#FF7A00] hover:text-[#FFFFFF] bg-transparent"
                         >
                           Continue as Guest
                         </Button>

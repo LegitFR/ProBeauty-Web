@@ -143,7 +143,7 @@ export function Header() {
 
                   {/* Dropdown Menu */}
                   {showUserMenu && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                    <div className="absolute right-0 mt-2 w-56 bg-[#ECE3DC] rounded-lg shadow-xl border border-gray-200 py-2 z-50">
                       <div className="px-4 py-3 border-b border-gray-200">
                         <p className="text-sm font-semibold text-gray-900">
                           {user.name}
@@ -153,7 +153,7 @@ export function Header() {
                         </p>
                       </div>
                       <Link href="/profile">
-                        <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                        <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-orange-500 flex items-center space-x-2">
                           <User className="h-4 w-4" />
                           <span>My Profile</span>
                         </button>

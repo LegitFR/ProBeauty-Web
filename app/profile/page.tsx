@@ -78,20 +78,20 @@ export default function ProfilePage() {
   return (
     <CartProvider>
       <WishlistProvider>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50">
+        <div className="min-h-screen bg-[#ECE3DC]">
           <Header />
 
           {/* Hero Section with Cover */}
           <div className="relative">
             {/* Cover Image */}
-            <div className="h-48 sm:h-64 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500 relative overflow-hidden">
+            <div className="h-48 sm:h-64 bg-linear-to-r from-[#4D1C00] via-[#792800] to-[#F44A01] relative overflow-hidden">
               <div className="absolute inset-0 bg-black/20"></div>
               <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200')] bg-cover bg-center mix-blend-overlay opacity-30"></div>
             </div>
 
             {/* Profile Card - Overlapping */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
-              <Card className="bg-white shadow-2xl rounded-2xl overflow-hidden">
+              <Card className="bg-[#ECE3DC] shadow-2xl rounded-2xl overflow-hidden">
                 <CardContent className="p-8">
                   <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                     {/* Avatar */}
@@ -176,7 +176,7 @@ export default function ProfilePage() {
               </Card>
 
               {/* Tabs */}
-              <div className="mt-8 flex gap-2 border-b border-gray-200 overflow-x-scroll">
+              <div className="mt-8 flex gap-2 border-b border-gray-200 scrollbar overflow-x-scroll md:overflow-hidden">
                 {[
                   { key: "overview", label: "Overview", icon: User },
                   {
@@ -208,7 +208,7 @@ export default function ProfilePage() {
                 {activeTab === "overview" && (
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Your Appointments - Preview */}
-                    <Card className="hover:shadow-lg transition-shadow md:col-span-2">
+                    <Card className="hover:shadow-lg transition-shadow md:col-span-2 bg-[#ECE3DC]">
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -225,7 +225,7 @@ export default function ProfilePage() {
                         </div>
                         <div className="space-y-4">
                           <div className="text-center py-8 text-gray-500">
-                            <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                            <Calendar className="h-12 w-12 mx-auto mb-2 text-orange-500" />
                             <p>No upcoming appointments</p>
                             <Button
                               onClick={() => (window.location.href = "/#book")}
@@ -239,7 +239,7 @@ export default function ProfilePage() {
                     </Card>
 
                     {/* Recent Activity */}
-                    <Card className="hover:shadow-lg transition-shadow md:col-span-2">
+                    <Card className="hover:shadow-lg transition-shadow md:col-span-2 bg-[#ECE3DC]">
                       <CardContent className="p-6">
                         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                           <Clock className="h-5 w-5 text-orange-500" />
@@ -247,7 +247,7 @@ export default function ProfilePage() {
                         </h3>
                         <div className="space-y-4">
                           <div className="text-center py-8 text-gray-500">
-                            <ShoppingBag className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                            <ShoppingBag className="h-12 w-12 mx-auto mb-2 text-orange-500" />
                             <p>No recent activity</p>
                             <Button
                               onClick={() => (window.location.href = "/#shop")}
@@ -263,14 +263,14 @@ export default function ProfilePage() {
                     {/* Rewards & Points */}
 
                     {/* Favorite Salons */}
-                    <Card className="hover:shadow-lg transition-shadow md:col-span-2">
+                    <Card className="hover:shadow-lg transition-shadow md:col-span-2 bg-[#ECE3DC]">
                       <CardContent className="p-6">
                         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                           <Star className="h-5 w-5 text-orange-500" />
                           Favorite Salons
                         </h3>
                         <div className="text-center py-8 text-gray-500">
-                          <Heart className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                          <Heart className="h-12 w-12 mx-auto mb-2 text-orange-500" />
                           <p>You haven't added any favorite salons yet</p>
                           <Button
                             onClick={() => (window.location.href = "/#book")}
@@ -336,7 +336,7 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {/* Appointment Card 1 - Upcoming */}
                       {appointmentFilter === "upcoming" && (
-                        <Card className="hover:shadow-lg transition-shadow">
+                        <Card className="hover:shadow-lg transition-shadow bg-[#ECE3DC]">
                           <CardContent className="p-4">
                             <div className="flex gap-4">
                               {/* Salon Image */}
@@ -400,7 +400,7 @@ export default function ProfilePage() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="border-gray-300 flex-1"
+                                    className="border-[#1E1E1E] border-2 flex-1 bg-[#ECE3DC]"
                                   >
                                     Cancel
                                   </Button>
@@ -413,7 +413,7 @@ export default function ProfilePage() {
 
                       {/* Appointment Card 2 - Upcoming */}
                       {appointmentFilter === "upcoming" && (
-                        <Card className="hover:shadow-lg transition-shadow">
+                        <Card className="hover:shadow-lg transition-shadow bg-[#ECE3DC]">
                           <CardContent className="p-4">
                             <div className="flex gap-4">
                               {/* Salon Image */}
@@ -475,7 +475,7 @@ export default function ProfilePage() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="border-gray-300 flex-1"
+                                    className="border-[#1E1E1E] border-2 flex-1 bg-[#ECE3DC]"
                                   >
                                     Reschedule
                                   </Button>
@@ -488,7 +488,7 @@ export default function ProfilePage() {
 
                       {/* Past Appointment Card */}
                       {appointmentFilter === "past" && (
-                        <Card className="hover:shadow-lg transition-shadow opacity-60 hover:opacity-100">
+                        <Card className="hover:shadow-lg transition-shadow opacity-60 hover:opacity-100 bg-[#ECE3DC]">
                           <CardContent className="p-4">
                             <div className="flex gap-4">
                               {/* Salon Image */}
@@ -562,7 +562,7 @@ export default function ProfilePage() {
 
                       {/* Cancelled Appointments - Empty State */}
                       {appointmentFilter === "cancelled" && (
-                        <Card className="lg:col-span-2">
+                        <Card className="lg:col-span-2 bg-[#ECE3DC]">
                           <CardContent className="p-12">
                             <div className="text-center text-gray-500">
                               <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
@@ -601,9 +601,9 @@ export default function ProfilePage() {
 
                 {activeTab === "orders" && (
                   <Card>
-                    <CardContent className="p-6">
+                    <CardContent className="p-6 bg-[#ECE3DC]">
                       <div className="text-center py-12 text-gray-500">
-                        <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                        <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-orange-500" />
                         <h3 className="text-xl font-semibold mb-2">
                           No orders yet
                         </h3>
@@ -623,9 +623,9 @@ export default function ProfilePage() {
 
                 {activeTab === "wishlist" && (
                   <Card>
-                    <CardContent className="p-6">
+                    <CardContent className="p-6 bg-[#ECE3DC]">
                       <div className="text-center py-12 text-gray-500">
-                        <Heart className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                        <Heart className="h-16 w-16 mx-auto mb-4 text-orange-500" />
                         <h3 className="text-xl font-semibold mb-2">
                           Your wishlist is empty
                         </h3>
@@ -643,7 +643,7 @@ export default function ProfilePage() {
 
                 {activeTab === "settings" && (
                   <Card>
-                    <CardContent className="p-6">
+                    <CardContent className="p-6 bg-[#ECE3DC]">
                       <h3 className="text-lg font-semibold mb-6">
                         Account Settings
                       </h3>
@@ -655,7 +655,7 @@ export default function ProfilePage() {
                           <input
                             type="text"
                             defaultValue={user.name}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            className="w-full px-4 py-2 border border-[#1E1E1E] rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                           />
                         </div>
                         <div>
@@ -666,7 +666,7 @@ export default function ProfilePage() {
                             type="email"
                             defaultValue={user.email}
                             disabled
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                            className="w-full px-4 py-2 border-[#1E1E1E] border-1 rounded-lg bg-[#ECE3DC] cursor-not-allowed"
                           />
                           <p className="text-xs text-gray-500 mt-1">
                             Email cannot be changed
@@ -679,7 +679,7 @@ export default function ProfilePage() {
                           <input
                             type="tel"
                             defaultValue={user.phone}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            className="w-full px-4 py-2 border border-[#1e1e1e] rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                           />
                         </div>
                         <div className="pt-4">

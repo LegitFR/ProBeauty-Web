@@ -125,7 +125,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           {item.name}
                         </h4>
                         <p className="text-sm text-gray-500">
-                          ${item.price.toFixed(2)} each
+                          £{item.price.toFixed(2)} each
                         </p>
                         <div className="flex items-center mt-2">
                           <Button
@@ -164,7 +164,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           <X className="h-4 w-4" />
                         </button>
                         <p className="text-sm text-[#616161]">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          £{(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
                     </motion.div>
@@ -177,7 +177,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm text-[#717171]">
                     <span>Subtotal ({totalItems} items)</span>
-                    <span>${totalPrice.toFixed(2)}</span>
+                    <span>£{totalPrice.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-[#717171]">
                     <span>Shipping</span>
@@ -185,7 +185,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   </div>
                   <div className="border-t -mx-6 px-6 pt-6 mt-6 flex justify-between font-medium">
                     <span>Total</span>
-                    <span>${totalPrice.toFixed(2)}</span>
+                    <span>£{totalPrice.toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -209,7 +209,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   ) : (
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-4 w-4" />
-                      Checkout - ${totalPrice.toFixed(2)}
+                      Checkout - £{totalPrice.toFixed(2)}
                     </div>
                   )}
                 </Button>

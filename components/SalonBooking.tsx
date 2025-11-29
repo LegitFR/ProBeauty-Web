@@ -68,27 +68,11 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
       image:
         "https://images.unsplash.com/photo-1562322140-8baeececf3df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBiZWF1dHklMjBzYWxvbiUyMGludGVyaW9yfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080",
       services: ["Hair Styling", "Color Treatment", "Keratin"],
-      priceRange: "₹800 - ₹3500",
+      priceRange: "£800 - £3,500",
       badge: "beauty salon",
       nextAvailable: "Today 3:00 PM",
       stylist: "Deepika Nair",
       specialOffer: "20% off on first visit",
-    },
-    {
-      id: 2,
-      name: "Glam Studio Pro",
-      location: "T. Nagar, Chennai",
-      distance: "1.2 km",
-      rating: 4.8,
-      reviews: 892,
-      image:
-        "https://images.unsplash.com/photo-1633681926035-ec90e342ced9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBiZWF1dHklMjBzYWxvbiUyMGludGVyaW9yfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080",
-      services: ["Bridal Makeup", "Party Look", "Pre-Wedding"],
-      priceRange: "₹1200 - ₹5000",
-      badge: "makeup specialist",
-      nextAvailable: "Tomorrow 11:00 AM",
-      stylist: "Priya Krishnan",
-      specialOffer: "Free consultation",
     },
     {
       id: 3,
@@ -100,7 +84,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
       image:
         "https://images.unsplash.com/photo-1544717297-fa95b6ee9643?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxzcGElMjBpbnRlcmlvcnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080",
       services: ["Swedish Massage", "Aromatherapy", "Body Scrub"],
-      priceRange: "₹1500 - ₹4000",
+      priceRange: "£1,500 - £4,000",
       badge: "wellness center",
       nextAvailable: "Today 5:30 PM",
       stylist: "Kavitha Menon",
@@ -116,7 +100,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
       image:
         "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxzYWxvbiUyMGNoYWlyfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080",
       services: ["Basic Haircut", "Beard Trim", "Quick Styling"],
-      priceRange: "₹200 - ₹800",
+      priceRange: "£200 - £800",
       badge: "express service",
       nextAvailable: "Today 2:00 PM",
       stylist: "Ravi Kumar",
@@ -132,7 +116,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
       image:
         "https://images.unsplash.com/photo-1560066984-138dadb4c035?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxsdXh1cnklMjBzYWxvbnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080",
       services: ["Hair Transformation", "Color Correction", "Extensions"],
-      priceRange: "₹2000 - ₹8000",
+      priceRange: "£2,000 - £8,000",
       badge: "celebrity stylist",
       nextAvailable: "Tomorrow 2:30 PM",
       stylist: "Meera Iyer",
@@ -148,11 +132,27 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
       image:
         "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxmYWNpYWwlMjB0cmVhdG1lbnR8ZW58MXx8fHwxNzU3OTE5OTU1fDA&ixlib=rb-4.0&q=80&w=1080",
       services: ["HydraFacial", "Chemical Peel", "Anti-aging"],
-      priceRange: "₹1000 - ₹6000",
+      priceRange: "£1,000 - £6,000",
       badge: "skincare clinic",
       nextAvailable: "Today 4:15 PM",
       stylist: "Dr. Anitha Raj",
       specialOffer: "Skin analysis free",
+    },
+    {
+      id: 7,
+      name: "Glam Studio Pro",
+      location: "T. Nagar, Chennai",
+      distance: "1.2 km",
+      rating: 4.8,
+      reviews: 892,
+      image:
+        "https://images.unsplash.com/photo-1633681926035-ec90e342ced9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBiZWF1dHklMjBzYWxvbiUyMGludGVyaW9yfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080",
+      services: ["Bridal Makeup", "Party Look", "Pre-Wedding"],
+      priceRange: "£1,200 - £5,000",
+      badge: "makeup specialist",
+      nextAvailable: "Tomorrow 11:00 AM",
+      stylist: "Priya Krishnan",
+      specialOffer: "Free consultation",
     },
   ];
 
@@ -368,7 +368,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
                   {/* Book Button - Edge-to-edge at bottom */}
                   <Button
                     onClick={() => onBookAppointment?.(salon.id)}
-                    className="w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 bg-[#1E1E1E] hover:bg-[#2a2a2a] text-[#ECE3DC] font-medium text-xs"
+                    className="w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 bg-[#1E1E1E] hover:bg-[#2a2a2a] text-[#ECE3DC] font-medium text-xs p-7"
                   >
                     <Calendar className="h-3 w-3 mr-1" />
                     Book Appointment

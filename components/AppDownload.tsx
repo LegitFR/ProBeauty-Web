@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
+import probeautyMobile from "/probeauty-mobile.png";
 
 export function AppDownload() {
   const features = [
@@ -181,130 +182,21 @@ export function AppDownload() {
             transition={{ duration: 0.8 }}
             className="relative mt-12 lg:mt-0"
           >
-            <div className="relative max-w-lg mx-auto flex items-center justify-center">
-              {/* Center Phone with Logo */}
+            <div className="relative max-w-2xl mx-auto flex items-center justify-center">
+              {/* ProBeauty Mobile Image */}
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 whileInView={{ scale: 1, opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: 0.3 }}
-                className="relative z-20 bg-black p-2.5 sm:p-3 rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl w-64 sm:w-80 mx-4"
+                className="relative z-20"
               >
-                <div className="bg-gradient-to-br from-[#FF6A00] to-[#FF8A00] rounded-[2.2rem] sm:rounded-[2.7rem] overflow-hidden shadow-inner aspect-[9/19]">
-                  {/* Status Bar */}
-                  <div className="flex justify-between items-center px-4 sm:px-6 py-2 sm:py-3 bg-black/20">
-                    <span className="text-white text-xs sm:text-sm font-medium">
-                      9:41
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 sm:w-4 h-1.5 sm:h-2 bg-white/80 rounded-sm"></div>
-                      <div className="w-4 sm:w-5 h-1.5 sm:h-2 bg-white/60 rounded-sm"></div>
-                    </div>
-                  </div>
-
-                  {/* ProBeauty Logo Center */}
-                  <div className="flex items-center justify-center h-[calc(100%-60px)] sm:h-[calc(100%-70px)]">
-                    <motion.div
-                      initial={{ scale: 0, rotate: -180 }}
-                      whileInView={{ scale: 1, rotate: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 1, delay: 0.6 }}
-                      className="relative"
-                    >
-                      {/* Circular background */}
-                      <motion.div
-                        animate={{
-                          rotate: 360,
-                        }}
-                        transition={{
-                          duration: 20,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
-                        className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white/30 border-dashed"
-                      ></motion.div>
-
-                      {/* P Logo */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/20 backdrop-blur-sm border-4 border-white flex items-center justify-center">
-                          <span className="text-white font-display text-4xl sm:text-5xl font-bold">
-                            P
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </div>
-
-                  {/* Bottom notch */}
-                  <div className="h-1.5 sm:h-2 bg-black/20"></div>
-                </div>
+                <img
+                  src="/probeauty-mobile.png"
+                  alt="ProBeauty Mobile App"
+                  className="w-full h-[750px] sm:h-[650px] lg:h-[750px] object-contain"
+                />
               </motion.div>
-
-              {/* Left Phone (Background) */}
-              <motion.div
-                initial={{ x: -50, opacity: 0, rotate: -15 }}
-                whileInView={{ x: 0, opacity: 0.9, rotate: -12 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black p-2 sm:p-2.5 rounded-[2rem] sm:rounded-[2.5rem] shadow-xl w-48 sm:w-60 hidden sm:block"
-              >
-                <div className="bg-white rounded-[1.7rem] sm:rounded-[2.2rem] overflow-hidden aspect-[9/19]">
-                  <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-                    <div className="w-full h-16 sm:h-20 bg-gradient-to-br from-[#FF6A00]/20 to-[#FF8A00]/20 rounded-lg"></div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[...Array(4)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="aspect-square bg-gray-100 rounded-lg"
-                        ></div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Right Phone (Background) */}
-              <motion.div
-                initial={{ x: 50, opacity: 0, rotate: 15 }}
-                whileInView={{ x: 0, opacity: 0.9, rotate: 12 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black p-2 sm:p-2.5 rounded-[2rem] sm:rounded-[2.5rem] shadow-xl w-48 sm:w-60 hidden sm:block"
-              >
-                <div className="bg-white rounded-[1.7rem] sm:rounded-[2.2rem] overflow-hidden aspect-[9/19]">
-                  <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-br from-[#FF6A00]/30 to-[#FF8A00]/30 rounded-full"></div>
-                      <div className="flex-1 space-y-1.5">
-                        <div className="h-2 bg-gray-200 rounded w-2/3"></div>
-                        <div className="h-2 bg-gray-200 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      {[...Array(6)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="h-2 bg-gray-100 rounded w-full"
-                        ></div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Floating circle animation */}
-              <motion.div
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.3, 0.6, 0.3],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="absolute inset-0 rounded-full border-2 border-white/20 z-0"
-              ></motion.div>
             </div>
           </motion.div>
         </div>

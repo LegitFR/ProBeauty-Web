@@ -55,9 +55,9 @@ export function Newsletter() {
             whileInView={{ scale: 1, rotate: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="w-16 h-16 bg-gradient-to-br from-[#FF6A00] to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg"
+            className="w-16 h-16 flex items-center justify-center mx-auto mb-8"
           >
-            <Mail className="h-8 w-8 text-white" />
+            <img src="/scissor-icon.png" alt="Scissors and comb" />
           </motion.div>
 
           {/* Header */}

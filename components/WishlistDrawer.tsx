@@ -166,11 +166,11 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                             {/* Price */}
                             <div className="flex items-center space-x-1.5 mb-2">
                               <span className="text-sm font-bold text-gray-900">
-                                ₹{item.price.toLocaleString()}
+                                £{item.price.toLocaleString()}
                               </span>
                               {item.originalPrice && (
                                 <span className="text-[11px] text-gray-400 line-through">
-                                  ₹{item.originalPrice.toLocaleString()}
+                                  £{item.originalPrice.toLocaleString()}
                                 </span>
                               )}
                             </div>
@@ -206,7 +206,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                       Estimated Value
                     </span>
                     <span className="text-base font-bold bg-gradient-to-r from-orange-600 to-red-500 bg-clip-text text-transparent">
-                      ₹
+                      £
                       {items
                         .reduce((sum, item) => sum + item.price, 0)
                         .toLocaleString()}

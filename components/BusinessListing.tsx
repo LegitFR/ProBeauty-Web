@@ -137,7 +137,7 @@ export function BusinessListing() {
                   const formSection = document.getElementById("business-form");
                   formSection?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="bg-[#FF6A00] hover:bg-[#FF6A00]/90 text-white px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-1/2"
+                className="bg-[#FF6A00] hover:bg-[#FF6A00]/90 text-white px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
               >
                 List your Business
               </Button>

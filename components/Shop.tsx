@@ -488,10 +488,10 @@ export function Shop({ apiProducts = [] }: ShopProps) {
                     {/* Price Section - Matching reference image */}
                     <div className="flex items-baseline gap-1.5 flex-wrap">
                       <span className="text-md font-body font-medium text-[#1E1E1E]">
-                        ₹{product.finalPrice.toLocaleString()}
+                        £{product.finalPrice.toLocaleString()}
                       </span>
                       <span className="text-md text-[#616161] line-through">
-                        ₹{product.originalPrice.toLocaleString()}
+                        £{product.originalPrice.toLocaleString()}
                       </span>
                       <span className="text-sm text-[#1E1E1E] font-normal">
                         ({product.discount}% off)
