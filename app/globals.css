@@ -202,6 +202,23 @@
     padding: 0;
   }
 
+  .scrollbar-auth::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-auth::-webkit-scrollbar-track {
+    background: #ece3dc;
+  }
+
+  .scrollbar-auth::-webkit-scrollbar-thumb {
+    background: #d4c4b4;
+    border-radius: 4px;
+  }
+
+  .scrollbar-auth::-webkit-scrollbar-thumb:hover {
+    background: #c4b4a4;
+  }
+
   .scrollbar::-webkit-scrollbar-track {
     background: #ece3dc;
   }
@@ -1107,6 +1124,10 @@
 
   .max-h-96 {
     max-height: calc(var(--spacing) * 96);
+  }
+
+  .max-h-\[90vh\] {
+    max-height: 90vh;
   }
 
   .min-h-16 {
@@ -4148,6 +4169,12 @@
   @media (width >= 40rem) {
     .sm\:text-left {
       text-align: left;
+    }
+  }
+
+  @media (width >= 40rem) {
+    .sm\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 

@@ -415,8 +415,8 @@ export function AuthModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md overflow-hidden">
-        <DialogHeader className="space-y-3 pb-2">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden bg-[#ECE3DC] flex flex-col">
+        <DialogHeader className="space-y-3 pb-2 flex-shrink-0">
           <DialogTitle className="font-display text-2xl text-center font-bold">
             Welcome to{" "}
             <span className="bg-clip-text text-orange-400">ProBeauty</span>
@@ -426,361 +426,117 @@ export function AuthModal({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs
-          defaultValue={defaultTab}
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as "login" | "signup")}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
-            <TabsTrigger
-              value="login"
-              className="rounded-md text-sm data-[state=active]:!bg-orange-500 data-[state=active]:!text-white data-[state=active]:shadow-md data-[state=inactive]:text-gray-600 transition-all font-medium"
-            >
-              Login
-            </TabsTrigger>
-            <TabsTrigger
-              value="signup"
-              className="rounded-md text-sm data-[state=active]:!bg-orange-500 data-[state=active]:!text-white data-[state=active]:shadow-md data-[state=inactive]:text-gray-600 transition-all font-medium"
-            >
-              Sign Up
-            </TabsTrigger>
-          </TabsList>
+        <div className="overflow-y-auto flex-1 -mx-6 px-6 scrollbar-auth">
+          <Tabs
+            defaultValue={defaultTab}
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as "login" | "signup")}
+            className="w-full bg-[#ECE3DC]"
+          >
+            <TabsList className="grid w-full grid-cols-2 bg-[#ECE3DC] p-1 rounded-lg">
+              <TabsTrigger
+                value="login"
+                className="rounded-md text-sm data-[state=active]:!bg-orange-500 data-[state=active]:!text-white data-[state=active]:shadow-md data-[state=inactive]:text-gray-600 transition-all font-medium"
+              >
+                Login
+              </TabsTrigger>
+              <TabsTrigger
+                value="signup"
+                className="rounded-md text-sm data-[state=active]:!bg-orange-500 data-[state=active]:!text-white data-[state=active]:shadow-md data-[state=inactive]:text-gray-600 transition-all font-medium"
+              >
+                Sign Up
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="login">
-            <Card>
-              <CardHeader>
-                <CardTitle>Welcome Back</CardTitle>
-                <CardDescription>
-                  Sign in to your ProBeauty account
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email or Phone</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="login-email"
-                        type="text"
-                        placeholder="Enter your email or phone"
-                        className="pl-10"
-                        value={loginForm.email}
-                        onChange={(e) =>
-                          setLoginForm({ ...loginForm, email: e.target.value })
-                        }
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="login-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password"
-                        className="pl-10 pr-10"
-                        value={loginForm.password}
-                        onChange={(e) =>
-                          setLoginForm({
-                            ...loginForm,
-                            password: e.target.value,
-                          })
-                        }
-                        disabled={isLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                        disabled={isLoading}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end mb-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowForgotPassword(true);
-                        setForgotPasswordStep("email");
-                      }}
-                      className="text-sm text-[#FF7A00] hover:text-[#e66900] font-medium"
-                    >
-                      Forgot Password?
-                    </button>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full bg-[#FF7A00] hover:bg-[#e66900]"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing In...
-                      </>
-                    ) : (
-                      "Sign In"
-                    )}
-                  </Button>
-
-                  {/* Divider */}
-                  <div className="relative my-4">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-200"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="px-2 bg-white text-gray-500">
-                        Or continue with
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Google Sign-In Button */}
-                  <div id="google-signin-button-login"></div>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="signup">
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-xl font-bold bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
-                  {showOtpVerification ? "Verify Your Email" : "Create Account"}
-                </CardTitle>
-                <CardDescription className="text-gray-600">
-                  {showOtpVerification
-                    ? `Enter the 6-digit code sent to ${signupForm.email}`
-                    : "Join ProBeauty and start your beauty journey"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!showOtpVerification ? (
-                  <form onSubmit={handleSignup} className="space-y-3">
-                    {/* Row 1: Name and Email */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label
-                          htmlFor="signup-name"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Full Name
-                        </Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
-                          <Input
-                            id="signup-name"
-                            type="text"
-                            placeholder="Your name"
-                            className="pl-10 h-10 border-gray-300 focus:border-orange-500 focus:ring-orange-500 transition-all"
-                            value={signupForm.name}
-                            onChange={(e) =>
-                              setSignupForm({
-                                ...signupForm,
-                                name: e.target.value,
-                              })
-                            }
-                            disabled={isLoading}
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label
-                          htmlFor="signup-email"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Email
-                        </Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
-                          <Input
-                            id="signup-email"
-                            type="email"
-                            placeholder="Your email"
-                            className="pl-10 h-10 border-gray-300 focus:border-orange-500 focus:ring-orange-500 transition-all"
-                            value={signupForm.email}
-                            onChange={(e) =>
-                              setSignupForm({
-                                ...signupForm,
-                                email: e.target.value,
-                              })
-                            }
-                            disabled={isLoading}
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Row 2: Phone and Account Type */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label
-                          htmlFor="signup-phone"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Phone Number
-                        </Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
-                          <Input
-                            id="signup-phone"
-                            type="tel"
-                            placeholder="10 digits"
-                            className="pl-10 h-10 border-gray-300 focus:border-orange-500 focus:ring-orange-500 transition-all"
-                            value={signupForm.phone}
-                            onChange={(e) =>
-                              setSignupForm({
-                                ...signupForm,
-                                phone: e.target.value,
-                              })
-                            }
-                            disabled={isLoading}
-                            required
-                            maxLength={10}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label
-                          htmlFor="signup-role"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Account Type
-                        </Label>
-                        <select
-                          id="signup-role"
-                          className="w-full h-10 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-white"
-                          value={signupForm.role}
+            <TabsContent value="login" className="bg-[#ECE3DC] overflow-hidden">
+              <Card className="bg-[#ECE3DC]">
+                <CardHeader>
+                  <CardTitle>Welcome Back</CardTitle>
+                  <CardDescription>
+                    Sign in to your ProBeauty account
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="login-email">Email or Phone</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-[#1e1e1e]" />
+                        <Input
+                          id="login-email"
+                          type="text"
+                          placeholder="Enter your email or phone"
+                          className="pl-10 bg-transparent border-[#1e1e1e]"
+                          value={loginForm.email}
                           onChange={(e) =>
-                            setSignupForm({
-                              ...signupForm,
-                              role: e.target.value as
-                                | "customer"
-                                | "salon_owner",
+                            setLoginForm({
+                              ...loginForm,
+                              email: e.target.value,
                             })
                           }
                           disabled={isLoading}
-                          required
-                        >
-                          <option value="customer">Customer</option>
-                          <option value="salon_owner">Salon Owner</option>
-                        </select>
+                        />
                       </div>
                     </div>
 
-                    {/* Row 3: Password and Confirm Password */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label
-                          htmlFor="signup-password"
-                          className="text-sm font-medium text-gray-700"
+                    <div className="space-y-2">
+                      <Label htmlFor="login-password">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-[#1e1e1e]" />
+                        <Input
+                          id="login-password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Enter your password"
+                          className="pl-10 pr-10 bg-transparent border-[#1e1e1e]"
+                          value={loginForm.password}
+                          onChange={(e) =>
+                            setLoginForm({
+                              ...loginForm,
+                              password: e.target.value,
+                            })
+                          }
+                          disabled={isLoading}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                          disabled={isLoading}
                         >
-                          Password
-                        </Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
-                          <Input
-                            id="signup-password"
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Min 8 chars"
-                            className="pl-10 pr-10 h-10 border-gray-300 focus:border-orange-500 focus:ring-orange-500 transition-all"
-                            value={signupForm.password}
-                            onChange={(e) =>
-                              setSignupForm({
-                                ...signupForm,
-                                password: e.target.value,
-                              })
-                            }
-                            disabled={isLoading}
-                            required
-                            minLength={8}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors"
-                            disabled={isLoading}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
+                    </div>
 
-                      <div className="space-y-1.5">
-                        <Label
-                          htmlFor="signup-confirm-password"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Confirm Password
-                        </Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
-                          <Input
-                            id="signup-confirm-password"
-                            type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Confirm"
-                            className="pl-10 pr-10 h-10 border-gray-300 focus:border-orange-500 focus:ring-orange-500 transition-all"
-                            value={signupForm.confirmPassword}
-                            onChange={(e) =>
-                              setSignupForm({
-                                ...signupForm,
-                                confirmPassword: e.target.value,
-                              })
-                            }
-                            disabled={isLoading}
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowConfirmPassword(!showConfirmPassword)
-                            }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors"
-                            disabled={isLoading}
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
+                    <div className="flex items-center justify-end mb-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowForgotPassword(true);
+                          setForgotPasswordStep("email");
+                        }}
+                        className="text-sm text-[#FF7A00] hover:text-[#e66900] font-medium"
+                      >
+                        Forgot Password?
+                      </button>
                     </div>
 
                     <Button
                       type="submit"
-                      className="w-full h-10 mt-4 bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 hover:from-orange-600 hover:via-pink-600 hover:to-purple-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                      className="w-full bg-[#FF7A00] hover:bg-[#e66900]"
                       disabled={isLoading}
                     >
                       {isLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creating Account...
+                          Signing In...
                         </>
                       ) : (
-                        "Create Account"
+                        "Sign In"
                       )}
                     </Button>
 
@@ -790,80 +546,342 @@ export function AuthModal({
                         <div className="w-full border-t border-gray-200"></div>
                       </div>
                       <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white text-gray-500">
-                          Or sign up with
+                        <span className="px-2 bg-[#ECE3DC] text-[#1e1e1e]">
+                          Or continue with
                         </span>
                       </div>
                     </div>
 
-                    {/* Google Sign-Up Button */}
-                    <div id="google-signin-button-signup"></div>
+                    {/* Google Sign-In Button */}
+                    <div
+                      id="google-signin-button-login"
+                      className="bg-[#ECE3DC]"
+                    ></div>
                   </form>
-                ) : (
-                  <form onSubmit={handleOtpVerification} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="otp-input">Verification Code</Label>
-                      <Input
-                        id="otp-input"
-                        type="text"
-                        placeholder="Enter 6-digit code"
-                        className="text-center text-2xl tracking-widest"
-                        value={otp}
-                        onChange={(e) =>
-                          setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                        }
-                        disabled={isLoading}
-                        required
-                        maxLength={6}
-                        pattern="\d{6}"
-                      />
-                      <p className="text-xs text-gray-500 text-center mt-2">
-                        Check your email inbox for the verification code
-                      </p>
-                    </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                    <Button
-                      type="submit"
-                      className="w-full bg-[#FF7A00] hover:bg-[#e66900]"
-                      disabled={isLoading || otp.length !== 6}
+            <TabsContent
+              value="signup"
+              className="bg-[#ECE3DC] overflow-hidden"
+            >
+              <Card className="border-0 shadow-sm bg-[#ECE3DC]">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-bold bg-[#FF6A00] bg-clip-text text-transparent">
+                    {showOtpVerification
+                      ? "Verify Your Email"
+                      : "Create Account"}
+                  </CardTitle>
+                  <CardDescription className="text-gray-600">
+                    {showOtpVerification
+                      ? `Enter the 6-digit code sent to ${signupForm.email}`
+                      : "Join ProBeauty and start your beauty journey"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!showOtpVerification ? (
+                    <form onSubmit={handleSignup} className="space-y-3">
+                      {/* Row 1: Name and Email */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="signup-name"
+                            className="text-sm font-medium text-[#1e1e1e]"
+                          >
+                            Full Name
+                          </Label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
+                            <Input
+                              id="signup-name"
+                              type="text"
+                              placeholder="Your name"
+                              className="pl-10 h-10 border-[#1e1e1e] bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all"
+                              value={signupForm.name}
+                              onChange={(e) =>
+                                setSignupForm({
+                                  ...signupForm,
+                                  name: e.target.value,
+                                })
+                              }
+                              disabled={isLoading}
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="signup-email"
+                            className="text-sm font-medium text-[#1e1e1e]"
+                          >
+                            Email
+                          </Label>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
+                            <Input
+                              id="signup-email"
+                              type="email"
+                              placeholder="Your email"
+                              className="pl-10 h-10 border-[#1e1e1e] bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all"
+                              value={signupForm.email}
+                              onChange={(e) =>
+                                setSignupForm({
+                                  ...signupForm,
+                                  email: e.target.value,
+                                })
+                              }
+                              disabled={isLoading}
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Row 2: Phone and Account Type */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="signup-phone"
+                            className="text-sm font-medium text-[#1e1e1e]"
+                          >
+                            Phone Number
+                          </Label>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
+                            <Input
+                              id="signup-phone"
+                              type="tel"
+                              placeholder="10 digits"
+                              className="pl-10 h-10 border-[#1e1e1e] bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all"
+                              value={signupForm.phone}
+                              onChange={(e) =>
+                                setSignupForm({
+                                  ...signupForm,
+                                  phone: e.target.value,
+                                })
+                              }
+                              disabled={isLoading}
+                              required
+                              maxLength={10}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="signup-role"
+                            className="text-sm font-medium text-[#1e1e1e]"
+                          >
+                            Account Type
+                          </Label>
+                          <select
+                            id="signup-role"
+                            className="w-full h-10 px-3 border border-[#1e1e1e] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-transparent"
+                            value={signupForm.role}
+                            onChange={(e) =>
+                              setSignupForm({
+                                ...signupForm,
+                                role: e.target.value as
+                                  | "customer"
+                                  | "salon_owner",
+                              })
+                            }
+                            disabled={isLoading}
+                            required
+                          >
+                            <option value="customer">Customer</option>
+                            <option value="salon_owner">Salon Owner</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Row 3: Password and Confirm Password */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="signup-password"
+                            className="text-sm font-medium text-[#1e1e1e]"
+                          >
+                            Password
+                          </Label>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
+                            <Input
+                              id="signup-password"
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Min 8 chars"
+                              className="pl-10 pr-10 h-10 border-[#1e1e1e] bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all"
+                              value={signupForm.password}
+                              onChange={(e) =>
+                                setSignupForm({
+                                  ...signupForm,
+                                  password: e.target.value,
+                                })
+                              }
+                              disabled={isLoading}
+                              required
+                              minLength={8}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors"
+                              disabled={isLoading}
+                            >
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="signup-confirm-password"
+                            className="text-sm font-medium text-[#1e1e1e]"
+                          >
+                            Confirm Password
+                          </Label>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
+                            <Input
+                              id="signup-confirm-password"
+                              type={showConfirmPassword ? "text" : "password"}
+                              placeholder="Confirm"
+                              className="pl-10 pr-10 h-10 border-[#1e1e1e] bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all"
+                              value={signupForm.confirmPassword}
+                              onChange={(e) =>
+                                setSignupForm({
+                                  ...signupForm,
+                                  confirmPassword: e.target.value,
+                                })
+                              }
+                              disabled={isLoading}
+                              required
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors"
+                              disabled={isLoading}
+                            >
+                              {showConfirmPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        className="w-full h-10 mt-4 bg-[#FF6A00] hover:bg-[#e66900] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating Account...
+                          </>
+                        ) : (
+                          "Create Account"
+                        )}
+                      </Button>
+
+                      {/* Divider */}
+                      <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-gray-200"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                          <span className="px-2 bg-[#ECE3DC] text-[#1e1e1e]">
+                            Or sign up with
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Google Sign-Up Button */}
+                      <div id="google-signin-button-signup"></div>
+                    </form>
+                  ) : (
+                    <form
+                      onSubmit={handleOtpVerification}
+                      className="space-y-4"
                     >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Verifying...
-                        </>
-                      ) : (
-                        "Verify & Complete Registration"
-                      )}
-                    </Button>
+                      <div className="space-y-2">
+                        <Label htmlFor="otp-input">Verification Code</Label>
+                        <Input
+                          id="otp-input"
+                          type="text"
+                          placeholder="Enter 6-digit code"
+                          className="text-center text-2xl tracking-widest"
+                          value={otp}
+                          onChange={(e) =>
+                            setOtp(
+                              e.target.value.replace(/\D/g, "").slice(0, 6)
+                            )
+                          }
+                          disabled={isLoading}
+                          required
+                          maxLength={6}
+                          pattern="\d{6}"
+                        />
+                        <p className="text-xs text-gray-500 text-center mt-2">
+                          Check your email inbox for the verification code
+                        </p>
+                      </div>
 
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={handleResendOtp}
-                        className="flex-1 text-sm text-[#FF7A00] hover:text-[#e66900] font-medium"
-                        disabled={isLoading}
+                      <Button
+                        type="submit"
+                        className="w-full bg-[#FF7A00] hover:bg-[#e66900]"
+                        disabled={isLoading || otp.length !== 6}
                       >
-                        Resend Code
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowOtpVerification(false);
-                          setOtp("");
-                        }}
-                        className="flex-1 text-sm text-gray-600 hover:text-gray-800 underline"
-                        disabled={isLoading}
-                      >
-                        Back to signup
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Verifying...
+                          </>
+                        ) : (
+                          "Verify & Complete Registration"
+                        )}
+                      </Button>
+
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleResendOtp}
+                          className="flex-1 text-sm text-[#FF7A00] hover:text-[#e66900] font-medium"
+                          disabled={isLoading}
+                        >
+                          Resend Code
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowOtpVerification(false);
+                            setOtp("");
+                          }}
+                          className="flex-1 text-sm text-gray-600 hover:text-gray-800 underline"
+                          disabled={isLoading}
+                        >
+                          Back to signup
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
 
         {/* Forgot Password Modal Overlay */}
         {showForgotPassword && (
