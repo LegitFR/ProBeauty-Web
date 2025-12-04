@@ -99,7 +99,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               </p>
               <Button
                 onClick={onClose}
-                className="bg-[#FF7A00] hover:bg-[#e66900]"
+                className="bg-[#FF7A00] hover:bg-[#e66900] mb-20"
               >
                 Continue Shopping
               </Button>

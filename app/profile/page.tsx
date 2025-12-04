@@ -21,10 +21,33 @@ import {
   Award,
   Star,
   Camera,
+  Trash2,
+  Plus,
+  Check,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  getAddresses,
+  createAddress,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
+  type Address,
+} from "@/lib/api/address";
+import {
+  getBookings,
+  type Booking,
+  type BookingStatus,
+} from "@/lib/api/booking";
+import {
+  getOrders,
+  cancelOrder,
+  type Order,
+  type OrderStatus,
+} from "@/lib/api/order";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -37,6 +60,34 @@ export default function ProfilePage() {
     "upcoming" | "past" | "cancelled"
   >("upcoming");
   const [mounted, setMounted] = useState(false);
+
+  // Settings tab state
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<string | null>(null);
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
+
+  // Bookings and Orders state
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+  });
+  const [addressFormData, setAddressFormData] = useState({
+    fullName: "",
+    phone: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "United Kingdom",
+    isDefault: false,
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -54,6 +105,14 @@ export default function ProfilePage() {
       }
 
       setUser(userData);
+      setFormData({
+        name: userData.name || "",
+        phone: userData.phone || "",
+      });
+
+      // Load initial data
+      loadBookings();
+      loadOrders();
     } catch (error) {
       console.error("Error loading user:", error);
       router.replace("/");
@@ -62,10 +121,196 @@ export default function ProfilePage() {
     }
   }, [router]);
 
+  // Load addresses when settings tab is active
+  useEffect(() => {
+    if (activeTab === "settings" && user) {
+      loadAddresses();
+    }
+  }, [activeTab, user]);
+
+  // Load bookings when appointments tab is active
+  useEffect(() => {
+    if (activeTab === "appointments" && user) {
+      loadBookings();
+    }
+  }, [activeTab, user]);
+
+  // Load orders when orders tab is active
+  useEffect(() => {
+    if (activeTab === "orders" && user) {
+      loadOrders();
+    }
+  }, [activeTab, user]);
+
+  const loadAddresses = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    setLoadingAddresses(true);
+    try {
+      const data = await getAddresses(token);
+      setAddresses(data);
+    } catch (error) {
+      console.error("Failed to load addresses:", error);
+    } finally {
+      setLoadingAddresses(false);
+    }
+  };
+
+  const loadBookings = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    setLoadingBookings(true);
+    try {
+      const response = await getBookings(token);
+      setBookings(response.data || []);
+    } catch (error) {
+      console.error("Failed to load bookings:", error);
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  const loadOrders = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    setLoadingOrders(true);
+    try {
+      const response = await getOrders(token);
+      setOrders(response.data || []);
+    } catch (error) {
+      console.error("Failed to load orders:", error);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!confirm("Are you sure you want to cancel this order?")) return;
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    try {
+      await cancelOrder(token, orderId);
+      alert("Order cancelled successfully");
+      await loadOrders(); // Reload orders
+    } catch (error: any) {
+      console.error("Failed to cancel order:", error);
+      alert(error?.message || "Failed to cancel order");
+    }
+  };
+
+  const handleSaveProfile = () => {
+    // TODO: Implement profile update API
+    console.log("Saving profile:", formData);
+  };
+
+  const handleCreateAddress = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    setSavingAddress(true);
+    try {
+      await createAddress(token, addressFormData);
+      await loadAddresses();
+      setShowNewAddressForm(false);
+      resetAddressForm();
+      alert("Address added successfully");
+    } catch (error: any) {
+      console.error("Failed to create address:", error);
+      alert(error?.message || "Failed to add address. Please try again.");
+    } finally {
+      setSavingAddress(false);
+    }
+  };
+
+  const handleUpdateAddress = async (addressId: string) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    setSavingAddress(true);
+    try {
+      await updateAddress(token, addressId, addressFormData);
+      await loadAddresses();
+      setEditingAddress(null);
+      resetAddressForm();
+      alert("Address updated successfully");
+    } catch (error: any) {
+      console.error("Failed to update address:", error);
+      alert(error?.message || "Failed to update address. Please try again.");
+    } finally {
+      setSavingAddress(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId: string) => {
+    if (!confirm("Are you sure you want to delete this address?")) return;
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    try {
+      await deleteAddress(token, addressId);
+      await loadAddresses();
+      alert("Address deleted successfully");
+    } catch (error: any) {
+      console.error("Failed to delete address:", error);
+      alert(error?.message || "Failed to delete address. Please try again.");
+    }
+  };
+
+  const handleSetDefaultAddress = async (addressId: string) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    try {
+      await setDefaultAddress(token, addressId);
+      await loadAddresses();
+      alert("Default address updated");
+    } catch (error: any) {
+      console.error("Failed to set default address:", error);
+      alert(
+        error?.message || "Failed to set default address. Please try again."
+      );
+    }
+  };
+
+  const startEditAddress = (address: Address) => {
+    setEditingAddress(address.id);
+    setAddressFormData({
+      fullName: address.fullName,
+      phone: address.phone,
+      addressLine1: address.addressLine1,
+      addressLine2: address.addressLine2 || "",
+      city: address.city,
+      state: address.state,
+      postalCode: address.postalCode,
+      country: address.country,
+      isDefault: address.isDefault,
+    });
+  };
+
+  const resetAddressForm = () => {
+    setAddressFormData({
+      fullName: "",
+      phone: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      country: "United Kingdom",
+      isDefault: false,
+    });
+  };
+
   // Prevent hydration mismatch
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-orange-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
       </div>
     );
@@ -96,9 +341,9 @@ export default function ProfilePage() {
                   <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                     {/* Avatar */}
                     <div className="relative group">
-                      <div className="w-32 h-32 rounded-full bg-gradient-to-br from-orange-400 via-pink-500 to-purple-500 p-1">
+                      <div className="w-32 h-32 rounded-full bg-linear-to-br from-orange-400 via-pink-500 to-purple-500 p-1">
                         <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                          <span className="text-5xl font-bold bg-gradient-to-br from-orange-500 to-pink-500 bg-clip-text text-transparent">
+                          <span className="text-5xl font-bold bg-linear-to-br from-orange-500 to-pink-500 bg-clip-text text-transparent">
                             {user.name?.charAt(0).toUpperCase()}
                           </span>
                         </div>
@@ -151,23 +396,34 @@ export default function ProfilePage() {
 
                       {/* Stats */}
                       <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
-                        <div className="text-center">
+                        <div
+                          className="text-center cursor-pointer"
+                          onClick={() => setActiveTab("appointments")}
+                        >
                           <div className="text-2xl font-bold text-gray-900">
-                            0
+                            {bookings.length}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Appointments
+                          </div>
+                        </div>
+                        <div
+                          className="text-center cursor-pointer"
+                          onClick={() => setActiveTab("orders")}
+                        >
+                          <div className="text-2xl font-bold text-gray-900">
+                            {orders.length}
                           </div>
                           <div className="text-sm text-gray-600">Orders</div>
                         </div>
-                        <div className="text-center">
+                        <div
+                          className="text-center cursor-pointer"
+                          onClick={() => setActiveTab("wishlist")}
+                        >
                           <div className="text-2xl font-bold text-gray-900">
                             0
                           </div>
                           <div className="text-sm text-gray-600">Wishlist</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900">
-                            0
-                          </div>
-                          <div className="text-sm text-gray-600">Reviews</div>
                         </div>
                       </div>
                     </div>
@@ -292,7 +548,7 @@ export default function ProfilePage() {
                         Your Appointments
                       </h2>
                       <Button
-                        onClick={() => (window.location.href = "/#book")}
+                        onClick={() => (window.location.href = "/salons")}
                         className="bg-orange-500 hover:bg-orange-600"
                       >
                         <Calendar className="h-4 w-4 mr-2" />
@@ -300,325 +556,429 @@ export default function ProfilePage() {
                       </Button>
                     </div>
 
-                    {/* Filter Tabs */}
-                    <div className="flex gap-2">
-                      {[
-                        {
-                          key: "upcoming" as const,
-                          label: "Upcoming",
-                          count: 2,
-                        },
-                        { key: "past" as const, label: "Past", count: 5 },
-                        {
-                          key: "cancelled" as const,
-                          label: "Cancelled",
-                          count: 1,
-                        },
-                      ].map((filter) => (
-                        <button
-                          key={filter.key}
-                          onClick={() => setAppointmentFilter(filter.key)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            appointmentFilter === filter.key
-                              ? "bg-orange-500 text-white"
-                              : "bg-orange-50 text-orange-600 hover:bg-orange-100"
-                          }`}
-                        >
-                          {filter.label}
-                          <span className="ml-2 text-xs opacity-75">
-                            ({filter.count})
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Appointments Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {/* Appointment Card 1 - Upcoming */}
-                      {appointmentFilter === "upcoming" && (
-                        <Card className="hover:shadow-lg transition-shadow bg-[#ECE3DC]">
-                          <CardContent className="p-4">
-                            <div className="flex gap-4">
-                              {/* Salon Image */}
-                              <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                                <img
-                                  src="https://images.unsplash.com/photo-1562322140-8baeececf3df?w=400"
-                                  alt="Salon"
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-
-                              {/* Appointment Details */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2 mb-2">
-                                  <div className="min-w-0 flex-1">
-                                    <h4 className="font-semibold text-gray-900 truncate">
-                                      Vurve Salon
-                                    </h4>
-                                    <p className="text-xs text-gray-600 flex items-center gap-1">
-                                      <MapPin className="h-3 w-3 flex-shrink-0" />
-                                      <span className="truncate">
-                                        Nungambakkam
-                                      </span>
-                                    </p>
-                                  </div>
-                                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs flex-shrink-0">
-                                    Confirmed
-                                  </Badge>
-                                </div>
-
-                                <div className="space-y-1 text-sm mb-3">
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
-                                    <span className="font-medium">
-                                      Tomorrow, Nov 27
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-gray-600">
-                                    <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                                    <span>3:00 PM - 4:30 PM</span>
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-wrap gap-1.5 mb-3">
-                                  <Badge variant="outline" className="text-xs">
-                                    Hair Styling
-                                  </Badge>
-                                  <Badge variant="outline" className="text-xs">
-                                    Color
-                                  </Badge>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    className="bg-orange-500 hover:bg-orange-600 flex-1"
-                                  >
-                                    Details
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-[#1E1E1E] border-2 flex-1 bg-[#ECE3DC]"
-                                  >
-                                    Cancel
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {/* Appointment Card 2 - Upcoming */}
-                      {appointmentFilter === "upcoming" && (
-                        <Card className="hover:shadow-lg transition-shadow bg-[#ECE3DC]">
-                          <CardContent className="p-4">
-                            <div className="flex gap-4">
-                              {/* Salon Image */}
-                              <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                                <img
-                                  src="https://images.unsplash.com/photo-1633681926035-ec90e342ced9?w=400"
-                                  alt="Salon"
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-
-                              {/* Appointment Details */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2 mb-2">
-                                  <div className="min-w-0 flex-1">
-                                    <h4 className="font-semibold text-gray-900 truncate">
-                                      Glam Studio Pro
-                                    </h4>
-                                    <p className="text-xs text-gray-600 flex items-center gap-1">
-                                      <MapPin className="h-3 w-3 flex-shrink-0" />
-                                      <span className="truncate">T. Nagar</span>
-                                    </p>
-                                  </div>
-                                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs flex-shrink-0">
-                                    Pending
-                                  </Badge>
-                                </div>
-
-                                <div className="space-y-1 text-sm mb-3">
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
-                                    <span className="font-medium">
-                                      Dec 2, 2025
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-gray-600">
-                                    <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                                    <span>11:00 AM - 1:00 PM</span>
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-wrap gap-1.5 mb-3">
-                                  <Badge variant="outline" className="text-xs">
-                                    Bridal Makeup
-                                  </Badge>
-                                  <Badge variant="outline" className="text-xs">
-                                    Pre-Wedding
-                                  </Badge>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    className="bg-orange-500 hover:bg-orange-600 flex-1"
-                                  >
-                                    Details
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-[#1E1E1E] border-2 flex-1 bg-[#ECE3DC]"
-                                  >
-                                    Reschedule
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {/* Past Appointment Card */}
-                      {appointmentFilter === "past" && (
-                        <Card className="hover:shadow-lg transition-shadow opacity-60 hover:opacity-100 bg-[#ECE3DC]">
-                          <CardContent className="p-4">
-                            <div className="flex gap-4">
-                              {/* Salon Image */}
-                              <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                                <img
-                                  src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=400"
-                                  alt="Salon"
-                                  className="w-full h-full object-cover grayscale"
-                                />
-                              </div>
-
-                              {/* Appointment Details */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2 mb-2">
-                                  <div className="min-w-0 flex-1">
-                                    <h4 className="font-semibold text-gray-900 truncate">
-                                      Zen Wellness Spa
-                                    </h4>
-                                    <p className="text-xs text-gray-600 flex items-center gap-1">
-                                      <MapPin className="h-3 w-3 flex-shrink-0" />
-                                      <span className="truncate">Adyar</span>
-                                    </p>
-                                  </div>
-                                  <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100 text-xs flex-shrink-0">
-                                    Completed
-                                  </Badge>
-                                </div>
-
-                                <div className="space-y-1 text-sm text-gray-600 mb-3">
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                                    <span>Nov 20, 2025</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                                    <span>5:30 PM - 6:30 PM</span>
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-wrap gap-1.5 mb-3">
-                                  <Badge variant="outline" className="text-xs">
-                                    Massage
-                                  </Badge>
-                                  <Badge variant="outline" className="text-xs">
-                                    Aromatherapy
-                                  </Badge>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    className="bg-orange-500 hover:bg-orange-600 flex-1"
-                                  >
-                                    <Star className="h-3 w-3 mr-1" />
-                                    Review
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-gray-300 flex-1"
-                                  >
-                                    Book Again
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {/* Cancelled Appointments - Empty State */}
-                      {appointmentFilter === "cancelled" && (
-                        <Card className="lg:col-span-2 bg-[#ECE3DC]">
-                          <CardContent className="p-12">
-                            <div className="text-center text-gray-500">
-                              <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                              <p className="text-lg font-medium">
-                                No cancelled appointments
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-
-                    {/* Empty State for No Appointments */}
-                    {/* <Card>
-                      <CardContent className="p-6">
-                        <div className="text-center py-12 text-gray-500">
-                          <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                          <h3 className="text-xl font-semibold mb-2">
-                            No appointments yet
-                          </h3>
-                          <p className="mb-6">
-                            Book your first appointment and experience premium beauty services
-                          </p>
-                          <Button
-                            onClick={() => (window.location.href = "/#book")}
-                            className="bg-orange-500 hover:bg-orange-600"
-                          >
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Browse Salons
-                          </Button>
+                    {loadingBookings ? (
+                      <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto"></div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Filter Tabs */}
+                        <div className="flex gap-2">
+                          {[
+                            {
+                              key: "upcoming" as const,
+                              label: "Upcoming",
+                              count: bookings.filter((b) => {
+                                const now = new Date();
+                                const startTime = new Date(b.startTime);
+                                return (
+                                  startTime >= now &&
+                                  (b.status === "CONFIRMED" ||
+                                    b.status === "PENDING")
+                                );
+                              }).length,
+                            },
+                            {
+                              key: "past" as const,
+                              label: "Past",
+                              count: bookings.filter((b) => {
+                                const now = new Date();
+                                const startTime = new Date(b.startTime);
+                                return (
+                                  startTime < now && b.status === "COMPLETED"
+                                );
+                              }).length,
+                            },
+                            {
+                              key: "cancelled" as const,
+                              label: "Cancelled",
+                              count: bookings.filter(
+                                (b) =>
+                                  b.status === "CANCELLED" ||
+                                  b.status === "NO_SHOW"
+                              ).length,
+                            },
+                          ].map((filter) => (
+                            <button
+                              key={filter.key}
+                              onClick={() => setAppointmentFilter(filter.key)}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                appointmentFilter === filter.key
+                                  ? "bg-orange-500 text-white"
+                                  : "bg-orange-50 text-orange-600 hover:bg-orange-100"
+                              }`}
+                            >
+                              {filter.label}
+                              <span className="ml-2 text-xs opacity-75">
+                                ({filter.count})
+                              </span>
+                            </button>
+                          ))}
                         </div>
-                      </CardContent>
-                    </Card> */}
+
+                        {/* Appointments Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {(() => {
+                            const now = new Date();
+                            const filtered = bookings.filter((booking) => {
+                              const startTime = new Date(booking.startTime);
+                              if (appointmentFilter === "upcoming") {
+                                return (
+                                  startTime >= now &&
+                                  (booking.status === "CONFIRMED" ||
+                                    booking.status === "PENDING")
+                                );
+                              } else if (appointmentFilter === "past") {
+                                return (
+                                  startTime < now &&
+                                  booking.status === "COMPLETED"
+                                );
+                              } else if (appointmentFilter === "cancelled") {
+                                return (
+                                  booking.status === "CANCELLED" ||
+                                  booking.status === "NO_SHOW"
+                                );
+                              }
+                              return false;
+                            });
+
+                            if (filtered.length === 0) {
+                              return (
+                                <Card className="lg:col-span-2 bg-[#ECE3DC]">
+                                  <CardContent className="p-12">
+                                    <div className="text-center text-gray-500">
+                                      <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                                      <p className="text-lg font-medium">
+                                        No {appointmentFilter} appointments
+                                      </p>
+                                      <Button
+                                        onClick={() =>
+                                          (window.location.href = "/salons")
+                                        }
+                                        className="mt-4 bg-orange-500 hover:bg-orange-600"
+                                      >
+                                        <Calendar className="h-4 w-4 mr-2" />
+                                        Browse Salons
+                                      </Button>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              );
+                            }
+
+                            return filtered.map((booking) => (
+                              <Card
+                                key={booking.id}
+                                className={`hover:shadow-lg transition-shadow bg-[#ECE3DC] ${
+                                  appointmentFilter === "past"
+                                    ? "opacity-60 hover:opacity-100"
+                                    : ""
+                                }`}
+                              >
+                                <CardContent className="p-4">
+                                  <div className="flex gap-4">
+                                    {/* Salon Image */}
+                                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 shrink-0">
+                                      <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-orange-100 to-pink-100">
+                                        <span className="text-2xl font-bold text-orange-500">
+                                          {booking.salon?.name
+                                            ?.charAt(0)
+                                            .toUpperCase() || "S"}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Appointment Details */}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-start justify-between gap-2 mb-2">
+                                        <div className="min-w-0 flex-1">
+                                          <h4 className="font-semibold text-gray-900 truncate">
+                                            {booking.salon?.name || "Salon"}
+                                          </h4>
+                                          <p className="text-xs text-gray-600 flex items-center gap-1">
+                                            <MapPin className="h-3 w-3 shrink-0" />
+                                            <span className="truncate">
+                                              {booking.salon?.address ||
+                                                "Address"}
+                                            </span>
+                                          </p>
+                                        </div>
+                                        <Badge
+                                          className={`text-xs shrink-0 ${
+                                            booking.status === "CONFIRMED"
+                                              ? "bg-green-100 text-green-700 hover:bg-green-100"
+                                              : booking.status === "PENDING"
+                                              ? "bg-blue-100 text-blue-700 hover:bg-blue-100"
+                                              : booking.status === "COMPLETED"
+                                              ? "bg-gray-100 text-gray-700 hover:bg-gray-100"
+                                              : "bg-red-100 text-red-700 hover:bg-red-100"
+                                          }`}
+                                        >
+                                          {booking.status.charAt(0) +
+                                            booking.status
+                                              .slice(1)
+                                              .toLowerCase()}
+                                        </Badge>
+                                      </div>
+
+                                      <div className="space-y-1 text-sm mb-3">
+                                        <div className="flex items-center gap-2">
+                                          <Calendar className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+                                          <span className="font-medium">
+                                            {new Date(
+                                              booking.startTime
+                                            ).toLocaleDateString("en", {
+                                              weekday: "short",
+                                              month: "short",
+                                              day: "numeric",
+                                              year: "numeric",
+                                            })}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-gray-600">
+                                          <Clock className="h-3.5 w-3.5 shrink-0" />
+                                          <span>
+                                            {new Date(
+                                              booking.startTime
+                                            ).toLocaleTimeString("en", {
+                                              hour: "numeric",
+                                              minute: "2-digit",
+                                            })}{" "}
+                                            -{" "}
+                                            {new Date(
+                                              booking.endTime
+                                            ).toLocaleTimeString("en", {
+                                              hour: "numeric",
+                                              minute: "2-digit",
+                                            })}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {booking.service && (
+                                        <div className="flex flex-wrap gap-1.5 mb-3">
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs"
+                                          >
+                                            {booking.service.title}
+                                          </Badge>
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs"
+                                          >
+                                            ${booking.service.price}
+                                          </Badge>
+                                        </div>
+                                      )}
+
+                                      {/* Action Buttons */}
+                                      {appointmentFilter === "past" && (
+                                        <div className="flex gap-2">
+                                          <Button
+                                            size="sm"
+                                            className="bg-orange-500 hover:bg-orange-600 flex-1"
+                                          >
+                                            <Star className="h-3 w-3 mr-1" />
+                                            Review
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() =>
+                                              router.push(
+                                                `/salons/${booking.salonId}/book`
+                                              )
+                                            }
+                                            className="border-gray-300 flex-1"
+                                          >
+                                            Book Again
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ));
+                          })()}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 
                 {activeTab === "orders" && (
-                  <Card>
-                    <CardContent className="p-6 bg-[#ECE3DC]">
-                      <div className="text-center py-12 text-gray-500">
-                        <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-orange-500" />
-                        <h3 className="text-xl font-semibold mb-2">
-                          No orders yet
-                        </h3>
-                        <p className="mb-6">
-                          Start shopping to see your order history
-                        </p>
-                        <Button
-                          onClick={() => (window.location.href = "/#shop")}
-                          className="bg-orange-500 hover:bg-orange-600"
-                        >
-                          Browse Products
-                        </Button>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Your Orders
+                      </h2>
+                    </div>
+
+                    {loadingOrders ? (
+                      <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto"></div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    ) : orders.length === 0 ? (
+                      <Card>
+                        <CardContent className="p-6 bg-[#ECE3DC]">
+                          <div className="text-center py-12 text-gray-500">
+                            <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-orange-500" />
+                            <h3 className="text-xl font-semibold mb-2">
+                              No orders yet
+                            </h3>
+                            <p className="mb-6">
+                              Start shopping to see your order history
+                            </p>
+                            <Button
+                              onClick={() => router.push("/")}
+                              className="bg-orange-500 hover:bg-orange-600"
+                            >
+                              Browse Products
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {orders.map((order) => (
+                          <Card
+                            key={order.id}
+                            className="hover:shadow-lg transition-shadow bg-[#ECE3DC]"
+                          >
+                            <CardContent className="p-4">
+                              <div className="space-y-3">
+                                {/* Order Header */}
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <p className="text-xs text-gray-500">
+                                      Order #{order.id.slice(-8)}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {new Date(
+                                        order.createdAt
+                                      ).toLocaleDateString("en", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                      })}
+                                    </p>
+                                  </div>
+                                  <Badge
+                                    className={`text-xs ${
+                                      order.status === "DELIVERED"
+                                        ? "bg-green-100 text-green-700 hover:bg-green-100"
+                                        : order.status === "SHIPPED"
+                                        ? "bg-blue-100 text-blue-700 hover:bg-blue-100"
+                                        : order.status === "CONFIRMED"
+                                        ? "bg-purple-100 text-purple-700 hover:bg-purple-100"
+                                        : order.status === "CANCELLED"
+                                        ? "bg-red-100 text-red-700 hover:bg-red-100"
+                                        : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
+                                    }`}
+                                  >
+                                    {order.status.replace("_", " ")}
+                                  </Badge>
+                                </div>
+
+                                {/* Salon Info */}
+                                {order.salon && (
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="h-4 w-4 text-orange-500" />
+                                    <span className="text-sm font-medium">
+                                      {order.salon.name}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Order Items */}
+                                {order.orderItems &&
+                                  order.orderItems.length > 0 && (
+                                    <div className="space-y-2">
+                                      {order.orderItems
+                                        .slice(0, 2)
+                                        .map((item) => (
+                                          <div
+                                            key={item.id}
+                                            className="flex items-center gap-3 text-sm"
+                                          >
+                                            {item.product?.images?.[0] ? (
+                                              <div className="w-12 h-12 rounded overflow-hidden bg-gray-100 shrink-0">
+                                                <img
+                                                  src={item.product.images[0]}
+                                                  alt={item.product.title}
+                                                  className="w-full h-full object-cover"
+                                                />
+                                              </div>
+                                            ) : (
+                                              <div className="w-12 h-12 rounded bg-gray-100 shrink-0 flex items-center justify-center">
+                                                <ShoppingBag className="h-5 w-5 text-gray-400" />
+                                              </div>
+                                            )}
+                                            <div className="flex-1 min-w-0">
+                                              <p className="font-medium truncate">
+                                                {item.product?.title ||
+                                                  "Product"}
+                                              </p>
+                                              <p className="text-xs text-gray-600">
+                                                Qty: {item.quantity}
+                                              </p>
+                                            </div>
+                                            <p className="font-semibold text-orange-600">
+                                              ${item.unitPrice}
+                                            </p>
+                                          </div>
+                                        ))}
+                                      {order.orderItems.length > 2 && (
+                                        <p className="text-xs text-gray-500">
+                                          + {order.orderItems.length - 2} more
+                                          items
+                                        </p>
+                                      )}
+                                    </div>
+                                  )}
+
+                                {/* Total */}
+                                <div className="pt-3 border-t border-gray-200 flex items-center justify-between">
+                                  <span className="font-semibold">Total</span>
+                                  <span className="font-bold text-lg text-orange-600">
+                                    ${order.total}
+                                  </span>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex gap-2 pt-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() =>
+                                      router.push(`/orders/${order.id}`)
+                                    }
+                                    className="bg-orange-500 hover:bg-orange-600 flex-1"
+                                  >
+                                    View Details
+                                  </Button>
+                                  {(order.status === "PENDING" ||
+                                    order.status === "CONFIRMED") && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        handleCancelOrder(order.id)
+                                      }
+                                      className="border-red-500 text-red-600 hover:bg-red-50 flex-1"
+                                    >
+                                      Cancel
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {activeTab === "wishlist" && (
@@ -642,54 +1002,599 @@ export default function ProfilePage() {
                 )}
 
                 {activeTab === "settings" && (
-                  <Card>
-                    <CardContent className="p-6 bg-[#ECE3DC]">
-                      <h3 className="text-lg font-semibold mb-6">
-                        Account Settings
-                      </h3>
-                      <div className="space-y-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Full Name
-                          </label>
-                          <input
-                            type="text"
-                            defaultValue={user.name}
-                            className="w-full px-4 py-2 border border-[#1E1E1E] rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          />
+                  <div className="space-y-6">
+                    {/* Personal Information */}
+                    <Card>
+                      <CardContent className="p-6 bg-[#ECE3DC]">
+                        <h3 className="text-lg font-semibold mb-6">
+                          Personal Information
+                        </h3>
+                        <div className="space-y-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Full Name
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.name}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  name: e.target.value,
+                                })
+                              }
+                              className="w-full px-4 py-2 border border-[#1E1E1E] rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Email
+                            </label>
+                            <input
+                              type="email"
+                              value={user.email}
+                              disabled
+                              className="w-full px-4 py-2 border border-[#1E1E1E] rounded-lg bg-gray-100 cursor-not-allowed"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Email cannot be changed
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Phone
+                            </label>
+                            <input
+                              type="tel"
+                              value={formData.phone}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  phone: e.target.value,
+                                })
+                              }
+                              className="w-full px-4 py-2 border border-[#1E1E1E] rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                            />
+                          </div>
+                          <div className="pt-4">
+                            <Button
+                              onClick={handleSaveProfile}
+                              className="bg-orange-500 hover:bg-orange-600"
+                            >
+                              Save Changes
+                            </Button>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Email
-                          </label>
-                          <input
-                            type="email"
-                            defaultValue={user.email}
-                            disabled
-                            className="w-full px-4 py-2 border-[#1E1E1E] border-1 rounded-lg bg-[#ECE3DC] cursor-not-allowed"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            Email cannot be changed
-                          </p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Phone
-                          </label>
-                          <input
-                            type="tel"
-                            defaultValue={user.phone}
-                            className="w-full px-4 py-2 border border-[#1e1e1e] rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          />
-                        </div>
-                        <div className="pt-4">
-                          <Button className="bg-orange-500 hover:bg-orange-600">
-                            Save Changes
+                      </CardContent>
+                    </Card>
+
+                    {/* Saved Addresses */}
+                    <Card>
+                      <CardContent className="p-6 bg-[#ECE3DC]">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-lg font-semibold">
+                            Saved Addresses
+                          </h3>
+                          <Button
+                            onClick={() => {
+                              setShowNewAddressForm(true);
+                              resetAddressForm();
+                            }}
+                            className="bg-orange-500 hover:bg-orange-600"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add New Address
                           </Button>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+
+                        {loadingAddresses ? (
+                          <div className="text-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500 mx-auto"></div>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {/* New Address Form */}
+                            {showNewAddressForm && (
+                              <Card className="border-2 border-orange-500">
+                                <CardContent className="p-4 bg-white">
+                                  <div className="flex items-center justify-between mb-4">
+                                    <h4 className="font-semibold">
+                                      New Address
+                                    </h4>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setShowNewAddressForm(false);
+                                        resetAddressForm();
+                                      }}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Full Name *
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={addressFormData.fullName}
+                                        onChange={(e) =>
+                                          setAddressFormData({
+                                            ...addressFormData,
+                                            fullName: e.target.value,
+                                          })
+                                        }
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Phone *
+                                      </label>
+                                      <input
+                                        type="tel"
+                                        value={addressFormData.phone}
+                                        onChange={(e) =>
+                                          setAddressFormData({
+                                            ...addressFormData,
+                                            phone: e.target.value,
+                                          })
+                                        }
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                      />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Address Line 1 *
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={addressFormData.addressLine1}
+                                        onChange={(e) =>
+                                          setAddressFormData({
+                                            ...addressFormData,
+                                            addressLine1: e.target.value,
+                                          })
+                                        }
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                      />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Address Line 2
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={addressFormData.addressLine2}
+                                        onChange={(e) =>
+                                          setAddressFormData({
+                                            ...addressFormData,
+                                            addressLine2: e.target.value,
+                                          })
+                                        }
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        City *
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={addressFormData.city}
+                                        onChange={(e) =>
+                                          setAddressFormData({
+                                            ...addressFormData,
+                                            city: e.target.value,
+                                          })
+                                        }
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        State/County *
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={addressFormData.state}
+                                        onChange={(e) =>
+                                          setAddressFormData({
+                                            ...addressFormData,
+                                            state: e.target.value,
+                                          })
+                                        }
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Postal Code *
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={addressFormData.postalCode}
+                                        onChange={(e) =>
+                                          setAddressFormData({
+                                            ...addressFormData,
+                                            postalCode: e.target.value,
+                                          })
+                                        }
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Country *
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={addressFormData.country}
+                                        onChange={(e) =>
+                                          setAddressFormData({
+                                            ...addressFormData,
+                                            country: e.target.value,
+                                          })
+                                        }
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-4">
+                                    <input
+                                      type="checkbox"
+                                      id="new-default"
+                                      checked={addressFormData.isDefault}
+                                      onChange={(e) =>
+                                        setAddressFormData({
+                                          ...addressFormData,
+                                          isDefault: e.target.checked,
+                                        })
+                                      }
+                                      className="rounded border-gray-300"
+                                    />
+                                    <label
+                                      htmlFor="new-default"
+                                      className="text-sm text-gray-700"
+                                    >
+                                      Set as default address
+                                    </label>
+                                  </div>
+                                  <div className="flex gap-2 mt-4">
+                                    <Button
+                                      onClick={handleCreateAddress}
+                                      disabled={savingAddress}
+                                      className="bg-orange-500 hover:bg-orange-600"
+                                    >
+                                      {savingAddress
+                                        ? "Saving..."
+                                        : "Save Address"}
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => {
+                                        setShowNewAddressForm(false);
+                                        resetAddressForm();
+                                      }}
+                                      className="border-gray-300"
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )}
+
+                            {/* Existing Addresses */}
+                            {addresses.length === 0 && !showNewAddressForm ? (
+                              <div className="text-center py-12 text-gray-500">
+                                <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                                <p>No saved addresses</p>
+                                <p className="text-sm mt-1">
+                                  Add your first address to get started
+                                </p>
+                              </div>
+                            ) : (
+                              addresses.map((address) => (
+                                <Card
+                                  key={address.id}
+                                  className={`${
+                                    address.isDefault
+                                      ? "border-2 border-orange-500"
+                                      : ""
+                                  }`}
+                                >
+                                  <CardContent className="p-4 bg-white">
+                                    {editingAddress === address.id ? (
+                                      <>
+                                        <div className="flex items-center justify-between mb-4">
+                                          <h4 className="font-semibold">
+                                            Edit Address
+                                          </h4>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                              setEditingAddress(null);
+                                              resetAddressForm();
+                                            }}
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                          <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                              Full Name *
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={addressFormData.fullName}
+                                              onChange={(e) =>
+                                                setAddressFormData({
+                                                  ...addressFormData,
+                                                  fullName: e.target.value,
+                                                })
+                                              }
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                              Phone *
+                                            </label>
+                                            <input
+                                              type="tel"
+                                              value={addressFormData.phone}
+                                              onChange={(e) =>
+                                                setAddressFormData({
+                                                  ...addressFormData,
+                                                  phone: e.target.value,
+                                                })
+                                              }
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                            />
+                                          </div>
+                                          <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                              Address Line 1 *
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={
+                                                addressFormData.addressLine1
+                                              }
+                                              onChange={(e) =>
+                                                setAddressFormData({
+                                                  ...addressFormData,
+                                                  addressLine1: e.target.value,
+                                                })
+                                              }
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                            />
+                                          </div>
+                                          <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                              Address Line 2
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={
+                                                addressFormData.addressLine2
+                                              }
+                                              onChange={(e) =>
+                                                setAddressFormData({
+                                                  ...addressFormData,
+                                                  addressLine2: e.target.value,
+                                                })
+                                              }
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                              City *
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={addressFormData.city}
+                                              onChange={(e) =>
+                                                setAddressFormData({
+                                                  ...addressFormData,
+                                                  city: e.target.value,
+                                                })
+                                              }
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                              State/County *
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={addressFormData.state}
+                                              onChange={(e) =>
+                                                setAddressFormData({
+                                                  ...addressFormData,
+                                                  state: e.target.value,
+                                                })
+                                              }
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                              Postal Code *
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={addressFormData.postalCode}
+                                              onChange={(e) =>
+                                                setAddressFormData({
+                                                  ...addressFormData,
+                                                  postalCode: e.target.value,
+                                                })
+                                              }
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                              Country *
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={addressFormData.country}
+                                              onChange={(e) =>
+                                                setAddressFormData({
+                                                  ...addressFormData,
+                                                  country: e.target.value,
+                                                })
+                                              }
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                            />
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-4">
+                                          <input
+                                            type="checkbox"
+                                            id={`edit-default-${address.id}`}
+                                            checked={addressFormData.isDefault}
+                                            onChange={(e) =>
+                                              setAddressFormData({
+                                                ...addressFormData,
+                                                isDefault: e.target.checked,
+                                              })
+                                            }
+                                            className="rounded border-gray-300"
+                                          />
+                                          <label
+                                            htmlFor={`edit-default-${address.id}`}
+                                            className="text-sm text-gray-700"
+                                          >
+                                            Set as default address
+                                          </label>
+                                        </div>
+                                        <div className="flex gap-2 mt-4">
+                                          <Button
+                                            onClick={() =>
+                                              handleUpdateAddress(address.id)
+                                            }
+                                            disabled={savingAddress}
+                                            className="bg-orange-500 hover:bg-orange-600"
+                                          >
+                                            {savingAddress
+                                              ? "Saving..."
+                                              : "Save Changes"}
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            onClick={() => {
+                                              setEditingAddress(null);
+                                              resetAddressForm();
+                                            }}
+                                            className="border-gray-300"
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <div className="flex items-start justify-between">
+                                          <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-2">
+                                              <h4 className="font-semibold">
+                                                {address.fullName}
+                                              </h4>
+                                              {address.isDefault && (
+                                                <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">
+                                                  Default
+                                                </Badge>
+                                              )}
+                                            </div>
+                                            <div className="text-sm text-gray-600 space-y-1">
+                                              <p className="flex items-center gap-2">
+                                                <Phone className="h-3.5 w-3.5" />
+                                                {address.phone}
+                                              </p>
+                                              <p className="flex items-start gap-2">
+                                                <MapPin className="h-3.5 w-3.5 mt-0.5" />
+                                                <span>
+                                                  {address.addressLine1}
+                                                  {address.addressLine2 &&
+                                                    `, ${address.addressLine2}`}
+                                                  <br />
+                                                  {address.city},{" "}
+                                                  {address.state}{" "}
+                                                  {address.postalCode}
+                                                  <br />
+                                                  {address.country}
+                                                </span>
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className="flex gap-2">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() =>
+                                                startEditAddress(address)
+                                              }
+                                            >
+                                              <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => {
+                                                console.log(
+                                                  "Deleting address with ID:",
+                                                  address.id
+                                                );
+                                                console.log(
+                                                  "Full address object:",
+                                                  address
+                                                );
+                                                handleDeleteAddress(address.id);
+                                              }}
+                                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                        {!address.isDefault && (
+                                          <div className="mt-3 pt-3 border-t">
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() =>
+                                                handleSetDefaultAddress(
+                                                  address.id
+                                                )
+                                              }
+                                              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                            >
+                                              <Check className="h-3.5 w-3.5 mr-1" />
+                                              Set as Default
+                                            </Button>
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                  </CardContent>
+                                </Card>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
                 )}
               </div>
             </div>

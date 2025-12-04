@@ -1,159 +1,422 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
-import { Input } from "./ui/input";
-import { ArrowLeft, Star, Check, User, Mail, Phone, X } from "lucide-react";
+import { ArrowLeft, Star, Check, User, X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
+import { getServicesBySalon, Service } from "@/lib/api/service";
+import { createBooking, TimeSlot } from "@/lib/api/booking";
+import { getStaffBySalon, Staff } from "@/lib/api/staff";
+import { getAccessToken, isAuthenticated } from "@/lib/api/auth";
+import { Salon } from "@/lib/api/salon";
 
 type BookingStep = "services" | "professional" | "time" | "confirm" | "login";
 
-interface Service {
-  id: string;
-  name: string;
-  duration: string;
-  price: number;
-  category: string;
-  description?: string;
-}
-
-interface Professional {
-  id: string;
-  name: string;
-  title: string;
-  rating: number;
-  image: string;
-  isAny?: boolean;
-}
-
-interface TimeSlot {
-  time: string;
-  available: boolean;
-}
-
 interface BookingFlowProps {
+  salon: Salon;
   onClose: () => void;
 }
 
-export function BookingFlow({ onClose }: BookingFlowProps) {
+export function BookingFlow({ salon, onClose }: BookingFlowProps) {
+  // Step management
   const [currentStep, setCurrentStep] = useState<BookingStep>("services");
+
+  // Loading states
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+
+  // Data states
+  const [services, setServices] = useState<Service[]>([]);
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+
+  // Selection states
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [selectedProfessional, setSelectedProfessional] =
-    useState<Professional | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("Featured");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Customer details
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  // Filter state
+  const [selectedFilter, setSelectedFilter] = useState<string>("Featured");
 
-  // Sample data
-  const salon = {
-    name: "Studio Zee | Colombo 07",
-    rating: 4.8,
-    reviews: 434,
-    location: "20A Guildford Crescent, Colombo",
-    image:
-      "https://images.unsplash.com/photo-1562322140-8baeececf3df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBiZWF1dHklMjBzYWxvbiUyMGludGVyaW9yfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080",
+  // Authentication state
+  const [userAuthenticated, setUserAuthenticated] = useState(false);
+
+  // Check authentication on mount
+  useEffect(() => {
+    setUserAuthenticated(isAuthenticated());
+  }, []);
+
+  // Load services when component mounts
+  useEffect(() => {
+    loadServices();
+  }, [salon.id]);
+
+  // Load staff when service is selected
+  useEffect(() => {
+    if (selectedService && currentStep === "professional") {
+      loadStaff();
+    }
+  }, [selectedService, currentStep]);
+
+  // Load available slots when staff and date are selected
+  useEffect(() => {
+    if (selectedService && selectedStaff && selectedDate) {
+      loadAvailableSlots();
+    }
+  }, [selectedService, selectedStaff, selectedDate]);
+
+  // Filter categories and their keyword mappings
+  const filterCategories = [
+    { label: "Featured", keywords: [] }, // Show all for Featured
+    { label: "Hair styling and kids", keywords: ["kids", "children", "child"] },
+    {
+      label: "Hair styling and woman",
+      keywords: [
+        "women",
+        "woman",
+        "ladies",
+        "female",
+        "haircut",
+        "hair",
+        "styling",
+        "color",
+        "highlights",
+        "balayage",
+        "blowout",
+      ],
+    },
+    {
+      label: "Hair styling and men",
+      keywords: ["men", "man", "male", "beard", "shave", "gentlemen"],
+    },
+    {
+      label: "Facials and skin care",
+      keywords: ["facial", "skin", "face", "massage", "spa"],
+    },
+    {
+      label: "Smoothing and Straightening",
+      keywords: ["smoothing", "straightening", "keratin", "rebonding"],
+    },
+    { label: "Makeup", keywords: ["makeup", "make-up", "cosmetic", "bridal"] },
+  ];
+
+  // Filter services based on selected filter
+  const getFilteredServices = () => {
+    if (selectedFilter === "Featured") {
+      return services;
+    }
+
+    const filter = filterCategories.find((f) => f.label === selectedFilter);
+    if (!filter || filter.keywords.length === 0) {
+      return services;
+    }
+
+    return services.filter((service) => {
+      const titleLower = service.title.toLowerCase();
+      return filter.keywords.some((keyword) =>
+        titleLower.includes(keyword.toLowerCase())
+      );
+    });
   };
 
-  const serviceCategories = [
-    "Featured",
-    "Hair Braiding",
-    "Hair Perming",
-    "Children's Section",
-    "Signature Spa Treatment",
-    "Hair Botox Treatment",
-  ];
+  const loadServices = async () => {
+    setServicesLoading(true);
+    try {
+      console.log(`Loading services for salon: ${salon.id}`);
+      const response = await getServicesBySalon(salon.id);
+      const allServices = response.data || [];
+      console.log(`Loaded ${allServices.length} services`);
 
-  const services: Service[] = [
-    {
-      id: "1",
-      name: "Women's Re-Style Cut + Wash + Blow dry",
-      duration: "1 hr",
-      price: 4000,
-      category: "Featured",
-      description: "Female only with any professional",
-    },
-    {
-      id: "2",
-      name: "B+ Bra-Strap to Midback Length",
-      duration: "3 hrs, 45 mins",
-      price: 28000,
-      category: "Hair Braiding",
-      description: "Premium braiding service",
-    },
-    {
-      id: "3",
-      name: "Aftercare for Hair Botox Treatment",
-      duration: "1 hr",
-      price: 4000,
-      category: "Hair Botox Treatment",
-      description: "Post-treatment care and styling",
-    },
-    {
-      id: "4",
-      name: "Deep Conditioner Treatment",
-      duration: "2 hrs, 15 mins",
-      price: 7500,
-      category: "Signature Spa Treatment",
-      description: "Intensive hair restoration",
-    },
-    {
-      id: "5",
-      name: "Haircut & Blow Dry",
-      duration: "45 mins",
-      price: 3500,
-      category: "Featured",
-      description: "Professional cut and style",
-    },
-  ];
+      // Debug: Log each service's salonId
+      console.log("=== SERVICE DEBUGGING ===");
+      allServices.forEach((service) => {
+        console.log(`Service: ${service.id} (${service.title})`);
+        console.log(`  - salonId in response: ${service.salonId}`);
+        console.log(`  - Expected salonId: ${salon.id}`);
+        console.log(`  - Match: ${service.salonId === salon.id}`);
+        console.log(`  - Full service object:`, service);
+      });
+      console.log("=== END DEBUGGING ===");
 
-  const professionals: Professional[] = [
-    {
-      id: "any",
-      name: "Any professional",
-      title: "for maximum availability",
-      rating: 0,
-      image: "",
-      isAny: true,
-    },
-    {
-      id: "1",
-      name: "Minoshi",
-      title: "Senior Hairdresser",
-      rating: 4.7,
-      image:
-        "https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBoYWlyZHJlc3NlcnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080",
-    },
-    {
-      id: "2",
-      name: "Maria",
-      title: "Senior Hairdresser",
-      rating: 4.7,
-      image:
-        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBoYWlyZHJlc3NlcnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080",
-    },
-    {
-      id: "3",
-      name: "Rozanne",
-      title: "Senior Hairdresser | Lecturer",
-      rating: 4.9,
-      image:
-        "https://images.unsplash.com/photo-1594824846809-5a9e3e6de2cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBoYWlyZHJlc3NlcnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080",
-    },
-    {
-      id: "4",
-      name: "Hashitha Thushara",
-      title: "Senior Beautician",
-      rating: 4.6,
-      image:
-        "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBoYWlyZHJlc3NlcnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080",
-    },
-  ];
+      // Filter out services that don't belong to this salon
+      // This is a workaround for backend data integrity issues
+      const validServices = allServices.filter((service) => {
+        if (service.salonId !== salon.id) {
+          console.warn(
+            `Service ${service.id} (${service.title}) belongs to salon ${service.salonId}, not ${salon.id}. Filtering out.`
+          );
+          return false;
+        }
+        return true;
+      });
+
+      if (validServices.length < allServices.length) {
+        console.warn(
+          `Filtered out ${
+            allServices.length - validServices.length
+          } invalid services`
+        );
+      }
+
+      console.log(`Displaying ${validServices.length} valid services`);
+      setServices(validServices);
+    } catch (error: any) {
+      console.error("Error loading services:", error);
+      toast.error(error.message || "Failed to load services");
+    } finally {
+      setServicesLoading(false);
+    }
+  };
+
+  const loadStaff = async () => {
+    setStaffLoading(true);
+    try {
+      // First, check if salon already has staff data
+      if (salon.staff && salon.staff.length > 0) {
+        console.log(
+          `Using ${salon.staff.length} staff members from salon data`
+        );
+        console.log(
+          "Staff data from salon:",
+          JSON.stringify(salon.staff, null, 2)
+        );
+        setStaff(salon.staff as Staff[]);
+        setStaffLoading(false);
+        return;
+      }
+
+      // If not, fetch from API (fallback)
+      console.log("Fetching staff from API...");
+      const response = await getStaffBySalon(salon.id);
+      const staffData = response.data || [];
+      setStaff(staffData);
+
+      // If no staff available, show a helpful message
+      if (staffData.length === 0) {
+        console.warn("No staff members available for this salon");
+        toast.info(
+          "No staff members are currently available at this salon. Please try again later or contact the salon directly."
+        );
+      }
+    } catch (error: any) {
+      console.error("Error loading staff:", error);
+
+      // Show user-friendly error message
+      if (
+        error.message?.includes("invalid response") ||
+        error.message?.includes("Backend returned")
+      ) {
+        toast.error(
+          "Unable to load staff information due to a technical issue. Please try selecting a different salon or contact support.",
+          { duration: 6000 }
+        );
+      } else {
+        toast.error(error.message || "Failed to load staff members");
+      }
+      setStaff([]);
+    } finally {
+      setStaffLoading(false);
+    }
+  };
+
+  const loadAvailableSlots = async () => {
+    if (!selectedService || !selectedStaff || !selectedDate) return;
+
+    setSlotsLoading(true);
+    try {
+      console.log("=== GENERATING AVAILABILITY FROM STAFF ===");
+      console.log(`Selected Date: ${selectedDate}`);
+      console.log(`Staff ID: ${selectedStaff.id}`);
+      console.log(`Staff Availability (raw):`, selectedStaff.availability);
+      console.log(`Availability type:`, typeof selectedStaff.availability);
+
+      // Parse availability if it's a string
+      let availability = selectedStaff.availability;
+      if (typeof availability === "string") {
+        console.log("Parsing availability from JSON string");
+        try {
+          availability = JSON.parse(availability);
+          console.log("Parsed availability:", availability);
+        } catch (e) {
+          console.error("Failed to parse availability JSON:", e);
+          toast.error("Invalid staff availability data");
+          setAvailableSlots([]);
+          setSlotsLoading(false);
+          return;
+        }
+      }
+
+      // Get day of week from selected date
+      const date = new Date(selectedDate);
+      const dayOfWeek = date
+        .toLocaleDateString("en-US", { weekday: "long" })
+        .toLowerCase() as keyof typeof availability;
+      console.log(`Day of week: ${dayOfWeek}`);
+
+      // Get staff availability for the selected day
+      const dayAvailability = availability?.[dayOfWeek];
+      console.log(`Availability for ${dayOfWeek}:`, dayAvailability);
+
+      // Check if day availability exists
+      if (!dayAvailability) {
+        console.log(`Staff not available on ${dayOfWeek}`);
+        toast.info(
+          `Staff member is not available on ${
+            dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1)
+          }. Please select a different date.`
+        );
+        setAvailableSlots([]);
+        setSlotsLoading(false);
+        return;
+      }
+
+      // Generate time slots from staff availability
+      const generatedSlots: TimeSlot[] = [];
+
+      // Handle two formats:
+      // Format 1: Array of time ranges ['10:00-18:00']
+      // Format 2: Object with isAvailable and slots {isAvailable: true, slots: [{start: '10:00', end: '18:00'}]}
+
+      if (Array.isArray(dayAvailability)) {
+        // Format 1: ['10:00-18:00', '19:00-21:00']
+        console.log(`Processing array format availability`);
+        for (const timeRange of dayAvailability) {
+          const [startTime, endTime] = timeRange.split("-");
+
+          // Generate 30-minute slots between start and end time
+          const slotTimes = generateTimeSlots(
+            selectedDate,
+            startTime,
+            endTime,
+            selectedService.durationMinutes || 30
+          );
+
+          generatedSlots.push(...slotTimes);
+        }
+      } else if (
+        typeof dayAvailability === "object" &&
+        dayAvailability.isAvailable
+      ) {
+        // Format 2: {isAvailable: true, slots: [...]}
+        console.log(`Processing object format availability`);
+        if (dayAvailability.slots && dayAvailability.slots.length > 0) {
+          for (const slot of dayAvailability.slots) {
+            const startTime = slot.start;
+            const endTime = slot.end;
+
+            // Generate 30-minute slots between start and end time
+            const slotTimes = generateTimeSlots(
+              selectedDate,
+              startTime,
+              endTime,
+              selectedService.durationMinutes || 30
+            );
+
+            generatedSlots.push(...slotTimes);
+          }
+        }
+      } else {
+        console.log(
+          `Staff not available on ${dayOfWeek} (unavailable or invalid format)`
+        );
+        toast.info(
+          `Staff member is not available on ${
+            dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1)
+          }. Please select a different date.`
+        );
+        setAvailableSlots([]);
+        setSlotsLoading(false);
+        return;
+      }
+
+      console.log(
+        `Generated ${generatedSlots.length} time slots:`,
+        generatedSlots
+      );
+      setAvailableSlots(generatedSlots);
+    } catch (error: any) {
+      console.error("Error generating available slots:", error);
+      toast.error("Failed to generate available time slots");
+      setAvailableSlots([]);
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  // Helper function to generate time slots
+  const generateTimeSlots = (
+    selectedDate: string,
+    startTime: string,
+    endTime: string,
+    durationMinutes: number
+  ): TimeSlot[] => {
+    const slots: TimeSlot[] = [];
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const [endHour, endMinute] = endTime.split(":").map(Number);
+
+    // Parse the date in local timezone (YYYY-MM-DD format)
+    const [year, month, day] = selectedDate.split("-").map(Number);
+
+    // Create date in local timezone
+    let currentTime = new Date(
+      year,
+      month - 1,
+      day,
+      startHour,
+      startMinute,
+      0,
+      0
+    );
+
+    const endDateTime = new Date(
+      year,
+      month - 1,
+      day,
+      endHour,
+      endMinute,
+      0,
+      0
+    );
+
+    console.log(
+      `Generating slots for date: ${selectedDate}, time range: ${startTime}-${endTime}`
+    );
+    console.log(`First slot time (local): ${currentTime.toString()}`);
+    console.log(`First slot time (ISO): ${currentTime.toISOString()}`);
+
+    const now = new Date();
+
+    while (currentTime < endDateTime) {
+      const slotEndTime = new Date(
+        currentTime.getTime() + durationMinutes * 60000
+      );
+
+      if (slotEndTime <= endDateTime) {
+        const startTimeStr = currentTime.toISOString();
+        const endTimeStr = slotEndTime.toISOString();
+
+        // Only include slots that are in the future
+        if (currentTime > now) {
+          slots.push({
+            startTime: startTimeStr,
+            endTime: endTimeStr,
+            available: true,
+          });
+        }
+      }
+
+      // Move to next slot (30-minute intervals)
+      currentTime = new Date(currentTime.getTime() + 30 * 60000);
+    }
+
+    console.log(`Generated ${slots.length} future time slots`);
+    return slots;
+  };
 
   // Generate calendar dates
   const generateCalendarDates = () => {
@@ -174,31 +437,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
 
   const calendarDates = generateCalendarDates();
 
-  const timeSlots: TimeSlot[] = [
-    { time: "11:00 am", available: true },
-    { time: "11:10 am", available: true },
-    { time: "11:20 am", available: true },
-    { time: "11:30 am", available: true },
-    { time: "11:40 am", available: false },
-    { time: "11:50 am", available: true },
-    { time: "12:00 pm", available: true },
-    { time: "12:10 pm", available: false },
-    { time: "12:20 pm", available: true },
-    { time: "12:30 pm", available: true },
-    { time: "12:40 pm", available: true },
-    { time: "12:50 pm", available: true },
-    { time: "1:00 pm", available: true },
-    { time: "1:10 pm", available: false },
-    { time: "1:20 pm", available: true },
-    { time: "1:30 pm", available: true },
-  ];
-
-  const filteredServices = services.filter((service) =>
-    selectedCategory === "Featured"
-      ? service.category === "Featured"
-      : service.category === selectedCategory
-  );
-
+  // Step management
   const steps = [
     {
       key: "services",
@@ -210,7 +449,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
       key: "professional",
       label: "Professional",
       active: currentStep === "professional",
-      completed: selectedProfessional !== null,
+      completed: selectedStaff !== null,
     },
     {
       key: "time",
@@ -224,12 +463,6 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
       active: currentStep === "confirm",
       completed: false,
     },
-    {
-      key: "login",
-      label: "Login to Book",
-      active: currentStep === "login",
-      completed: false,
-    },
   ];
 
   const handleServiceSelect = (service: Service) => {
@@ -237,42 +470,33 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
     setCurrentStep("professional");
   };
 
-  const handleProfessionalSelect = (professional: Professional) => {
-    setSelectedProfessional(professional);
+  const handleStaffSelect = (staffMember: Staff) => {
+    console.log("=== STAFF SELECTED ===");
+    console.log("Selected staff:", JSON.stringify(staffMember, null, 2));
+    console.log("Staff availability:", staffMember.availability);
+    setSelectedStaff(staffMember);
     setCurrentStep("time");
-  };
-
-  const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
   };
 
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
+    setSelectedTime(""); // Reset time when date changes
   };
 
-  const handleConfirmClick = () => {
-    if (isLoggedIn) {
-      handleBookingConfirm();
-    } else {
-      setCurrentStep("login");
+  const handleTimeSelect = (slot: TimeSlot) => {
+    if (slot.available) {
+      console.log("=== TIME SLOT SELECTED ===");
+      console.log("Slot start time (ISO):", slot.startTime);
+      console.log(
+        "Slot start time (local):",
+        new Date(slot.startTime).toString()
+      );
+      console.log(
+        "Slot start time (local hours):",
+        new Date(slot.startTime).getHours()
+      );
+      setSelectedTime(slot.startTime);
     }
-  };
-
-  const handleBookingConfirm = () => {
-    toast.success(
-      "Booking confirmed! You will receive a confirmation email shortly."
-    );
-    onClose();
-  };
-
-  const handleLoginAndBook = () => {
-    toast.success("Redirecting to login...");
-    // In a real app, this would open login modal or redirect
-  };
-
-  const handleGuestCheckout = () => {
-    setIsLoggedIn(true);
-    setCurrentStep("confirm");
   };
 
   const goBack = () => {
@@ -282,36 +506,121 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
     else if (currentStep === "login") setCurrentStep("confirm");
   };
 
+  const handleConfirmClick = () => {
+    if (userAuthenticated) {
+      handleBookingConfirm();
+    } else {
+      setCurrentStep("login");
+    }
+  };
+
+  const handleBookingConfirm = async () => {
+    if (!selectedService || !selectedStaff || !selectedTime) {
+      toast.error("Please complete all booking details");
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) {
+      toast.error("Please login to continue");
+      setCurrentStep("login");
+      return;
+    }
+
+    setBookingLoading(true);
+    try {
+      console.log("=== BOOKING CONFIRMATION ===");
+      console.log("Current time (local):", new Date().toString());
+      console.log("Current time (UTC):", new Date().toISOString());
+      console.log("Selected time (ISO):", selectedTime);
+      console.log("Selected date:", selectedDate);
+
+      const selectedTimeObj = new Date(selectedTime);
+      console.log("Selected time (local):", selectedTimeObj.toString());
+      console.log("Selected time (UTC):", selectedTimeObj.toISOString());
+      console.log("Selected time hours (local):", selectedTimeObj.getHours());
+      console.log("Selected time hours (UTC):", selectedTimeObj.getUTCHours());
+      console.log("Is selected time in future?", selectedTimeObj > new Date());
+
+      console.log("\nStaff availability for the day:");
+      console.log(JSON.stringify(selectedStaff?.availability, null, 2));
+
+      await createBooking(token, {
+        salonId: salon.id,
+        serviceId: selectedService.id,
+        staffId: selectedStaff.id,
+        startTime: selectedTime,
+      });
+      toast.success(
+        "Booking confirmed! You will receive a confirmation email shortly."
+      );
+      onClose();
+    } catch (error: any) {
+      console.error("Error creating booking:", error);
+      toast.error(error.message || "Failed to create booking");
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+
+  const handleLoginAndBook = () => {
+    // This should trigger the AuthModal
+    toast.info("Please login to complete your booking");
+    // You might want to add a callback here to reopen the booking flow after login
+    onClose();
+  };
+
+  const handleGuestCheckout = () => {
+    setUserAuthenticated(true);
+    setCurrentStep("confirm");
+  };
+
+  // Format time for display
+  const formatTime = (isoString: string) => {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   // Render booking summary sidebar
   const renderBookingSummary = () => (
-    <Card className="bg-[#ECE3DC] shadow-lg rounded-2xl overflow-hidden sticky top-6">
+    <Card className="bg-[#ECE3DC] shadow-lg rounded-2xl overflow-hidden sticky top-6 border-none">
       <CardContent className="p-6">
         {/* Salon Info */}
         <div className="flex items-start space-x-3 mb-6 pb-6 border-b">
-          <img
-            src={salon.image}
-            alt={salon.name}
-            className="w-16 h-16 rounded-xl object-cover"
-          />
+          <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+            {salon.thumbnail ||
+            (salon.images && salon.images.length > 0 && salon.images[0]) ? (
+              <img
+                src={salon.thumbnail || salon.images?.[0]}
+                alt={salon.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                <span className="text-gray-400 text-xs">No Image</span>
+              </div>
+            )}
+          </div>
           <div className="flex-1">
             <h3 className="font-semibold text-black mb-1">{salon.name}</h3>
             <div className="flex items-center space-x-1 mb-1">
-              <span className="font-medium text-sm">{salon.rating}</span>
+              <span className="font-medium text-sm">4.5</span>
               <div className="flex">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
                     className={`h-3 w-3 ${
-                      i < Math.floor(salon.rating)
-                        ? "fill-[#FF7A00] text-[#FF7A00]"
-                        : "text-gray-300"
+                      i < 4 ? "fill-[#FF7A00] text-[#FF7A00]" : "text-gray-300"
                     }`}
                   />
                 ))}
               </div>
-              <span className="text-gray-500 text-xs">({salon.reviews})</span>
             </div>
-            <p className="text-xs text-gray-600">{salon.location}</p>
+            <p className="text-xs text-gray-600">{salon.address}</p>
           </div>
         </div>
 
@@ -321,48 +630,35 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
             <h4 className="font-medium text-black mb-3 text-sm">Service</h4>
             <div>
               <p className="font-medium text-black mb-1">
-                {selectedService.name}
+                {selectedService.title}
               </p>
-              <p className="text-xs text-gray-600 mb-2">
-                {selectedService.description}
-              </p>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mt-2">
                 <span className="text-xs text-gray-600">
-                  {selectedService.duration}
+                  {selectedService.durationMinutes} mins
                 </span>
                 <span className="font-semibold text-black">
-                  £{selectedService.price.toLocaleString()}
+                  ${selectedService.price}
                 </span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Selected Professional */}
-        {selectedProfessional && (
+        {/* Selected Staff */}
+        {selectedStaff && (
           <div className="mb-6 pb-6 border-b">
             <h4 className="font-medium text-black mb-3 text-sm">
               Professional
             </h4>
             <div className="flex items-center space-x-3">
-              {selectedProfessional.isAny ? (
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-purple-600" />
-                </div>
-              ) : (
-                <img
-                  src={selectedProfessional.image}
-                  alt={selectedProfessional.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              )}
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <User className="h-5 w-5 text-purple-600" />
+              </div>
               <div className="flex-1">
                 <p className="font-medium text-black text-sm">
-                  {selectedProfessional.name}
+                  {selectedStaff.user?.name || "Staff Member"}
                 </p>
-                <p className="text-xs text-gray-600">
-                  {selectedProfessional.title}
-                </p>
+                <p className="text-xs text-gray-600">{selectedStaff.role}</p>
               </div>
             </div>
           </div>
@@ -381,7 +677,9 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                   year: "numeric",
                 })}
               </p>
-              <p className="text-sm text-gray-600">{selectedTime}</p>
+              <p className="text-sm text-gray-600">
+                {formatTime(selectedTime)}
+              </p>
             </div>
           </div>
         )}
@@ -392,7 +690,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
             <div className="flex justify-between items-center">
               <span className="font-semibold text-black">Total</span>
               <span className="font-bold text-xl text-[#FF7A00]">
-                £{selectedService.price.toLocaleString()}
+                ${selectedService.price}
               </span>
             </div>
           </div>
@@ -402,9 +700,9 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
   );
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+    <div className="bg-[#ECE3DC] z-50 overflow-y-auto overflow-x-hidden">
       <div className="min-h-screen bg-[#ECE3DC] py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header with Close Button */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
@@ -415,14 +713,14 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
               >
                 <X className="h-6 w-6" />
               </Button>
-              <h1 className="text-2xl font-bold text-black font-display">
+              <h1 className="text-2xl font-semibold text-black font-display">
                 Book Appointment
               </h1>
             </div>
           </div>
 
           {/* Progress Breadcrumb */}
-          <div className="mb-8 bg-[#ECE3DC] py-6 px-4 rounded-xl shadow-sm">
+          <div className="mb-8 bg-[#ECE3DC] py-6 px-4 rounded-xl shadow-lg">
             <div className="flex items-center justify-center text-sm flex-wrap gap-y-3">
               {steps.map((step, index) => (
                 <>
@@ -432,7 +730,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                       step.active
                         ? "bg-linear-to-r from-[#FD7501] to-[#F65000] text-white font-medium"
                         : step.completed
-                        ? "text-[#26D55A]"
+                        ? "text-[#26D55A] font-medium"
                         : "text-[#1E1E1E]"
                     }`}
                   >
@@ -461,101 +759,95 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-6"
                   >
-                    <div className="bg-[#ECE3DC] p-6 rounded-2xl shadow-sm">
-                      <h2 className="text-2xl font-medium text-black mb-8">
+                    <div className="bg-[#ECE3DC] p-6 rounded-2xl">
+                      <h2 className="text-2xl font-medium text-black mb-6">
                         Services
                       </h2>
-                      {/* <p className="text-gray-600 mb-6">
-                        Choose the services you'd like to book
-                      </p> */}
 
-                      {/* Service Categories */}
-                      <div className="flex flex-wrap gap-2 mb-6">
-                        {serviceCategories.map((category) => (
-                          <Button
-                            key={category}
-                            variant={
-                              selectedCategory === category
-                                ? "default"
-                                : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setSelectedCategory(category)}
-                            className={`rounded-full ${
-                              selectedCategory === category
-                                ? "bg-[#1E1E1E] hover:bg-[#FF7A00]/90 text-[#ECE3DC]"
-                                : "text-[#1E1E1E] hover:text-white hover:border-[#FF7A00] bg-transparent border-none"
+                      {/* Service Filters */}
+                      <div className="flex flex-wrap gap-3 mb-8">
+                        {filterCategories.map((filter) => (
+                          <button
+                            key={filter.label}
+                            onClick={() => setSelectedFilter(filter.label)}
+                            className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                              selectedFilter === filter.label
+                                ? "bg-[#1E1E1E] text-[#ECE3DC]"
+                                : "bg-transparent text-[#1E1E1E] hover:bg-gray-200"
                             }`}
                           >
-                            {category}
-                          </Button>
+                            {filter.label}
+                          </button>
                         ))}
                       </div>
 
-                      {/* Services List */}
-                      <div className="space-y-4">
-                        {filteredServices.map((service) => (
-                          <Card
-                            key={service.id}
-                            className={`p-5 cursor-pointer transition-all duration-200 border-2 ${
-                              selectedService?.id === service.id
-                                ? "border-[#FF7A00] bg-orange-50"
-                                : "border-[#CBCBCB] hover:border-gray-300 bg-transparent"
-                            }`}
-                            onClick={() => handleServiceSelect(service)}
-                          >
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-black mb-1">
-                                  {service.name}
-                                </h3>
-                                <p className="text-sm text-gray-600 mb-2">
-                                  {service.description}
-                                </p>
-                                <div className="text-sm text-gray-500">
-                                  {service.duration}
+                      {servicesLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                          <Loader2 className="h-8 w-8 animate-spin text-[#FF7A00]" />
+                        </div>
+                      ) : services.length === 0 ? (
+                        <div className="text-center py-12">
+                          <p className="text-gray-600">No services available</p>
+                        </div>
+                      ) : getFilteredServices().length === 0 ? (
+                        <div className="text-center py-12">
+                          <p className="text-gray-600">
+                            No services found for this category
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {getFilteredServices().map((service) => (
+                            <Card
+                              key={service.id}
+                              className={`p-5 cursor-pointer transition-all duration-200 border-2 ${
+                                selectedService?.id === service.id
+                                  ? "border-[#FF7A00] bg-orange-50"
+                                  : "border-[#CBCBCB] hover:border-gray-300 bg-transparent"
+                              }`}
+                              onClick={() => handleServiceSelect(service)}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h3 className="font-semibold text-black mb-1">
+                                    {service.title}
+                                  </h3>
+                                  <div className="text-sm text-gray-500">
+                                    {service.durationMinutes} minutes
+                                  </div>
+                                </div>
+                                <div className="text-right flex flex-col items-end ml-4">
+                                  <div className="font-semibold text-black mb-3">
+                                    ${service.price}
+                                  </div>
+                                  <Button
+                                    variant={
+                                      selectedService?.id === service.id
+                                        ? "default"
+                                        : "outline"
+                                    }
+                                    size="sm"
+                                    className={
+                                      selectedService?.id === service.id
+                                        ? "bg-linear-to-r from-[#FD7501] to-[#F65000] rounded-xl px-6 py-2"
+                                        : "bg-transparent border-[#1e1e1e] text-[#1e1e1e] rounded-xl px-6 py-2"
+                                    }
+                                  >
+                                    {selectedService?.id === service.id
+                                      ? "Selected"
+                                      : "Book"}
+                                  </Button>
                                 </div>
                               </div>
-                              <div className="text-right flex flex-col items-end ml-4">
-                                <div className="font-semibold text-black mb-3">
-                                  £{service.price.toLocaleString()}
-                                </div>
-                                <Button
-                                  variant={
-                                    selectedService?.id === service.id
-                                      ? "default"
-                                      : "outline"
-                                  }
-                                  size="sm"
-                                  className={
-                                    selectedService?.id === service.id
-                                      ? "bg-orange-500 hover:bg-[#FF7A00]/90 rounded-xl px-6 py-2"
-                                      : "bg-linear-to-r from-[#FD7501] to-[#F65000] rounded-xl px-6 py-2"
-                                  }
-                                >
-                                  {selectedService?.id === service.id
-                                    ? "Selected"
-                                    : "Book"}
-                                </Button>
-                              </div>
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-
-                      {/* {selectedService && (
-                        <Button
-                          onClick={() => setCurrentStep("professional")}
-                          className="w-full bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white py-6 rounded-xl mt-6"
-                        >
-                          Continue
-                        </Button>
-                      )} */}
+                            </Card>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}
 
-                {/* Step 2: Select Professional */}
+                {/* Step 2: Select Staff */}
                 {currentStep === "professional" && (
                   <motion.div
                     key="professional"
@@ -569,68 +861,60 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                         <Button
                           variant="ghost"
                           onClick={goBack}
-                          className="p-2 hover:bg-gray-100 hover:text-[#1e1e1e] rounded-full"
+                          className="p-2 hover:bg-[#CBCBCB] hover:text-[#1e1e1e] rounded-full"
                         >
                           <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div>
                           <h2 className="text-2xl font-medium text-black">
-                            Select professional
+                            Select Professional
                           </h2>
                         </div>
                       </div>
 
-                      <div className="space-y-4">
-                        {professionals.map((professional) => (
-                          <Card
-                            key={professional.id}
-                            className="p-5 cursor-pointer hover:border-gray-300 transition-all duration-200 bg-transparent border-2 border-[#CBCBCCBC]"
-                            onClick={() =>
-                              handleProfessionalSelect(professional)
-                            }
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
-                                <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-                                  {professional.isAny ? (
-                                    <div className="w-full h-full bg-purple-100 flex items-center justify-center">
-                                      <User className="h-7 w-7 text-purple-600" />
-                                    </div>
-                                  ) : (
-                                    <img
-                                      src={professional.image}
-                                      alt={professional.name}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  )}
+                      {staffLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                          <Loader2 className="h-8 w-8 animate-spin text-[#FF7A00]" />
+                        </div>
+                      ) : staff.length === 0 ? (
+                        <div className="text-center py-12">
+                          <p className="text-gray-600">
+                            No staff members available
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {staff.map((staffMember) => (
+                            <Card
+                              key={staffMember.id}
+                              className="p-5 cursor-pointer hover:border-gray-300 transition-all duration-200 bg-transparent border-2 border-[#CBCBCB]"
+                              onClick={() => handleStaffSelect(staffMember)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <div className="w-14 h-14 rounded-full overflow-hidden bg-purple-100 shrink-0 flex items-center justify-center">
+                                    <User className="h-7 w-7 text-purple-600" />
+                                  </div>
+                                  <div>
+                                    <h3 className="font-semibold text-black">
+                                      {staffMember.user?.name || "Staff Member"}
+                                    </h3>
+                                    <p className="text-sm text-gray-600">
+                                      {staffMember.role}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <h3 className="font-semibold text-black">
-                                    {professional.name}
-                                  </h3>
-                                  <p className="text-sm text-gray-600">
-                                    {professional.title}
-                                  </p>
-                                  {professional.rating > 0 && (
-                                    <div className="flex items-center space-x-1 mt-1">
-                                      <span className="text-sm font-medium">
-                                        {professional.rating}
-                                      </span>
-                                      <Star className="h-4 w-4 fill-[#FF7A00] text-[#FF7A00]" />
-                                    </div>
-                                  )}
-                                </div>
+                                <Button
+                                  variant="outline"
+                                  className="hover:bg-[#FF7A00] hover:text-white hover:border-[#FF7A00] bg-transparent border-[#1E1E1E] px-6 py-4 rounded-2xl"
+                                >
+                                  Select
+                                </Button>
                               </div>
-                              <Button
-                                variant="outline"
-                                className="hover:bg-[#FF7A00] hover:text-white hover:border-[#FF7A00] bg-transparent border-[#1E1E1E] px-6 py-4 rounded-2xl"
-                              >
-                                Select
-                              </Button>
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -649,13 +933,13 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                         <Button
                           variant="ghost"
                           onClick={goBack}
-                          className="p-2 hover:bg-gray-100 hover:text-[#1e1e1e] rounded-full"
+                          className="p-2 hover:bg-[#CBCBCB] hover:text-[#1e1e1e] rounded-full"
                         >
                           <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div>
                           <h2 className="text-2xl font-bold text-black">
-                            Select time
+                            Select Date & Time
                           </h2>
                         </div>
                       </div>
@@ -664,28 +948,30 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                       <div className="space-y-6">
                         <div>
                           <p className="text-sm text-gray-600 mb-4 font-medium">
-                            October 2025
+                            {new Date().toLocaleDateString("en", {
+                              month: "long",
+                              year: "numeric",
+                            })}
                           </p>
-                          <div className="grid grid-cols-7 gap-3">
+                          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 sm:gap-3">
                             {calendarDates.map((dateObj, index) => (
                               <button
                                 key={index}
                                 onClick={() =>
                                   handleDateSelect(dateObj.fullDate)
                                 }
-                                className={`p-4 rounded-xl text-center transition-all duration-200 ${
+                                className={`p-2 sm:p-3 md:p-4 rounded-xl text-center transition-all duration-200 ${
                                   selectedDate === dateObj.fullDate
                                     ? "bg-[#FF7A00] text-white shadow-lg scale-105"
                                     : dateObj.isToday
                                     ? "bg-blue-600 text-white"
-                                    : "hover:shadow-lg text-gray-700 bg-transparent border-2 border-gray-200"
+                                    : "hover:shadow-lg text-[#1E1E1E] bg-[#ECE3DC] border-2 border-[#CBCBCB]"
                                 }`}
-                                disabled={index >= 7}
                               >
-                                <div className="font-bold text-lg">
+                                <div className="font-bold text-base sm:text-lg">
                                   {dateObj.date}
                                 </div>
-                                <div className="text-xs mt-1">
+                                <div className="text-[10px] sm:text-xs mt-1 truncate">
                                   {dateObj.day}
                                 </div>
                               </button>
@@ -699,32 +985,41 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                             <h3 className="font-medium text-black">
                               Available times
                             </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
-                              {timeSlots.map((slot) => (
-                                <button
-                                  key={slot.time}
-                                  onClick={() =>
-                                    slot.available &&
-                                    handleTimeSelect(slot.time)
-                                  }
-                                  disabled={!slot.available}
-                                  className={`p-4 text-center rounded-lg border-2 transition-all duration-200 ${
-                                    selectedTime === slot.time
-                                      ? "border-[#FF7A00] bg-orange-50 text-[#FF7A00] font-semibold"
-                                      : slot.available
-                                      ? "border-gray-200 hover:border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                                      : "border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed"
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-center">
-                                    <span>{slot.time}</span>
-                                    {selectedTime === slot.time && (
-                                      <Check className="h-4 w-4 ml-2" />
-                                    )}
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
+                            {slotsLoading ? (
+                              <div className="flex items-center justify-center py-12">
+                                <Loader2 className="h-8 w-8 animate-spin text-[#FF7A00]" />
+                              </div>
+                            ) : availableSlots.length === 0 ? (
+                              <div className="text-center py-12">
+                                <p className="text-gray-600">
+                                  No available time slots for this date
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
+                                {availableSlots.map((slot) => (
+                                  <button
+                                    key={slot.startTime}
+                                    onClick={() => handleTimeSelect(slot)}
+                                    disabled={!slot.available}
+                                    className={`p-4 text-center rounded-lg border-2 transition-all duration-200 ${
+                                      selectedTime === slot.startTime
+                                        ? "border-[#FF7A00] bg-orange-50 text-[#FF7A00] font-semibold"
+                                        : slot.available
+                                        ? "border-[#CBCBCB] hover:border-[#1E1E1E] bg-[#ECE3DC] text-[#1E1E1E] hover:bg-[#CBCBCB]"
+                                        : "border-[#CBCBCB] bg-[#CBCBCB] text-[#616161] cursor-not-allowed"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-center">
+                                      <span>{formatTime(slot.startTime)}</span>
+                                      {selectedTime === slot.startTime && (
+                                        <Check className="h-4 w-4 ml-2" />
+                                      )}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -750,12 +1045,12 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-6"
                   >
-                    <div className="bg-[#ECE3DC] p-6 rounded-2xl shadow-sm">
+                    <div className="bg-[#ECE3DC] p-6 rounded-2xl shadow-sm border-4 border-[#1E1E1E]">
                       <div className="flex items-center space-x-4 mb-6">
                         <Button
                           variant="ghost"
                           onClick={goBack}
-                          className="p-2 hover:bg-gray-100 rounded-full"
+                          className="p-2 hover:bg-[#CBCBCB] rounded-full"
                         >
                           <ArrowLeft className="h-5 w-5" />
                         </Button>
@@ -773,9 +1068,17 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
 
                       <Button
                         onClick={handleConfirmClick}
-                        className="w-full bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white py-6 rounded-xl font-semibold text-lg"
+                        disabled={bookingLoading}
+                        className="w-full bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white py-6 rounded-xl font-semibold text-lg disabled:opacity-50"
                       >
-                        Confirm Appointment
+                        {bookingLoading ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                            Creating booking...
+                          </>
+                        ) : (
+                          "Confirm Appointment"
+                        )}
                       </Button>
                     </div>
                   </motion.div>
@@ -790,7 +1093,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-6"
                   >
-                    <div className="bg-[#ECE3DC] p-8 rounded-2xl shadow-sm text-center">
+                    <div className="bg-[#ECE3DC] p-8 rounded-2xl shadow-sm border-4 border-[#1E1E1E] text-center">
                       <div className="w-16 h-16 bg-[#FF7A00]/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <User className="h-8 w-8 text-[#FF7A00]" />
                       </div>
@@ -814,7 +1117,7 @@ export function BookingFlow({ onClose }: BookingFlowProps) {
                         <Button
                           onClick={handleGuestCheckout}
                           variant="outline"
-                          className="w-full py-6 rounded-xl font-semibold text-lg border-2 border-gray-300 hover:border-[#FF7A00] hover:text-[#FFFFFF] bg-transparent"
+                          className="w-full py-6 rounded-xl font-semibold text-lg border-2 border-gray-300 hover:border-[#FF7A00] hover:text-[#FFFFFF] hover:bg-[#FF7A00] bg-transparent"
                         >
                           Continue as Guest
                         </Button>

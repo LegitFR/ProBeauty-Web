@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Header } from "../components/Header";
 import { Hero } from "../components/Hero";
 import { FeaturesOverview } from "../components/FeaturesOverview";
@@ -14,53 +14,34 @@ import { Footer } from "../components/Footer";
 import { CartProvider } from "../components/CartContext";
 import { WishlistProvider } from "../components/WishlistContext";
 import { Toaster } from "../components/Toaster";
-import { BookingFlow } from "../components/BookingFlow";
-import { DisplayProduct } from "../lib/api/products";
+import { Salon } from "@/lib/api/salon";
 
-interface HomeClientProps {
-  products: DisplayProduct[];
-}
+export default function HomeClient() {
+  const router = useRouter();
 
-export default function HomeClient({ products }: HomeClientProps) {
-  const [showBookingFlow, setShowBookingFlow] = useState(false);
-  const [selectedSalonId, setSelectedSalonId] = useState<number | null>(null);
-
-  const handleBookAppointment = (salonId: number) => {
-    setSelectedSalonId(salonId);
-    setShowBookingFlow(true);
-    // Scroll to top when opening booking flow
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleCloseBookingFlow = () => {
-    setShowBookingFlow(false);
-    setSelectedSalonId(null);
+  const handleBookAppointment = (salon: Salon) => {
+    // Navigate to the booking page
+    router.push(`/salons/${salon.id}/book`);
   };
 
   return (
     <CartProvider>
       <WishlistProvider>
         <div className="min-h-screen bg-black overflow-x-hidden">
-          {!showBookingFlow && <Header />}
+          <Header />
           <main className="overflow-x-hidden">
-            {showBookingFlow ? (
-              <BookingFlow onClose={handleCloseBookingFlow} />
-            ) : (
-              <>
-                <Hero />
-                <FeaturesOverview />
-                <div className="bg-body">
-                  <Shop apiProducts={products} />
-                  <SalonBooking onBookAppointment={handleBookAppointment} />
-                  <BusinessListing />
-                  <AppDownload />
-                  <Testimonials />
-                  <Newsletter />
-                </div>
-              </>
-            )}
+            <Hero />
+            <FeaturesOverview />
+            <div className="bg-body">
+              <Shop />
+              <SalonBooking onBookAppointment={handleBookAppointment} />
+              <BusinessListing />
+              <AppDownload />
+              <Testimonials />
+              <Newsletter />
+            </div>
           </main>
-          {!showBookingFlow && <Footer />}
+          <Footer />
           <Toaster />
         </div>
       </WishlistProvider>

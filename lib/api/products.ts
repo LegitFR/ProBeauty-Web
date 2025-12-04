@@ -1,10 +1,11 @@
 /**
- * Server-side API functions for fetching products
- * These functions should ONLY be called from Server Components
- * to keep the API URL secure and not exposed to the client
+ * API functions for fetching products
+ * Server-side functions call backend directly
+ * Client-side functions use Next.js API proxy route
  */
 
 const API_BASE_URL = "https://probeauty-backend.onrender.com/api/v1";
+const CLIENT_API_BASE_URL = "/api/products";
 
 interface ApiProduct {
   id: string;
@@ -47,7 +48,7 @@ export interface DisplayProduct {
 }
 
 /**
- * Fetches all products from the backend API
+ * Fetches all products from the backend API (Server-side only)
  * @param limit - Number of products to fetch (default: 50)
  * @returns Array of products or empty array on error
  */
@@ -79,19 +80,48 @@ export async function fetchProducts(limit: number = 50): Promise<ApiProduct[]> {
 }
 
 /**
+ * Fetches products via Next.js API proxy (Client-side safe)
+ * @param limit - Number of products to fetch (default: 50)
+ * @returns Array of products or empty array on error
+ */
+export async function fetchProductsClient(
+  limit: number = 50
+): Promise<ApiProduct[]> {
+  try {
+    const response = await fetch(
+      `${CLIENT_API_BASE_URL}?limit=${limit}&inStock=true`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`API Error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
+    const data: ProductsResponse = await response.json();
+    return data.data || [];
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return [];
+  }
+}
+
+/**
  * Transforms API products to display format with fallback values
  * @param apiProducts - Products from the API
  * @returns Array of display-ready products
  */
 export function transformProducts(apiProducts: ApiProduct[]): DisplayProduct[] {
   return apiProducts.map((product) => {
-    // Use first image or placeholder
+    // Use first image from API
     const image =
-      product.images && product.images.length > 0
-        ? product.images[0]
-        : "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400";
-
-    // Calculate discount (you can enhance this based on your business logic)
+      product.images && product.images.length > 0 ? product.images[0] : ""; // Calculate discount (you can enhance this based on your business logic)
     const discount = Math.floor(Math.random() * 20) + 5; // Random 5-25% for demo
     const originalPrice = product.price;
     const finalPrice = Math.round(originalPrice * (1 - discount / 100));

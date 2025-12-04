@@ -45,6 +45,16 @@ export function Header() {
     // Check if user is logged in
     const userData = getUser();
     setUser(userData);
+
+    // Listen for auth expiration event
+    const handleAuthExpired = () => {
+      console.log("[Header] Auth expired, showing login modal");
+      setUser(null);
+      setShowAuthModal(true);
+    };
+
+    window.addEventListener("auth-expired", handleAuthExpired);
+    return () => window.removeEventListener("auth-expired", handleAuthExpired);
   }, []);
 
   useEffect(() => {

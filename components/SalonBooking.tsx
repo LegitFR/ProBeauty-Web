@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -24,15 +25,47 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
+import { getSalons, type Salon } from "@/lib/api/salon";
 
 interface SalonBookingProps {
-  onBookAppointment?: (salonId: number) => void;
+  onBookAppointment?: (salon: Salon) => void;
 }
 
 export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [selectedService, setSelectedService] = useState("");
+  const [salons, setSalons] = useState<Salon[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const salonImages = [
+    "https://images.unsplash.com/photo-1562322140-8baeececf3df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBiZWF1dHklMjBzYWxvbiUyMGludGVyaW9yfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080",
+    "https://images.unsplash.com/photo-1633681926035-ec90e342ced9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBiZWF1dHklMjBzYWxvbiUyMGludGVyaW9yfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080",
+    "https://images.unsplash.com/photo-1560066984-138dadb4c035?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxsdXh1cnklMjBzYWxvbnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080",
+    "https://images.unsplash.com/photo-1544717297-fa95b6ee9643?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxzcGElMjBpbnRlcmlvcnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080",
+    "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxzYWxvbiUyMGNoYWlyfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080",
+    "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxmYWNpYWwlMjB0cmVhdG1lbnR8ZW58MXx8fHwxNzU3OTE5OTU1fDA&ixlib=rb-4.0&q=80&w=1080",
+  ];
+
+  useEffect(() => {
+    loadSalons();
+  }, []);
+
+  const loadSalons = async () => {
+    try {
+      const response = await getSalons({
+        page: 1,
+        limit: 3,
+        verified: true,
+      });
+      setSalons(response.data);
+    } catch (error) {
+      console.error("Failed to load salons:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleFavorite = (salonId: number) => {
     setFavorites((prev) => {
@@ -57,112 +90,10 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
     { id: "makeup", name: "Professional Makeup", icon: "💄" },
   ];
 
-  const salons = [
-    {
-      id: 1,
-      name: "Vurve Salon",
-      location: "Nungambakkam, Chennai",
-      distance: "0.8 km",
-      rating: 4.5,
-      reviews: 1690,
-      image:
-        "https://images.unsplash.com/photo-1562322140-8baeececf3df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBiZWF1dHklMjBzYWxvbiUyMGludGVyaW9yfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080",
-      services: ["Hair Styling", "Color Treatment", "Keratin"],
-      priceRange: "£800 - £3,500",
-      badge: "beauty salon",
-      nextAvailable: "Today 3:00 PM",
-      stylist: "Deepika Nair",
-      specialOffer: "20% off on first visit",
-    },
-    {
-      id: 3,
-      name: "Zen Wellness Spa",
-      location: "Adyar, Chennai",
-      distance: "2.1 km",
-      rating: 4.7,
-      reviews: 1245,
-      image:
-        "https://images.unsplash.com/photo-1544717297-fa95b6ee9643?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxzcGElMjBpbnRlcmlvcnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080",
-      services: ["Swedish Massage", "Aromatherapy", "Body Scrub"],
-      priceRange: "£1,500 - £4,000",
-      badge: "wellness center",
-      nextAvailable: "Today 5:30 PM",
-      stylist: "Kavitha Menon",
-      specialOffer: "Couple package available",
-    },
-    {
-      id: 4,
-      name: "Quick Style Express",
-      location: "Velachery, Chennai",
-      distance: "3.5 km",
-      rating: 4.3,
-      reviews: 567,
-      image:
-        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxzYWxvbiUyMGNoYWlyfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080",
-      services: ["Basic Haircut", "Beard Trim", "Quick Styling"],
-      priceRange: "£200 - £800",
-      badge: "express service",
-      nextAvailable: "Today 2:00 PM",
-      stylist: "Ravi Kumar",
-      specialOffer: "15 min express service",
-    },
-    {
-      id: 5,
-      name: "Elite Beauty Lounge",
-      location: "Anna Nagar, Chennai",
-      distance: "4.2 km",
-      rating: 4.9,
-      reviews: 2134,
-      image:
-        "https://images.unsplash.com/photo-1560066984-138dadb4c035?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxsdXh1cnklMjBzYWxvbnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080",
-      services: ["Hair Transformation", "Color Correction", "Extensions"],
-      priceRange: "£2,000 - £8,000",
-      badge: "celebrity stylist",
-      nextAvailable: "Tomorrow 2:30 PM",
-      stylist: "Meera Iyer",
-      specialOffer: "Celebrity makeover package",
-    },
-    {
-      id: 6,
-      name: "Glow Aesthetics",
-      location: "Besant Nagar, Chennai",
-      distance: "5.1 km",
-      rating: 4.6,
-      reviews: 778,
-      image:
-        "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxmYWNpYWwlMjB0cmVhdG1lbnR8ZW58MXx8fHwxNzU3OTE5OTU1fDA&ixlib=rb-4.0&q=80&w=1080",
-      services: ["HydraFacial", "Chemical Peel", "Anti-aging"],
-      priceRange: "£1,000 - £6,000",
-      badge: "skincare clinic",
-      nextAvailable: "Today 4:15 PM",
-      stylist: "Dr. Anitha Raj",
-      specialOffer: "Skin analysis free",
-    },
-    {
-      id: 7,
-      name: "Glam Studio Pro",
-      location: "T. Nagar, Chennai",
-      distance: "1.2 km",
-      rating: 4.8,
-      reviews: 892,
-      image:
-        "https://images.unsplash.com/photo-1633681926035-ec90e342ced9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBiZWF1dHklMjBzYWxvbiUyMGludGVyaW9yfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080",
-      services: ["Bridal Makeup", "Party Look", "Pre-Wedding"],
-      priceRange: "£1,200 - £5,000",
-      badge: "makeup specialist",
-      nextAvailable: "Tomorrow 11:00 AM",
-      stylist: "Priya Krishnan",
-      specialOffer: "Free consultation",
-    },
-  ];
-
   const filteredSalons = salons.filter((salon) => {
     const searchMatch =
       salon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      salon.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      salon.services.some((service) =>
-        service.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      salon.address.toLowerCase().includes(searchTerm.toLowerCase());
     return searchMatch;
   });
 
@@ -179,7 +110,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
         >
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-black mb-10">
             Book Your Perfect{" "}
-            <span className="bg-gradient-to-r from-orange-600 via-red-500 to-orange-600 bg-clip-text text-transparent bg-[length:400%_400%]">
+            <span className="bg-linear-to-r from-orange-600 via-red-500 to-orange-600 bg-clip-text text-transparent bg-size-[400%_400%]">
               Beauty Experience
             </span>
           </h2>
@@ -231,7 +162,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
               onClick={() =>
                 toast.success("AI is finding the perfect salons for you...")
               }
-              className="h-12 sm:h-14 bg-gradient-to-r from-[#FF7A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group w-full text-sm sm:text-base"
+              className="h-12 sm:h-14 bg-linear-to-r from-[#FF7A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group w-full text-sm sm:text-base"
             >
               <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-2 group-hover:scale-110 transition-transform" />
               AI Search
@@ -244,6 +175,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
         <div className="flex justify-end mb-6">
           <Button
             variant="ghost"
+            onClick={() => router.push("/salons")}
             className="text-black hover:text-orange-600 hover:bg-orange-50 font-medium"
           >
             <p className="text-[#000000]">View All</p>
@@ -278,11 +210,25 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
         </motion.div> */}
 
         {/* Salon Grid - Responsive layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-4">
-          {filteredSalons.slice(0, 3).map((salon, index) => {
-            const isFavorite = favorites.has(salon.id);
-
-            return (
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <Card className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] rounded-xl overflow-hidden">
+                  <div className="aspect-video bg-gray-300 m-4 rounded-lg"></div>
+                  <CardContent className="p-3">
+                    <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-300 rounded mb-2 w-3/4"></div>
+                    <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                  </CardContent>
+                  <div className="h-16 bg-gray-300"></div>
+                </Card>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-4">
+            {filteredSalons.slice(0, 3).map((salon, index) => (
               <motion.div
                 key={salon.id}
                 initial={{ opacity: 0, y: 30 }}
@@ -297,9 +243,14 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
               >
                 <Card className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] shadow-md hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden flex flex-col">
                   {/* Image Section - More rectangular */}
-                  <div className="relative aspect-[16/9] overflow-hidden bg-transparent p-4">
+                  <div className="relative aspect-video overflow-hidden bg-transparent p-4">
                     <img
-                      src={salon.image}
+                      src={
+                        salon.thumbnail ||
+                        (salon.images && salon.images.length > 0
+                          ? salon.images[0]
+                          : "")
+                      }
                       alt={salon.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-lg"
                     />
@@ -328,7 +279,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
                     )} */}
                   </div>
 
-                  <CardContent className="p-3 flex flex-col flex-grow">
+                  <CardContent className="p-3 flex flex-col grow">
                     {/* Salon Name */}
                     <CardTitle className="text-base font-semibold text-[#1E1E1E] leading-tight line-clamp-2 mb-2">
                       {salon.name}
@@ -337,37 +288,37 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
                     {/* Rating */}
                     <div className="flex items-center gap-1 mb-2">
                       <span className="text-sm font-medium text-[#1E1E1E]">
-                        {salon.rating}
+                        4.5
                       </span>
                       <div className="flex items-center gap-0.5">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
                             className={`h-3.5 w-3.5 ${
-                              i < Math.floor(salon.rating)
+                              i < 4
                                 ? "fill-[#F44A01] text-[#F44A01]"
                                 : "fill-gray-300 text-gray-300"
                             }`}
                           />
                         ))}
                       </div>
-                      <span className="text-xs text-[#616161]">
-                        ({salon.reviews})
-                      </span>
+                      <span className="text-xs text-[#616161]">(1200)</span>
                     </div>
 
                     {/* Location */}
                     <CardDescription className="text-sm text-[#1E1E1E] mb-2">
-                      {salon.location}
+                      {salon.address}
                     </CardDescription>
 
                     {/* Badge */}
-                    <p className="text-xs text-[#616161] mb-2">{salon.badge}</p>
+                    <p className="text-xs text-[#616161] mb-2">
+                      {salon.verified ? "verified salon" : "beauty salon"}
+                    </p>
                   </CardContent>
 
                   {/* Book Button - Edge-to-edge at bottom */}
                   <Button
-                    onClick={() => onBookAppointment?.(salon.id)}
+                    onClick={() => onBookAppointment?.(salon)}
                     className="w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 bg-[#1E1E1E] hover:bg-[#2a2a2a] text-[#ECE3DC] font-medium text-xs p-7"
                   >
                     <Calendar className="h-3 w-3 mr-1" />
@@ -375,9 +326,9 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
                   </Button>
                 </Card>
               </motion.div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Popular Services */}
         {/* <motion.div

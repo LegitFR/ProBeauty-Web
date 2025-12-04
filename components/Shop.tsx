@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -30,26 +31,49 @@ import {
   Tag,
   Camera,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useCart } from "./CartContext";
 import { useWishlist } from "./WishlistContext";
 import { toast } from "sonner";
-import { DisplayProduct } from "../lib/api/products";
+import {
+  DisplayProduct,
+  fetchProductsClient,
+  transformProducts,
+} from "../lib/api/products";
+import { navigationActions } from "./ScrollManager";
 
-interface ShopProps {
-  apiProducts?: DisplayProduct[];
-}
-
-export function Shop({ apiProducts = [] }: ShopProps) {
+export function Shop() {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [addedItems, setAddedItems] = useState<Set<string | number>>(new Set());
   const [highlightedProductId, setHighlightedProductId] = useState<
     string | number | null
   >(null);
+  const [apiProducts, setApiProducts] = useState<DisplayProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+
+  // Fetch products on mount
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const products = await fetchProductsClient(50);
+        const transformedProducts = transformProducts(products);
+        setApiProducts(transformedProducts);
+      } catch (error) {
+        console.error("Failed to load products:", error);
+        // Keep loading state to show skeleton
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   useEffect(() => {
     const handleHighlightProduct = (event: any) => {
@@ -139,6 +163,21 @@ export function Shop({ apiProducts = [] }: ShopProps) {
         reviews: product.reviews,
       });
       toast.success("Added to wishlist");
+    }
+  };
+
+  const handleViewAll = () => {
+    // Check if user is logged in
+    const userStr =
+      typeof window !== "undefined" ? localStorage.getItem("user") : null;
+
+    if (!userStr) {
+      // User not logged in, show auth modal
+      toast.info("Please login to view all products");
+      navigationActions.login();
+    } else {
+      // User logged in, navigate to products page
+      router.push("/products");
     }
   };
 
@@ -393,6 +432,7 @@ export function Shop({ apiProducts = [] }: ShopProps) {
         {/* View All Button */}
         <div className="flex justify-end mb-6">
           <Button
+            onClick={handleViewAll}
             variant="ghost"
             className="text-[#000000] hover:text-orange-600 hover:bg-orange-50 font-medium"
           >
@@ -402,127 +442,153 @@ export function Shop({ apiProducts = [] }: ShopProps) {
         </div>
 
         {/* Products Grid - Responsive layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-4">
-          {filteredProducts.map((product, index) => {
-            const isAdded = addedItems.has(product.id);
-            const isFavorite = isInWishlist(product.id);
-            const isHighlighted = highlightedProductId === product.id;
-
-            return (
-              <motion.div
-                key={product.id}
-                id={`product-${product.id}`}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -8, scale: 1.02 }}
-                animate={{
-                  backgroundColor: isHighlighted
-                    ? [
-                        "rgba(255, 255, 255, 0.9)",
-                        "rgba(255, 122, 0, 0.15)",
-                        "rgba(255, 255, 255, 0.9)",
-                      ]
-                    : "rgba(255, 255, 255, 0.9)",
-                  boxShadow: isHighlighted
-                    ? [
-                        "0 10px 30px rgba(0, 0, 0, 0.1)",
-                        "0 20px 60px rgba(255, 122, 0, 0.3)",
-                        "0 10px 30px rgba(0, 0, 0, 0.1)",
-                      ]
-                    : "0 10px 30px rgba(0, 0, 0, 0.1)",
-                  y: isHighlighted ? [0, -4, 0] : 0,
-                  scale: isHighlighted ? [1, 1.03, 1] : 1,
-                }}
-                transition={{
-                  duration: isHighlighted ? 0.8 : 0.6,
-                  delay: isHighlighted ? 0 : index * 0.1,
-                  ease: "easeInOut",
-                }}
-                className="group h-full rounded-3xl"
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card
+                key={i}
+                className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] rounded-xl overflow-hidden flex flex-col"
               >
-                <Card className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] shadow-md hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden flex flex-col">
-                  {/* Image Section - Matching reference design */}
-                  <div className="relative aspect-[4/3] overflow-hidden bg-transparent p-4">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-lg"
-                    />
+                <div className="relative aspect-[4/3] overflow-hidden bg-gray-200 p-4 animate-pulse">
+                  <div className="w-full h-full bg-gray-300 rounded-lg"></div>
+                </div>
+                <CardContent className="p-2 flex flex-col flex-grow gap-y-2">
+                  <div className="h-3 bg-gray-300 rounded animate-pulse w-1/3"></div>
+                  <div className="h-4 bg-gray-300 rounded animate-pulse w-3/4"></div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <div className="h-3 bg-gray-300 rounded animate-pulse w-16"></div>
+                  </div>
+                  <div className="flex items-baseline gap-1 mb-2">
+                    <div className="h-5 bg-gray-300 rounded animate-pulse w-20"></div>
+                  </div>
+                  <div className="h-9 bg-gray-300 rounded-lg animate-pulse"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-4">
+            {filteredProducts.map((product, index) => {
+              const isAdded = addedItems.has(product.id);
+              const isFavorite = isInWishlist(product.id);
+              const isHighlighted = highlightedProductId === product.id;
 
-                    {/* Wishlist Button - Top Right */}
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => toggleFavorite(product)}
-                      className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md z-10 border border-gray-200"
-                    >
-                      <Heart
-                        className={`h-3 w-3 transition-colors ${
-                          isFavorite
-                            ? "fill-red-500 text-red-500"
-                            : "text-gray-400 hover:text-gray-600"
-                        }`}
+              return (
+                <motion.div
+                  key={product.id}
+                  id={`product-${product.id}`}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  animate={{
+                    backgroundColor: isHighlighted
+                      ? [
+                          "rgba(255, 255, 255, 0.9)",
+                          "rgba(255, 122, 0, 0.15)",
+                          "rgba(255, 255, 255, 0.9)",
+                        ]
+                      : "rgba(255, 255, 255, 0.9)",
+                    boxShadow: isHighlighted
+                      ? [
+                          "0 10px 30px rgba(0, 0, 0, 0.1)",
+                          "0 20px 60px rgba(255, 122, 0, 0.3)",
+                          "0 10px 30px rgba(0, 0, 0, 0.1)",
+                        ]
+                      : "0 10px 30px rgba(0, 0, 0, 0.1)",
+                    y: isHighlighted ? [0, -4, 0] : 0,
+                    scale: isHighlighted ? [1, 1.03, 1] : 1,
+                  }}
+                  transition={{
+                    duration: isHighlighted ? 0.8 : 0.6,
+                    delay: isHighlighted ? 0 : index * 0.1,
+                    ease: "easeInOut",
+                  }}
+                  className="group h-full rounded-3xl"
+                >
+                  <Card className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] shadow-md hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden flex flex-col">
+                    {/* Image Section - Matching reference design */}
+                    <div className="relative aspect-[4/3] overflow-hidden bg-transparent p-4">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-lg"
                       />
-                    </motion.button>
 
-                    {/* Discount Badge - Matching reference image */}
-                    {/* {product.isSpecialOffer && (
+                      {/* Wishlist Button - Top Right */}
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => toggleFavorite(product)}
+                        className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md z-10 border border-gray-200"
+                      >
+                        <Heart
+                          className={`h-3 w-3 transition-colors ${
+                            isFavorite
+                              ? "fill-red-500 text-red-500"
+                              : "text-gray-400 hover:text-gray-600"
+                          }`}
+                        />
+                      </motion.button>
+
+                      {/* Discount Badge - Matching reference image */}
+                      {/* {product.isSpecialOffer && (
                       <div className="absolute bottom-2 left-2 bg-[#F44A01] text-white px-1.5 py-0.5 rounded text-[10px] font-medium">
                         {product.badge}
                       </div>
                     )} */}
-                  </div>
-
-                  <CardContent className="p-2 flex flex-col flex-grow gap-y-2">
-                    {/* Brand Name in Orange */}
-                    <p className="font-normal text-[#F44A01] mb-0 text-xs">
-                      {product.brand}
-                    </p>
-
-                    {/* Product Name */}
-                    <CardTitle className="text-sm font-medium text-[#1E1E1E] leading-tight line-clamp-2 mb-1">
-                      {product.name}
-                    </CardTitle>
-
-                    {/* Price Section - Matching reference image */}
-                    <div className="flex items-baseline gap-1.5 flex-wrap">
-                      <span className="text-md font-body font-medium text-[#1E1E1E]">
-                        £{product.finalPrice.toLocaleString()}
-                      </span>
-                      <span className="text-md text-[#616161] line-through">
-                        £{product.originalPrice.toLocaleString()}
-                      </span>
-                      <span className="text-sm text-[#1E1E1E] font-normal">
-                        ({product.discount}% off)
-                      </span>
                     </div>
-                  </CardContent>
 
-                  {/* Add to Cart Button - At bottom edge-to-edge like reference */}
-                  <Button
-                    onClick={() => handleAddToCart(product)}
-                    disabled={isAdded}
-                    className={`w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 font-medium text-xs ${
-                      isAdded
-                        ? "bg-green-500 hover:bg-green-600 text-white"
-                        : "bg-[#1E1E1E] hover:bg-[#2a2a2a] text-white"
-                    }`}
-                  >
-                    {isAdded ? (
-                      <>
-                        <Check className="h-3 w-3 mr-1" />
-                        Added
-                      </>
-                    ) : (
-                      "Select Size"
-                    )}
-                  </Button>
-                </Card>
-              </motion.div>
-            );
-          })}
-        </div>
+                    <CardContent className="p-2 flex flex-col flex-grow gap-y-2">
+                      {/* Brand Name in Orange */}
+                      <p className="font-normal text-[#F44A01] mb-0 text-xs">
+                        {product.brand}
+                      </p>
+
+                      {/* Product Name */}
+                      <CardTitle className="text-sm font-medium text-[#1E1E1E] leading-tight line-clamp-2 mb-1">
+                        {product.name}
+                      </CardTitle>
+
+                      {/* Price Section - Matching reference image */}
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-md font-body font-medium text-[#1E1E1E]">
+                          £{product.finalPrice.toLocaleString()}
+                        </span>
+                        <span className="text-md text-[#616161] line-through">
+                          £{product.originalPrice.toLocaleString()}
+                        </span>
+                        <span className="text-sm text-[#1E1E1E] font-normal">
+                          ({product.discount}% off)
+                        </span>
+                      </div>
+                    </CardContent>
+
+                    {/* Add to Cart Button - At bottom edge-to-edge like reference */}
+                    <Button
+                      onClick={() => handleAddToCart(product)}
+                      disabled={isAdded}
+                      className={`w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 font-medium text-xs ${
+                        isAdded
+                          ? "bg-green-500 hover:bg-green-600 text-white"
+                          : "bg-[#1E1E1E] hover:bg-[#2a2a2a] text-white"
+                      }`}
+                    >
+                      {isAdded ? (
+                        <>
+                          <Check className="h-3 w-3 mr-1" />
+                          Added
+                        </>
+                      ) : (
+                        "Select Size"
+                      )}
+                    </Button>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Enhanced AI Recommendations Section */}
         {/* <motion.div

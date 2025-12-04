@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CartProvider, useCart } from "@/components/CartContext";
 import { WishlistProvider } from "@/components/WishlistContext";
+import { AuthModal } from "@/components/AuthModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,9 +26,18 @@ import {
   CheckCircle2,
   ArrowLeft,
   Trash2,
+  Plus,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
+import { getAddresses, createAddress, type Address } from "@/lib/api/address";
+import {
+  getCart,
+  clearCart,
+  type ApiCartItem,
+  type CartResponse,
+} from "@/lib/api/cart";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -42,6 +52,17 @@ function CheckoutContent() {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [isProcessing, setIsProcessing] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null
+  );
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+  const [apiCart, setApiCart] = useState<CartResponse | null>(null);
+  const [isLoadingCart, setIsLoadingCart] = useState(false);
 
   // Placeholder products for demo
   const placeholderProducts = [
@@ -73,8 +94,41 @@ function CheckoutContent() {
     },
   ];
 
-  // Use cart items if available, otherwise use placeholder
-  const items = cartItems.length > 0 ? cartItems : placeholderProducts;
+  // Use API cart if available (authenticated user), otherwise use CartContext, fallback to placeholder
+  // This needs to be recalculated whenever apiCart or cartItems changes
+  const items = React.useMemo(() => {
+    console.log("=== Determining Cart Items Source ===");
+    console.log("API Cart exists:", !!apiCart);
+    console.log("API Cart items:", apiCart?.data?.cart?.cartItems?.length || 0);
+    console.log("CartContext items:", cartItems.length);
+
+    if (
+      apiCart?.data?.cart?.cartItems &&
+      apiCart.data.cart.cartItems.length > 0
+    ) {
+      console.log("✅ Using API Cart items");
+      const mappedItems = apiCart.data.cart.cartItems.map(
+        (item: ApiCartItem) => ({
+          id: item.productId,
+          name: item.product.title,
+          price: parseFloat(item.product.price),
+          quantity: item.quantity,
+          image:
+            item.product.images[0] ||
+            "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400",
+          brand: "",
+        })
+      );
+      console.log("Mapped API items:", mappedItems);
+      return mappedItems;
+    } else if (cartItems.length > 0) {
+      console.log("⚠️ Using CartContext items");
+      return cartItems;
+    } else {
+      console.log("⚠️ Using placeholder products");
+      return placeholderProducts;
+    }
+  }, [apiCart, cartItems]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -90,11 +144,131 @@ function CheckoutContent() {
     cardName: "",
     expiryDate: "",
     cvv: "",
+    saveAddress: false,
   });
 
   useEffect(() => {
     setMounted(true);
+
+    // Check authentication
+    const checkAuth = () => {
+      try {
+        const accessToken = localStorage.getItem("accessToken");
+        const userStr = localStorage.getItem("user");
+
+        console.log("=== Checkout Auth Check ===");
+        console.log("Access token:", accessToken ? "exists" : "missing");
+        console.log("User data:", userStr ? "exists" : "missing");
+
+        if (accessToken && userStr) {
+          const user = JSON.parse(userStr);
+          console.log("User object:", user);
+
+          setToken(accessToken);
+          setIsAuthenticated(true);
+          setFormData((prev) => ({ ...prev, email: user.email || "" }));
+          loadAddresses(accessToken);
+          loadCartFromAPI(accessToken);
+          console.log("✅ User authenticated successfully");
+          return;
+        }
+      } catch (error) {
+        console.error("❌ Auth check error:", error);
+      }
+
+      console.log("⚠️ User not authenticated, will show auth modal");
+      setIsAuthenticated(false);
+      setShowAuthModal(true);
+    };
+
+    checkAuth();
   }, []);
+
+  // Load cart from API
+  const loadCartFromAPI = async (userToken: string) => {
+    console.log("=== Loading Cart from API ===");
+    console.log(
+      "Token:",
+      userToken ? `${userToken.substring(0, 20)}...` : "none"
+    );
+    setIsLoadingCart(true);
+    try {
+      const cartData = await getCart(userToken);
+      console.log("✅ Cart API Response:", cartData);
+      console.log(
+        "📦 Full response object:",
+        JSON.stringify(cartData, null, 2)
+      );
+      console.log(
+        "Cart items count:",
+        cartData?.data?.cart?.cartItems?.length || 0
+      );
+      console.log("Cart summary:", cartData?.data?.summary);
+
+      // Detailed check
+      if (!cartData) {
+        console.warn("⚠️ cartData is null or undefined");
+      } else if (!cartData.data) {
+        console.warn("⚠️ cartData.data is missing");
+      } else if (!cartData.data.cart) {
+        console.warn("⚠️ cartData.data.cart is missing");
+      } else if (!cartData.data.cart.cartItems) {
+        console.warn("⚠️ cartData.data.cart.cartItems is missing");
+      } else if (cartData.data.cart.cartItems.length === 0) {
+        console.warn("⚠️ cartData.data.cart.cartItems is empty array");
+      } else {
+        console.log("✅ Cart has items:", cartData.data.cart.cartItems);
+      }
+
+      setApiCart(cartData);
+    } catch (error) {
+      console.error("❌ Failed to load cart:", error);
+      setApiCart(null);
+    } finally {
+      setIsLoadingCart(false);
+    }
+  };
+
+  // Load saved addresses
+  const loadAddresses = async (userToken: string) => {
+    setIsLoadingAddresses(true);
+    try {
+      const addresses = await getAddresses(userToken);
+      setSavedAddresses(addresses);
+
+      // Auto-select default address or first address
+      const defaultAddress = addresses.find((addr) => addr.isDefault);
+      if (defaultAddress) {
+        setSelectedAddressId(defaultAddress.id);
+        populateFormWithAddress(defaultAddress);
+      } else if (addresses.length > 0) {
+        setSelectedAddressId(addresses[0].id);
+        populateFormWithAddress(addresses[0]);
+      } else {
+        setShowNewAddressForm(true);
+      }
+    } catch (error) {
+      console.error("Failed to load addresses:", error);
+      setShowNewAddressForm(true);
+    } finally {
+      setIsLoadingAddresses(false);
+    }
+  };
+
+  // Populate form with selected address
+  const populateFormWithAddress = (address: Address) => {
+    const names = address.fullName.split(" ");
+    setFormData((prev) => ({
+      ...prev,
+      firstName: names[0] || "",
+      lastName: names.slice(1).join(" ") || "",
+      phone: address.phone,
+      address: address.addressLine1,
+      city: address.city,
+      state: address.state,
+      pincode: address.postalCode,
+    }));
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -103,7 +277,7 @@ function CheckoutContent() {
     });
   };
 
-  const handleContinueToPayment = () => {
+  const handleContinueToPayment = async () => {
     // Validation for Step 1
     if (
       !formData.email ||
@@ -132,6 +306,29 @@ function CheckoutContent() {
       return;
     }
 
+    // Save address if checkbox is checked and user is authenticated
+    if (formData.saveAddress && token && isAuthenticated) {
+      try {
+        console.log("Saving new address...");
+        const newAddress = await createAddress(token, {
+          fullName: `${formData.firstName} ${formData.lastName}`,
+          phone: formData.phone,
+          addressLine1: formData.address,
+          city: formData.city,
+          state: formData.state,
+          postalCode: formData.pincode,
+          country: "United Kingdom",
+          isDefault: savedAddresses.length === 0,
+        });
+        setSavedAddresses([...savedAddresses, newAddress]);
+        console.log("✅ Address saved successfully:", newAddress);
+        toast.success("Address saved successfully!");
+      } catch (error) {
+        console.error("❌ Failed to save address:", error);
+        toast.error("Failed to save address, but continuing with checkout");
+      }
+    }
+
     setCurrentStep(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -157,12 +354,17 @@ function CheckoutContent() {
     setIsProcessing(true);
 
     // Simulate payment processing
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsProcessing(false);
       toast.success("Order placed successfully! 🎉");
 
-      // Clear cart (only if using real cart items)
-      if (cartItems.length > 0) {
+      // Clear cart
+      if (token && apiCart) {
+        // Clear API cart for authenticated users
+        await clearCart(token);
+        console.log("✅ API cart cleared");
+      } else if (cartItems.length > 0) {
+        // Clear CartContext for guest users
         cartItems.forEach((item) => removeFromCart(item.id));
       }
 
@@ -173,14 +375,42 @@ function CheckoutContent() {
     }, 2000);
   };
 
-  const totalPrice = getTotalPrice();
-  const totalItems = getTotalItems();
+  // Use API cart summary if available, otherwise use CartContext
+  const totalPrice = apiCart?.data?.summary?.subtotal
+    ? parseFloat(apiCart.data.summary.subtotal.toString())
+    : getTotalPrice();
+  const totalItems = apiCart?.data?.summary?.totalItems || getTotalItems();
   const tax = totalPrice * 0.2; // 20% VAT
   const finalTotal = totalPrice + tax;
 
+  // Log whenever items or totals change
+  useEffect(() => {
+    console.log("=== Cart State Updated ===");
+    console.log("Items count:", items.length);
+    console.log("Items:", items);
+    console.log("Total Price:", totalPrice);
+    console.log("Total Items:", totalItems);
+    console.log("Tax:", tax);
+    console.log("Final Total:", finalTotal);
+  }, [items, totalPrice, totalItems, tax, finalTotal]);
+
+  // Expose reload function to window for manual testing
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).reloadCart = () => {
+        if (token) {
+          console.log("Manually reloading cart...");
+          loadCartFromAPI(token);
+        } else {
+          console.log("No token available. Please log in first.");
+        }
+      };
+    }
+  }, [token]);
+
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-orange-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
       </div>
     );
@@ -333,126 +563,257 @@ function CheckoutContent() {
               {/* Shipping Address */}
               <Card className="border-2 border-[#1E1E1E] shadow-lg bg-[#ECE3DC] overflow-hidden">
                 <CardHeader className="bg-[#ECE3DC]">
-                  <CardTitle className="flex items-center gap-2 text-[#1E1E1E]">
-                    <div className="p-2 bg-[#FF6A00] rounded-lg">
-                      <MapPin className="h-5 w-5 text-white" />
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-[#1E1E1E]">
+                      <div className="p-2 bg-[#FF6A00] rounded-lg">
+                        <MapPin className="h-5 w-5 text-white" />
+                      </div>
+                      Shipping Address
                     </div>
-                    Shipping Address
+                    {isAuthenticated &&
+                      savedAddresses.length > 0 &&
+                      !showNewAddressForm && (
+                        <Button
+                          onClick={() => setShowNewAddressForm(true)}
+                          variant="outline"
+                          size="sm"
+                          className="border-[#FF6A00] text-[#FF6A00] hover:bg-[#FF6A00] hover:text-white"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add New
+                        </Button>
+                      )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-5">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="firstName"
-                        className="text-[#1E1E1E] font-medium"
-                      >
-                        First Name *
-                      </Label>
-                      <Input
-                        id="firstName"
-                        name="firstName"
-                        placeholder="John"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
-                        required
-                      />
+                  {isLoadingAddresses ? (
+                    <div className="space-y-4">
+                      <div className="h-24 bg-gray-200 animate-pulse rounded-lg" />
+                      <div className="h-24 bg-gray-200 animate-pulse rounded-lg" />
                     </div>
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="lastName"
-                        className="text-[#1E1E1E] font-medium"
-                      >
-                        Last Name *
-                      </Label>
-                      <Input
-                        id="lastName"
-                        name="lastName"
-                        placeholder="Doe"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
-                        required
-                      />
+                  ) : isAuthenticated &&
+                    savedAddresses.length > 0 &&
+                    !showNewAddressForm ? (
+                    // Saved Addresses Selection
+                    <div className="space-y-4">
+                      {savedAddresses.map((address) => (
+                        <div
+                          key={address.id}
+                          onClick={() => {
+                            setSelectedAddressId(address.id);
+                            populateFormWithAddress(address);
+                          }}
+                          className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                            selectedAddressId === address.id
+                              ? "border-[#FF6A00] bg-orange-50"
+                              : "border-gray-300 hover:border-[#FF6A00]"
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                selectedAddressId === address.id
+                                  ? "border-[#FF6A00] bg-[#FF6A00]"
+                                  : "border-gray-300"
+                              }`}
+                            >
+                              {selectedAddressId === address.id && (
+                                <Check className="h-3 w-3 text-white" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="font-semibold text-[#1E1E1E]">
+                                  {address.fullName}
+                                </p>
+                                {address.isDefault && (
+                                  <span className="text-xs bg-[#FF6A00] text-white px-2 py-0.5 rounded">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600">
+                                {address.phone}
+                              </p>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {address.addressLine1}
+                                {address.addressLine2 &&
+                                  `, ${address.addressLine2}`}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {address.city}, {address.state}{" "}
+                                {address.postalCode}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {address.country}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                  ) : (
+                    // New Address Form
+                    <>
+                      {showNewAddressForm && savedAddresses.length > 0 && (
+                        <Button
+                          onClick={() => {
+                            setShowNewAddressForm(false);
+                            if (savedAddresses.length > 0) {
+                              const defaultAddr =
+                                savedAddresses.find((a) => a.isDefault) ||
+                                savedAddresses[0];
+                              setSelectedAddressId(defaultAddr.id);
+                              populateFormWithAddress(defaultAddr);
+                            }
+                          }}
+                          variant="ghost"
+                          size="sm"
+                          className="text-[#FF6A00] hover:text-orange-600 mb-2"
+                        >
+                          ← Back to saved addresses
+                        </Button>
+                      )}
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="firstName"
+                            className="text-[#1E1E1E] font-medium"
+                          >
+                            First Name *
+                          </Label>
+                          <Input
+                            id="firstName"
+                            name="firstName"
+                            placeholder="John"
+                            value={formData.firstName}
+                            onChange={handleInputChange}
+                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="lastName"
+                            className="text-[#1E1E1E] font-medium"
+                          >
+                            Last Name *
+                          </Label>
+                          <Input
+                            id="lastName"
+                            name="lastName"
+                            placeholder="Doe"
+                            value={formData.lastName}
+                            onChange={handleInputChange}
+                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                            required
+                          />
+                        </div>
+                      </div>
 
-                  <Separator className="my-4" />
+                      <Separator className="my-4" />
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="address"
-                      className="text-[#1E1E1E] font-medium"
-                    >
-                      Street Address *
-                    </Label>
-                    <Input
-                      id="address"
-                      name="address"
-                      placeholder="123 Main Street, Apartment 4B"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
-                      required
-                    />
-                  </div>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="address"
+                          className="text-[#1E1E1E] font-medium"
+                        >
+                          Street Address *
+                        </Label>
+                        <Input
+                          id="address"
+                          name="address"
+                          placeholder="123 Main Street, Apartment 4B"
+                          value={formData.address}
+                          onChange={handleInputChange}
+                          className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                          required
+                        />
+                      </div>
 
-                  <Separator className="my-4" />
+                      <Separator className="my-4" />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="city"
-                        className="text-[#1E1E1E] font-medium"
-                      >
-                        City *
-                      </Label>
-                      <Input
-                        id="city"
-                        name="city"
-                        placeholder="Chennai"
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="state"
-                        className="text-[#1E1E1E] font-medium"
-                      >
-                        State *
-                      </Label>
-                      <Input
-                        id="state"
-                        name="state"
-                        placeholder="Tamil Nadu"
-                        value={formData.state}
-                        onChange={handleInputChange}
-                        className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transaprent"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="pincode"
-                        className="text-[#1E1E1E] font-medium"
-                      >
-                        Pincode *
-                      </Label>
-                      <Input
-                        id="pincode"
-                        name="pincode"
-                        placeholder="600001"
-                        value={formData.pincode}
-                        onChange={handleInputChange}
-                        className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
-                        required
-                      />
-                    </div>
-                  </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="city"
+                            className="text-[#1E1E1E] font-medium"
+                          >
+                            City *
+                          </Label>
+                          <Input
+                            id="city"
+                            name="city"
+                            placeholder="London"
+                            value={formData.city}
+                            onChange={handleInputChange}
+                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="state"
+                            className="text-[#1E1E1E] font-medium"
+                          >
+                            State *
+                          </Label>
+                          <Input
+                            id="state"
+                            name="state"
+                            placeholder="England"
+                            value={formData.state}
+                            onChange={handleInputChange}
+                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="pincode"
+                            className="text-[#1E1E1E] font-medium"
+                          >
+                            Postcode *
+                          </Label>
+                          <Input
+                            id="pincode"
+                            name="pincode"
+                            placeholder="SW1A 1AA"
+                            value={formData.pincode}
+                            onChange={handleInputChange}
+                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {isAuthenticated && (
+                        <>
+                          <Separator className="my-4" />
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id="saveAddress"
+                              checked={formData.saveAddress}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  saveAddress: e.target.checked,
+                                })
+                              }
+                              className="w-4 h-4 text-[#FF6A00] border-gray-300 rounded focus:ring-[#FF6A00]"
+                            />
+                            <Label
+                              htmlFor="saveAddress"
+                              className="text-sm text-gray-700 cursor-pointer"
+                            >
+                              Save this address for future orders
+                            </Label>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
@@ -460,7 +821,7 @@ function CheckoutContent() {
               <div className="flex justify-end pt-4">
                 <Button
                   onClick={handleContinueToPayment}
-                  className="bg-gradient-to-r from-[#FF6A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all"
+                  className="bg-linear-to-r from-[#FF6A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all"
                   size="lg"
                 >
                   Continue to Payment
@@ -751,7 +1112,7 @@ function CheckoutContent() {
                             key={item.id}
                             className="flex gap-3 p-3 border-2 border-[#1E1E1E] rounded-xl bg-[#ECE3DC] hover:shadow-md transition-all"
                           >
-                            <div className="relative flex-shrink-0">
+                            <div className="relative shrink-0">
                               <img
                                 src={item.image}
                                 alt={item.name}
@@ -835,7 +1196,7 @@ function CheckoutContent() {
                       <Button
                         onClick={handlePlaceOrder}
                         disabled={isProcessing}
-                        className="w-full bg-gradient-to-r from-[#FF6A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-6 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
+                        className="w-full bg-linear-to-r from-[#FF6A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-6 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
                       >
                         {isProcessing ? (
                           <div className="flex items-center gap-2">
@@ -887,6 +1248,36 @@ function CheckoutContent() {
       </div>
 
       <Footer />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => {
+          // Check if user logged in while modal was open
+          const accessToken = localStorage.getItem("accessToken");
+          const userStr = localStorage.getItem("user");
+
+          if (accessToken && userStr) {
+            try {
+              const user = JSON.parse(userStr);
+              setToken(accessToken);
+              setIsAuthenticated(true);
+              setFormData((prev) => ({ ...prev, email: user.email || "" }));
+              loadAddresses(accessToken);
+              loadCartFromAPI(accessToken);
+              setShowAuthModal(false);
+              console.log("✅ User logged in, modal closed");
+              return;
+            } catch (error) {
+              console.error("Error loading user after login:", error);
+            }
+          }
+          // If user closed modal without logging in, redirect to home
+          console.log("⚠️ User closed modal without logging in, redirecting");
+          toast.error("Please log in to continue with checkout");
+          router.push("/");
+        }}
+      />
     </div>
   );
 }

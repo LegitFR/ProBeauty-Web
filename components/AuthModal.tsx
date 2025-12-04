@@ -30,6 +30,7 @@ import {
   resetPassword,
   googleAuth,
 } from "../lib/api/auth";
+import { useCart } from "./CartContext";
 
 // Declare Google types for TypeScript
 declare global {
@@ -50,13 +51,16 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultTab?: "login" | "signup";
+  onLoginSuccess?: () => void;
 }
 
 export function AuthModal({
   isOpen,
   onClose,
   defaultTab = "login",
+  onLoginSuccess,
 }: AuthModalProps) {
+  const { syncCartWithBackend } = useCart();
   const [activeTab, setActiveTab] = useState<"login" | "signup">(defaultTab);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -159,6 +163,15 @@ export function AuthModal({
     try {
       const response = await googleAuth(credential);
       toast.success(`Welcome, ${response.user.name}!`);
+
+      // Sync local cart with backend
+      try {
+        await syncCartWithBackend();
+      } catch (error) {
+        console.error("Failed to sync cart:", error);
+        // Don't show error to user, just log it
+      }
+
       onClose();
       // Refresh the page to update UI with logged-in state
       window.location.reload();
@@ -185,10 +198,24 @@ export function AuthModal({
 
       toast.success(`Welcome back, ${response.user.name}!`);
       setLoginForm({ email: "", password: "" });
-      onClose();
 
-      // Refresh the page to update UI with logged-in state
-      window.location.reload();
+      // Sync local cart with backend
+      try {
+        await syncCartWithBackend();
+      } catch (error) {
+        console.error("Failed to sync cart:", error);
+        // Don't show error to user, just log it
+      }
+
+      // Call success callback if provided (for booking flow)
+      if (onLoginSuccess) {
+        onLoginSuccess();
+        onClose();
+      } else {
+        onClose();
+        // Refresh the page to update UI with logged-in state
+        window.location.reload();
+      }
     } catch (error: any) {
       toast.error(error.message || "Login failed. Please try again.");
     } finally {
