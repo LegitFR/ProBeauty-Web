@@ -289,6 +289,11 @@ export function AuthModal({
       return;
     }
 
+    // TODO: REMOVE - Temporary OTP logging for development
+    console.log("🔐 [DEV ONLY] OTP entered for verification:", otp);
+    console.log("🔐 [DEV ONLY] Email:", signupForm.email);
+    // END TODO: REMOVE
+
     setIsLoading(true);
     try {
       await confirmRegistration(signupForm.email, otp);

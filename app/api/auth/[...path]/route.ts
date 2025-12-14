@@ -41,6 +41,12 @@ export async function POST(
       console.log(`[Proxy] Response status: ${response.status}`);
       console.log(`[Proxy] Response data:`, data);
 
+      // TODO: REMOVE - Temporary OTP logging for development
+      if (path === "signup" && data.otp) {
+        console.log("🔐 [DEV ONLY] OTP from backend:", data.otp);
+      }
+      // END TODO: REMOVE
+
       return NextResponse.json(data, { status: response.status });
     } catch (fetchError: any) {
       clearTimeout(timeoutId);

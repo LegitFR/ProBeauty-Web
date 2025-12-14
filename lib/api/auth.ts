@@ -65,6 +65,13 @@ export async function signup(data: SignupData): Promise<AuthResponse> {
 
     const result = await response.json();
 
+    // TODO: REMOVE - Temporary OTP logging for development
+    console.log("🔐 [DEV ONLY] Signup response:", result);
+    if (result.otp) {
+      console.log("🔐 [DEV ONLY] OTP received:", result.otp);
+    }
+    // END TODO: REMOVE
+
     if (!response.ok) {
       // Provide user-friendly error messages
       if (response.status === 409) {

@@ -41,10 +41,10 @@ export function AppDownload() {
   return (
     <section
       id="app"
-      className="py-16 sm:py-20 lg:py-24 bg-linear-to-r from-[#4D1C00] via-[#792800] to-[#F44A01] relative overflow-hidden"
+      className="py-12 sm:py-20 lg:py-24 bg-linear-to-r from-[#4D1C00] via-[#792800] to-[#F44A01] relative overflow-hidden"
     >
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           {/* Content Side */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -67,7 +67,7 @@ export function AppDownload() {
                 <span className="text-[#F44A01]">Mobile App</span>
               </h2>
 
-              <p className="text-base sm:text-lg text-[#F1E5D5] mb-8 sm:mb-10 leading-relaxed max-w-lg">
+              <p className="text-base sm:text-lg text-[#F1E5D5] mb-6 sm:mb-10 leading-relaxed max-w-lg">
                 Take your beauty journey with you! Shop, book, and discover new
                 looks wherever you are.
               </p>
@@ -79,7 +79,7 @@ export function AppDownload() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="space-y-4 sm:space-y-5 mb-8 sm:mb-10"
+              className="space-y-3 sm:space-y-5 mb-6 sm:mb-10"
             >
               {features.map((feature, index) => (
                 <motion.div
@@ -114,7 +114,7 @@ export function AppDownload() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.8 }}
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8 sm:mb-10"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-10"
             >
               <Button
                 size="lg"
@@ -180,7 +180,7 @@ export function AppDownload() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="relative mt-12 lg:mt-0"
+            className="relative mt-8 lg:mt-0"
           >
             <div className="relative max-w-2xl mx-auto flex items-center justify-center">
               {/* ProBeauty Mobile Image */}
@@ -194,7 +194,7 @@ export function AppDownload() {
                 <img
                   src="/probeauty-mobile.png"
                   alt="ProBeauty Mobile App"
-                  className="w-full h-[750px] sm:h-[650px] lg:h-[750px] object-contain"
+                  className="w-full h-[350px] sm:h-[650px] lg:h-[750px] object-contain"
                 />
               </motion.div>
             </div>

@@ -53,9 +53,9 @@ export function Footer() {
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
         {/* Main Footer Content */}
         <div className="py-12 sm:py-16 lg:py-20">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-6 gap-x-6 gap-y-10 lg:gap-12">
             {/* Brand Section */}
-            <div className="md:col-span-2 lg:col-span-2">
+            <div className="col-span-2 md:col-span-2 lg:col-span-2">
               <div className="mb-5">
                 <h3 className="font-display text-2xl sm:text-3xl font-bold mb-4">
                   <img src={footerLogo.src} alt="ProBeauty Logo" />

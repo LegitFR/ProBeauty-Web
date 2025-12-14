@@ -900,7 +900,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                       {staffMember.user?.name || "Staff Member"}
                                     </h3>
                                     <p className="text-sm text-gray-600">
-                                      {staffMember.role}
+                                      {staffMember.role || "Staff Member"}
                                     </p>
                                   </div>
                                 </div>
