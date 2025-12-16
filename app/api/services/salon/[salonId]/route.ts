@@ -32,7 +32,14 @@ export async function GET(
     }
 
     const data = await response.json();
-    console.log(`Successfully fetched ${data.data?.length || 0} services`);
+
+    // Ensure data.data is always an array
+    if (!Array.isArray(data.data)) {
+      console.warn("Services data is not an array, converting to empty array");
+      data.data = [];
+    }
+
+    console.log(`Successfully fetched ${data.data.length} services`);
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Error fetching salon services:", error);

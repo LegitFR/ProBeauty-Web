@@ -7,7 +7,7 @@ import { ArrowLeft, Star, Check, User, X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { getServicesBySalon, Service } from "@/lib/api/service";
-import { createBooking, TimeSlot } from "@/lib/api/booking";
+import { createBooking, TimeSlot, getAvailableSlots } from "@/lib/api/booking";
 import { getStaffBySalon, Staff } from "@/lib/api/staff";
 import { getAccessToken, isAuthenticated } from "@/lib/api/auth";
 import { Salon } from "@/lib/api/salon";
@@ -129,7 +129,8 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     try {
       console.log(`Loading services for salon: ${salon.id}`);
       const response = await getServicesBySalon(salon.id);
-      const allServices = response.data || [];
+      // Ensure response.data is an array
+      const allServices = Array.isArray(response.data) ? response.data : [];
       console.log(`Loaded ${allServices.length} services`);
 
       // Debug: Log each service's salonId
@@ -177,15 +178,14 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     setStaffLoading(true);
     try {
       // First, check if salon already has staff data
-      if (salon.staff && salon.staff.length > 0) {
-        console.log(
-          `Using ${salon.staff.length} staff members from salon data`
-        );
+      const salonStaff = Array.isArray(salon.staff) ? salon.staff : [];
+      if (salonStaff.length > 0) {
+        console.log(`Using ${salonStaff.length} staff members from salon data`);
         console.log(
           "Staff data from salon:",
-          JSON.stringify(salon.staff, null, 2)
+          JSON.stringify(salonStaff, null, 2)
         );
-        setStaff(salon.staff as Staff[]);
+        setStaff(salonStaff as Staff[]);
         setStaffLoading(false);
         return;
       }
@@ -193,7 +193,8 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       // If not, fetch from API (fallback)
       console.log("Fetching staff from API...");
       const response = await getStaffBySalon(salon.id);
-      const staffData = response.data || [];
+      // Ensure response.data is an array
+      const staffData = Array.isArray(response.data) ? response.data : [];
       setStaff(staffData);
 
       // If no staff available, show a helpful message
@@ -229,193 +230,57 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
     setSlotsLoading(true);
     try {
-      console.log("=== GENERATING AVAILABILITY FROM STAFF ===");
+      console.log("=== FETCHING AVAILABILITY FROM BACKEND API ===");
       console.log(`Selected Date: ${selectedDate}`);
+      console.log(`Salon ID: ${salon.id}`);
+      console.log(`Service ID: ${selectedService.id}`);
       console.log(`Staff ID: ${selectedStaff.id}`);
-      console.log(`Staff Availability (raw):`, selectedStaff.availability);
-      console.log(`Availability type:`, typeof selectedStaff.availability);
 
-      // Parse availability if it's a string
-      let availability = selectedStaff.availability;
-      if (typeof availability === "string") {
-        console.log("Parsing availability from JSON string");
-        try {
-          availability = JSON.parse(availability);
-          console.log("Parsed availability:", availability);
-        } catch (e) {
-          console.error("Failed to parse availability JSON:", e);
-          toast.error("Invalid staff availability data");
-          setAvailableSlots([]);
-          setSlotsLoading(false);
-          return;
-        }
-      }
+      // Call the backend availability API which properly validates staff availability and existing bookings
+      const response = await getAvailableSlots({
+        salonId: salon.id,
+        serviceId: selectedService.id,
+        staffId: selectedStaff.id,
+        date: selectedDate,
+      });
 
-      // Get day of week from selected date
-      const date = new Date(selectedDate);
-      const dayOfWeek = date
-        .toLocaleDateString("en-US", { weekday: "long" })
-        .toLowerCase() as keyof typeof availability;
-      console.log(`Day of week: ${dayOfWeek}`);
+      console.log("Backend availability response:", response);
 
-      // Get staff availability for the selected day
-      const dayAvailability = availability?.[dayOfWeek];
-      console.log(`Availability for ${dayOfWeek}:`, dayAvailability);
-
-      // Check if day availability exists
-      if (!dayAvailability) {
-        console.log(`Staff not available on ${dayOfWeek}`);
-        toast.info(
-          `Staff member is not available on ${
-            dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1)
-          }. Please select a different date.`
+      if (response.data && response.data.slots) {
+        // Filter to only show available slots
+        const availableSlots = response.data.slots.filter(
+          (slot) => slot.available
         );
-        setAvailableSlots([]);
-        setSlotsLoading(false);
-        return;
-      }
 
-      // Generate time slots from staff availability
-      const generatedSlots: TimeSlot[] = [];
-
-      // Handle two formats:
-      // Format 1: Array of time ranges ['10:00-18:00']
-      // Format 2: Object with isAvailable and slots {isAvailable: true, slots: [{start: '10:00', end: '18:00'}]}
-
-      if (Array.isArray(dayAvailability)) {
-        // Format 1: ['10:00-18:00', '19:00-21:00']
-        console.log(`Processing array format availability`);
-        for (const timeRange of dayAvailability) {
-          const [startTime, endTime] = timeRange.split("-");
-
-          // Generate 30-minute slots between start and end time
-          const slotTimes = generateTimeSlots(
-            selectedDate,
-            startTime,
-            endTime,
-            selectedService.durationMinutes || 30
-          );
-
-          generatedSlots.push(...slotTimes);
-        }
-      } else if (
-        typeof dayAvailability === "object" &&
-        dayAvailability.isAvailable
-      ) {
-        // Format 2: {isAvailable: true, slots: [...]}
-        console.log(`Processing object format availability`);
-        if (dayAvailability.slots && dayAvailability.slots.length > 0) {
-          for (const slot of dayAvailability.slots) {
-            const startTime = slot.start;
-            const endTime = slot.end;
-
-            // Generate 30-minute slots between start and end time
-            const slotTimes = generateTimeSlots(
-              selectedDate,
-              startTime,
-              endTime,
-              selectedService.durationMinutes || 30
-            );
-
-            generatedSlots.push(...slotTimes);
-          }
-        }
-      } else {
         console.log(
-          `Staff not available on ${dayOfWeek} (unavailable or invalid format)`
+          `Received ${response.data.slots.length} total slots, ${availableSlots.length} available`
         );
-        toast.info(
-          `Staff member is not available on ${
-            dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1)
-          }. Please select a different date.`
-        );
-        setAvailableSlots([]);
-        setSlotsLoading(false);
-        return;
-      }
 
-      console.log(
-        `Generated ${generatedSlots.length} time slots:`,
-        generatedSlots
-      );
-      setAvailableSlots(generatedSlots);
+        if (availableSlots.length === 0) {
+          const date = new Date(selectedDate);
+          const dayOfWeek = date.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+          toast.info(
+            `No available time slots for ${dayOfWeek}. Please select a different date or staff member.`
+          );
+        }
+
+        setAvailableSlots(response.data.slots);
+      } else {
+        console.warn("No slots data in response");
+        setAvailableSlots([]);
+      }
     } catch (error: any) {
-      console.error("Error generating available slots:", error);
-      toast.error("Failed to generate available time slots");
+      console.error("Error fetching available slots:", error);
+      toast.error(
+        error.message ||
+          "Failed to fetch available time slots. Please try again."
+      );
       setAvailableSlots([]);
     } finally {
       setSlotsLoading(false);
     }
-  };
-
-  // Helper function to generate time slots
-  const generateTimeSlots = (
-    selectedDate: string,
-    startTime: string,
-    endTime: string,
-    durationMinutes: number
-  ): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-    const [startHour, startMinute] = startTime.split(":").map(Number);
-    const [endHour, endMinute] = endTime.split(":").map(Number);
-
-    // Parse the date in local timezone (YYYY-MM-DD format)
-    const [year, month, day] = selectedDate.split("-").map(Number);
-
-    // Create date in local timezone
-    let currentTime = new Date(
-      year,
-      month - 1,
-      day,
-      startHour,
-      startMinute,
-      0,
-      0
-    );
-
-    const endDateTime = new Date(
-      year,
-      month - 1,
-      day,
-      endHour,
-      endMinute,
-      0,
-      0
-    );
-
-    console.log(
-      `Generating slots for date: ${selectedDate}, time range: ${startTime}-${endTime}`
-    );
-    console.log(`First slot time (local): ${currentTime.toString()}`);
-    console.log(`First slot time (ISO): ${currentTime.toISOString()}`);
-
-    const now = new Date();
-
-    while (currentTime < endDateTime) {
-      const slotEndTime = new Date(
-        currentTime.getTime() + durationMinutes * 60000
-      );
-
-      if (slotEndTime <= endDateTime) {
-        const startTimeStr = currentTime.toISOString();
-        const endTimeStr = slotEndTime.toISOString();
-
-        // Only include slots that are in the future
-        if (currentTime > now) {
-          slots.push({
-            startTime: startTimeStr,
-            endTime: endTimeStr,
-            available: true,
-          });
-        }
-      }
-
-      // Move to next slot (30-minute intervals)
-      currentTime = new Date(currentTime.getTime() + 30 * 60000);
-    }
-
-    console.log(`Generated ${slots.length} future time slots`);
-    return slots;
   };
 
   // Generate calendar dates
@@ -545,14 +410,23 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       console.log("\nStaff availability for the day:");
       console.log(JSON.stringify(selectedStaff?.availability, null, 2));
 
-      await createBooking(token, {
+      const response = await createBooking(token, {
         salonId: salon.id,
         serviceId: selectedService.id,
         staffId: selectedStaff.id,
         startTime: selectedTime,
       });
+
+      console.log("Booking created successfully:", response.data);
+
       toast.success(
-        "Booking confirmed! You will receive a confirmation email shortly."
+        `Booking confirmed! Your appointment is scheduled for ${formatTime(
+          selectedTime
+        )} on ${new Date(selectedDate).toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })}`
       );
       onClose();
     } catch (error: any) {

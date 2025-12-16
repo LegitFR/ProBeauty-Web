@@ -113,6 +113,19 @@ export async function fetchProductsClient(
 }
 
 /**
+ * Simple hash function to generate consistent values from product ID
+ */
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
+}
+
+/**
  * Transforms API products to display format with fallback values
  * @param apiProducts - Products from the API
  * @returns Array of display-ready products
@@ -121,10 +134,19 @@ export function transformProducts(apiProducts: ApiProduct[]): DisplayProduct[] {
   return apiProducts.map((product) => {
     // Use first image from API
     const image =
-      product.images && product.images.length > 0 ? product.images[0] : ""; // Calculate discount (you can enhance this based on your business logic)
-    const discount = Math.floor(Math.random() * 20) + 5; // Random 5-25% for demo
+      product.images && product.images.length > 0 ? product.images[0] : "";
+
+    // Generate consistent values based on product ID hash
+    const hash = hashCode(product.id);
+
+    // No discount for now - salon owners haven't decided on offers
+    const discount = 0;
     const originalPrice = product.price;
-    const finalPrice = Math.round(originalPrice * (1 - discount / 100));
+    const finalPrice = product.price; // Show actual price from API
+
+    // Generate consistent rating and reviews based on product ID
+    const rating = 4.5 + (hash % 5) / 10; // Consistent rating 4.5-5.0
+    const reviews = 50 + (hash % 200); // Consistent reviews 50-250
 
     return {
       id: product.id,
@@ -134,8 +156,8 @@ export function transformProducts(apiProducts: ApiProduct[]): DisplayProduct[] {
       originalPrice,
       finalPrice,
       discount,
-      rating: 4.5 + Math.random() * 0.5, // Random rating 4.5-5.0 for demo
-      reviews: Math.floor(Math.random() * 200) + 50, // Random reviews 50-250 for demo
+      rating: Math.round(rating * 10) / 10, // Round to 1 decimal
+      reviews,
       image,
       isSpecialOffer: discount > 10,
       badge: `${discount}% off`,

@@ -555,12 +555,13 @@ export function Shop() {
                         <span className="text-md font-body font-medium text-[#1E1E1E]">
                           £{product.finalPrice.toLocaleString()}
                         </span>
-                        <span className="text-md text-[#616161] line-through">
+                        {/* Commented out until salon owners decide on offers */}
+                        {/* <span className="text-md text-[#616161] line-through">
                           £{product.originalPrice.toLocaleString()}
                         </span>
                         <span className="text-sm text-[#1E1E1E] font-normal">
                           ({product.discount}% off)
-                        </span>
+                        </span> */}
                       </div>
                     </CardContent>
 

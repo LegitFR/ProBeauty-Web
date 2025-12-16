@@ -32,8 +32,19 @@ export async function GET(
     }
 
     const data = await response.json();
-    console.log(`Successfully fetched ${data.data?.length || 0} staff members`);
-    return NextResponse.json(data, { status: response.status });
+
+    // The salon endpoint returns { data: { ...salon, staff: [...] } }
+    // We need to extract the staff array
+    const salon = data.data;
+    const staff = Array.isArray(salon?.staff) ? salon.staff : [];
+
+    console.log(`Successfully fetched ${staff.length} staff members`);
+
+    // Return staff in the expected format
+    return NextResponse.json(
+      { message: "Staff fetched successfully", data: staff },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching salon staff:", error);
     return NextResponse.json(

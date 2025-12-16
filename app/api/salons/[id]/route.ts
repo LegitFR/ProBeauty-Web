@@ -24,6 +24,15 @@ export async function GET(
     });
 
     const data = await response.json();
+
+    // Ensure staff property is always an array
+    if (data.data && data.data.staff && !Array.isArray(data.data.staff)) {
+      console.warn("Staff property is not an array, converting to array");
+      data.data.staff = [];
+    } else if (data.data && !data.data.staff) {
+      data.data.staff = [];
+    }
+
     return NextResponse.json(data, { status: response.status });
   } catch (error: any) {
     console.error("[Salon API] GET by ID Error:", error);
