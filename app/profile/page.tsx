@@ -480,16 +480,88 @@ export default function ProfilePage() {
                           </Button>
                         </div>
                         <div className="space-y-4">
-                          <div className="text-center py-8 text-gray-500">
-                            <Calendar className="h-12 w-12 mx-auto mb-2 text-orange-500" />
-                            <p>No upcoming appointments</p>
-                            <Button
-                              onClick={() => (window.location.href = "/#book")}
-                              className="mt-4 bg-orange-500 hover:bg-orange-600"
-                            >
-                              Book Appointment
-                            </Button>
-                          </div>
+                          {(() => {
+                            const now = new Date();
+                            const upcomingBookings = bookings
+                              .filter((booking) => {
+                                const startTime = new Date(booking.startTime);
+                                return (
+                                  startTime >= now &&
+                                  (booking.status === "CONFIRMED" ||
+                                    booking.status === "PENDING")
+                                );
+                              })
+                              .slice(0, 3); // Show only first 3 upcoming appointments
+
+                            if (upcomingBookings.length === 0) {
+                              return (
+                                <div className="text-center py-8 text-gray-500">
+                                  <Calendar className="h-12 w-12 mx-auto mb-2 text-orange-500" />
+                                  <p>No upcoming appointments</p>
+                                  <Button
+                                    onClick={() =>
+                                      (window.location.href = "/#book")
+                                    }
+                                    className="mt-4 bg-orange-500 hover:bg-orange-600"
+                                  >
+                                    Book Appointment
+                                  </Button>
+                                </div>
+                              );
+                            }
+
+                            return upcomingBookings.map((booking) => (
+                              <div
+                                key={booking.id}
+                                className="group flex gap-3 p-4 bg-gradient-to-br from-white to-orange-50/30 rounded-xl hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer border border-orange-100/50"
+                                onClick={() => setActiveTab("appointments")}
+                              >
+                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6A00] to-[#F44A01] flex items-center justify-center shrink-0 shadow-md group-hover:shadow-lg transition-shadow">
+                                  <span className="text-xl font-bold text-white">
+                                    {booking.salon?.name
+                                      ?.charAt(0)
+                                      .toUpperCase() || "S"}
+                                  </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-sm text-gray-900 truncate mb-0.5">
+                                    {booking.salon?.name || "Salon"}
+                                  </h4>
+                                  <p className="text-xs text-[#FF6A00] font-medium truncate mb-2">
+                                    {booking.service?.title || "Service"}
+                                  </p>
+                                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                                    <Clock className="h-3.5 w-3.5 text-[#FF6A00]" />
+                                    <span className="font-medium">
+                                      {new Date(
+                                        booking.startTime
+                                      ).toLocaleDateString("en", {
+                                        month: "short",
+                                        day: "numeric",
+                                      })}
+                                      {" at "}
+                                      {new Date(
+                                        booking.startTime
+                                      ).toLocaleTimeString("en", {
+                                        hour: "numeric",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
+                                  </div>
+                                </div>
+                                <Badge
+                                  className={`text-xs h-fit px-3 py-1 font-medium ${
+                                    booking.status === "CONFIRMED"
+                                      ? "bg-gradient-to-r from-orange-100 to-orange-200 text-[#FF6A00] border-orange-300"
+                                      : "bg-gradient-to-r from-amber-100 to-amber-200 text-amber-700 border-amber-300"
+                                  }`}
+                                >
+                                  {booking.status.charAt(0) +
+                                    booking.status.slice(1).toLowerCase()}
+                                </Badge>
+                              </div>
+                            ));
+                          })()}
                         </div>
                       </CardContent>
                     </Card>
@@ -585,7 +657,9 @@ export default function ProfilePage() {
                                 const now = new Date();
                                 const startTime = new Date(b.startTime);
                                 return (
-                                  startTime < now && b.status === "COMPLETED"
+                                  startTime < now &&
+                                  b.status !== "CANCELLED" &&
+                                  b.status !== "NO_SHOW"
                                 );
                               }).length,
                             },
@@ -631,7 +705,8 @@ export default function ProfilePage() {
                               } else if (appointmentFilter === "past") {
                                 return (
                                   startTime < now &&
-                                  booking.status === "COMPLETED"
+                                  booking.status !== "CANCELLED" &&
+                                  booking.status !== "NO_SHOW"
                                 );
                               } else if (appointmentFilter === "cancelled") {
                                 return (

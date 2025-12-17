@@ -38,8 +38,9 @@ export interface StaffAvailability {
 
 export interface Staff {
   id: string;
+  name?: string; // Name is directly on staff object
   salonId: string;
-  role: string;
+  role?: string; // Role might not exist in the data
   availability: StaffAvailability;
   userId?: string;
   user?: {

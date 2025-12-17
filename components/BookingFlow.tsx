@@ -283,6 +283,29 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     }
   };
 
+  // Check if a staff member is available on a specific day
+  const isStaffAvailableOnDay = (dateString: string): boolean => {
+    if (!selectedStaff || !selectedStaff.availability) {
+      return true; // If no staff selected or no availability info, assume available
+    }
+
+    const date = new Date(dateString);
+    const dayOfWeek = date
+      .toLocaleDateString("en-US", { weekday: "long" })
+      .toLowerCase();
+
+    const dayAvailability =
+      selectedStaff.availability[
+        dayOfWeek as keyof typeof selectedStaff.availability
+      ];
+
+    if (!dayAvailability || !dayAvailability.isAvailable) {
+      return false;
+    }
+
+    return true;
+  };
+
   // Generate calendar dates
   const generateCalendarDates = () => {
     const dates = [];
@@ -290,11 +313,15 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     for (let i = 0; i < 14; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
+      const fullDate = date.toISOString().split("T")[0];
+      const isAvailable = isStaffAvailableOnDay(fullDate);
+
       dates.push({
         date: date.getDate(),
         day: date.toLocaleDateString("en", { weekday: "short" }),
-        fullDate: date.toISOString().split("T")[0],
+        fullDate,
         isToday: i === 0,
+        isAvailable,
       });
     }
     return dates;
@@ -758,35 +785,78 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {staff.map((staffMember) => (
-                            <Card
-                              key={staffMember.id}
-                              className="p-5 cursor-pointer hover:border-gray-300 transition-all duration-200 bg-transparent border-2 border-[#CBCBCB]"
-                              onClick={() => handleStaffSelect(staffMember)}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                  <div className="w-14 h-14 rounded-full overflow-hidden bg-purple-100 shrink-0 flex items-center justify-center">
-                                    <User className="h-7 w-7 text-purple-600" />
+                          {staff.map((staffMember) => {
+                            // Get staff name - check multiple possible locations
+                            const staffName =
+                              staffMember.name || // Direct name field (primary)
+                              staffMember.user?.name || // User object name (fallback)
+                              "Professional"; // Default fallback
+
+                            // Get role with fallback
+                            const staffRole =
+                              staffMember.role || "Professional";
+
+                            // Check available days for this staff
+                            const availableDays: string[] = [];
+                            if (staffMember.availability) {
+                              const days = [
+                                "monday",
+                                "tuesday",
+                                "wednesday",
+                                "thursday",
+                                "friday",
+                                "saturday",
+                                "sunday",
+                              ];
+                              days.forEach((day) => {
+                                const dayAvail =
+                                  staffMember.availability[
+                                    day as keyof typeof staffMember.availability
+                                  ];
+                                if (dayAvail && dayAvail.isAvailable) {
+                                  availableDays.push(
+                                    day.charAt(0).toUpperCase() +
+                                      day.slice(1, 3)
+                                  );
+                                }
+                              });
+                            }
+
+                            return (
+                              <Card
+                                key={staffMember.id}
+                                className="p-5 cursor-pointer hover:border-gray-300 transition-all duration-200 bg-transparent border-2 border-[#CBCBCB]"
+                                onClick={() => handleStaffSelect(staffMember)}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-4">
+                                    <div className="w-14 h-14 rounded-full overflow-hidden bg-linear-to-br from-orange-100 to-purple-100 shrink-0 flex items-center justify-center">
+                                      <User className="h-7 w-7 text-[#FF7A00]" />
+                                    </div>
+                                    <div>
+                                      <h3 className="font-semibold text-black">
+                                        {staffName}
+                                      </h3>
+                                      <p className="text-sm text-gray-600">
+                                        {staffRole}
+                                      </p>
+                                      {availableDays.length > 0 && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          Available: {availableDays.join(", ")}
+                                        </p>
+                                      )}
+                                    </div>
                                   </div>
-                                  <div>
-                                    <h3 className="font-semibold text-black">
-                                      {staffMember.user?.name || "Staff Member"}
-                                    </h3>
-                                    <p className="text-sm text-gray-600">
-                                      {staffMember.role || "Staff Member"}
-                                    </p>
-                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    className="hover:bg-[#FF7A00] hover:text-white hover:border-[#FF7A00] bg-transparent border-[#1E1E1E] px-6 py-4 rounded-2xl"
+                                  >
+                                    Select
+                                  </Button>
                                 </div>
-                                <Button
-                                  variant="outline"
-                                  className="hover:bg-[#FF7A00] hover:text-white hover:border-[#FF7A00] bg-transparent border-[#1E1E1E] px-6 py-4 rounded-2xl"
-                                >
-                                  Select
-                                </Button>
-                              </div>
-                            </Card>
-                          ))}
+                              </Card>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -828,28 +898,41 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                             })}
                           </p>
                           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 sm:gap-3">
-                            {calendarDates.map((dateObj, index) => (
-                              <button
-                                key={index}
-                                onClick={() =>
-                                  handleDateSelect(dateObj.fullDate)
-                                }
-                                className={`p-2 sm:p-3 md:p-4 rounded-xl text-center transition-all duration-200 ${
-                                  selectedDate === dateObj.fullDate
-                                    ? "bg-[#FF7A00] text-white shadow-lg scale-105"
-                                    : dateObj.isToday
-                                    ? "bg-blue-600 text-white"
-                                    : "hover:shadow-lg text-[#1E1E1E] bg-[#ECE3DC] border-2 border-[#CBCBCB]"
-                                }`}
-                              >
-                                <div className="font-bold text-base sm:text-lg">
-                                  {dateObj.date}
-                                </div>
-                                <div className="text-[10px] sm:text-xs mt-1 truncate">
-                                  {dateObj.day}
-                                </div>
-                              </button>
-                            ))}
+                            {calendarDates.map((dateObj, index) => {
+                              const isDisabled = !dateObj.isAvailable;
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() => {
+                                    if (!isDisabled) {
+                                      handleDateSelect(dateObj.fullDate);
+                                    }
+                                  }}
+                                  disabled={isDisabled}
+                                  className={`p-2 sm:p-3 md:p-4 rounded-xl text-center transition-all duration-200 ${
+                                    isDisabled
+                                      ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
+                                      : selectedDate === dateObj.fullDate
+                                      ? "bg-[#FF7A00] text-white shadow-lg scale-105"
+                                      : dateObj.isToday
+                                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                                      : "hover:shadow-lg text-[#1E1E1E] bg-[#ECE3DC] border-2 border-[#CBCBCB] hover:border-[#FF7A00]"
+                                  }`}
+                                  title={
+                                    isDisabled
+                                      ? "Staff not available on this day"
+                                      : ""
+                                  }
+                                >
+                                  <div className="font-bold text-base sm:text-lg">
+                                    {dateObj.date}
+                                  </div>
+                                  <div className="text-[10px] sm:text-xs mt-1 truncate">
+                                    {dateObj.day}
+                                  </div>
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
 
