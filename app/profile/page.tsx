@@ -1086,7 +1086,7 @@ export default function ProfilePage() {
                         </h3>
                         <div className="space-y-6">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-800 mb-2">
                               Full Name
                             </label>
                             <input
@@ -1098,25 +1098,26 @@ export default function ProfilePage() {
                                   name: e.target.value,
                                 })
                               }
-                              className="w-full px-4 py-2 border border-[#1E1E1E] rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-800 mb-2">
                               Email
                             </label>
                             <input
                               type="email"
                               value={user.email}
                               disabled
-                              className="w-full px-4 py-2 border border-[#1E1E1E] rounded-lg bg-gray-100 cursor-not-allowed"
+                              className="w-full px-4 py-3 border-2 border-gray-200 border-2 rounded-xl bg-[#ECE3DC] cursor-not-allowed text-gray-600"
                             />
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                              <span className="inline-block w-1 h-1 bg-gray-400 rounded-full"></span>
                               Email cannot be changed
                             </p>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-800 mb-2">
                               Phone
                             </label>
                             <input
@@ -1128,7 +1129,7 @@ export default function ProfilePage() {
                                   phone: e.target.value,
                                 })
                               }
-                              className="w-full px-4 py-2 border border-[#1E1E1E] rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+                              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
                             />
                           </div>
                           <div className="pt-4">
@@ -1170,10 +1171,10 @@ export default function ProfilePage() {
                           <div className="space-y-4">
                             {/* New Address Form */}
                             {showNewAddressForm && (
-                              <Card className="border-2 border-orange-500">
-                                <CardContent className="p-4 bg-white">
-                                  <div className="flex items-center justify-between mb-4">
-                                    <h4 className="font-semibold">
+                              <Card className="border-2 border-[#FF6A00] shadow-lg">
+                                <CardContent className="p-6 bg-[#ECE3DC]">
+                                  <div className="flex items-center justify-between mb-6">
+                                    <h4 className="font-semibold text-lg text-gray-900">
                                       New Address
                                     </h4>
                                     <Button
@@ -1183,13 +1184,14 @@ export default function ProfilePage() {
                                         setShowNewAddressForm(false);
                                         resetAddressForm();
                                       }}
+                                      className="hover:bg-orange-100 text-gray-600 hover:text-gray-900"
                                     >
                                       <X className="h-4 w-4" />
                                     </Button>
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      <label className="block text-sm font-medium text-gray-800 mb-2">
                                         Full Name *
                                       </label>
                                       <input
@@ -1201,11 +1203,11 @@ export default function ProfilePage() {
                                             fullName: e.target.value,
                                           })
                                         }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
                                       />
                                     </div>
                                     <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      <label className="block text-sm font-medium text-gray-800 mb-2">
                                         Phone *
                                       </label>
                                       <input
@@ -1217,11 +1219,11 @@ export default function ProfilePage() {
                                             phone: e.target.value,
                                           })
                                         }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
                                       />
                                     </div>
                                     <div className="md:col-span-2">
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      <label className="block text-sm font-medium text-gray-800 mb-2">
                                         Address Line 1 *
                                       </label>
                                       <input
@@ -1233,11 +1235,11 @@ export default function ProfilePage() {
                                             addressLine1: e.target.value,
                                           })
                                         }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
                                       />
                                     </div>
                                     <div className="md:col-span-2">
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      <label className="block text-sm font-medium text-gray-800 mb-2">
                                         Address Line 2
                                       </label>
                                       <input
@@ -1249,11 +1251,11 @@ export default function ProfilePage() {
                                             addressLine2: e.target.value,
                                           })
                                         }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
                                       />
                                     </div>
                                     <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      <label className="block text-sm font-medium text-gray-800 mb-2">
                                         City *
                                       </label>
                                       <input
@@ -1265,11 +1267,11 @@ export default function ProfilePage() {
                                             city: e.target.value,
                                           })
                                         }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
                                       />
                                     </div>
                                     <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      <label className="block text-sm font-medium text-gray-800 mb-2">
                                         State/County *
                                       </label>
                                       <input
@@ -1281,11 +1283,11 @@ export default function ProfilePage() {
                                             state: e.target.value,
                                           })
                                         }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
                                       />
                                     </div>
                                     <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      <label className="block text-sm font-medium text-gray-800 mb-2">
                                         Postal Code *
                                       </label>
                                       <input
@@ -1297,11 +1299,11 @@ export default function ProfilePage() {
                                             postalCode: e.target.value,
                                           })
                                         }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
                                       />
                                     </div>
                                     <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      <label className="block text-sm font-medium text-gray-800 mb-2">
                                         Country *
                                       </label>
                                       <input
@@ -1313,11 +1315,11 @@ export default function ProfilePage() {
                                             country: e.target.value,
                                           })
                                         }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
                                       />
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2 mt-4">
+                                  <div className="flex items-center gap-3 mt-6 p-3 bg-orange-50 rounded-lg">
                                     <input
                                       type="checkbox"
                                       id="new-default"
@@ -1328,20 +1330,20 @@ export default function ProfilePage() {
                                           isDefault: e.target.checked,
                                         })
                                       }
-                                      className="rounded border-gray-300"
+                                      className="rounded border-gray-300 text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
                                     />
                                     <label
                                       htmlFor="new-default"
-                                      className="text-sm text-gray-700"
+                                      className="text-sm text-gray-800 font-medium cursor-pointer"
                                     >
                                       Set as default address
                                     </label>
                                   </div>
-                                  <div className="flex gap-2 mt-4">
+                                  <div className="flex gap-3 mt-6">
                                     <Button
                                       onClick={handleCreateAddress}
                                       disabled={savingAddress}
-                                      className="bg-orange-500 hover:bg-orange-600"
+                                      className="bg-[#FF6A00] hover:bg-[#FF7A00] text-white px-6 py-2.5 rounded-xl font-medium transition-all"
                                     >
                                       {savingAddress
                                         ? "Saving..."
@@ -1353,7 +1355,7 @@ export default function ProfilePage() {
                                         setShowNewAddressForm(false);
                                         resetAddressForm();
                                       }}
-                                      className="border-gray-300"
+                                      className="border-2 border-gray-300 hover:bg-gray-100 px-6 py-2.5 rounded-xl font-medium"
                                     >
                                       Cancel
                                     </Button>
@@ -1375,13 +1377,19 @@ export default function ProfilePage() {
                               addresses.map((address) => (
                                 <Card
                                   key={address.id}
-                                  className={`${
+                                  className={`transition-all hover:shadow-lg ${
                                     address.isDefault
-                                      ? "border-2 border-orange-500"
-                                      : ""
+                                      ? "border-2 border-[#FF6A00] shadow-md"
+                                      : "border border-gray-200"
                                   }`}
                                 >
-                                  <CardContent className="p-4 bg-white">
+                                  <CardContent
+                                    className={`p-5 ${
+                                      address.isDefault
+                                        ? "bg-gradient-to-br from-orange-50/50 to-white"
+                                        : "bg-[#ECE3DC]"
+                                    }`}
+                                  >
                                     {editingAddress === address.id ? (
                                       <>
                                         <div className="flex items-center justify-between mb-4">
