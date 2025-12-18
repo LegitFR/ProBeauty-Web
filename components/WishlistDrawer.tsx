@@ -24,7 +24,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
   const { addToCart } = useCart();
 
   const handleRemoveItem = (id: string | number, name: string) => {
-    removeFromWishlist(id);
+    removeFromWishlist(String(id));
     toast.success(`${name} removed from wishlist`);
   };
 
@@ -35,7 +35,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
       price: item.price,
       image: item.image,
     });
-    removeFromWishlist(item.id);
+    removeFromWishlist(String(item.id));
     toast.success(`${item.name} moved to cart!`);
   };
 

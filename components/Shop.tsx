@@ -145,14 +145,15 @@ export function Shop() {
   };
 
   const toggleFavorite = (product: any) => {
-    const isFavorite = isInWishlist(product.id);
+    const productId = String(product.id);
+    const isFavorite = isInWishlist(productId);
 
     if (isFavorite) {
-      removeFromWishlist(product.id);
+      removeFromWishlist(productId);
       toast.success("Removed from wishlist");
     } else {
       addToWishlist({
-        id: product.id,
+        id: productId,
         name: product.name,
         price: product.finalPrice,
         originalPrice: product.originalPrice,
@@ -469,8 +470,9 @@ export function Shop() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-4">
             {filteredProducts.map((product, index) => {
+              const productId = String(product.id);
               const isAdded = addedItems.has(product.id);
-              const isFavorite = isInWishlist(product.id);
+              const isFavorite = isInWishlist(productId);
               const isHighlighted = highlightedProductId === product.id;
 
               return (
