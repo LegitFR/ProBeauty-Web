@@ -11,6 +11,7 @@ import { createBooking, TimeSlot, getAvailableSlots } from "@/lib/api/booking";
 import { getStaffBySalon, Staff } from "@/lib/api/staff";
 import { getAccessToken, isAuthenticated } from "@/lib/api/auth";
 import { Salon } from "@/lib/api/salon";
+import { SalonReviewsSection } from "./SalonReviewsSection";
 
 type BookingStep = "services" | "professional" | "time" | "confirm" | "login";
 
@@ -1096,6 +1097,11 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
             <div className="lg:col-span-1 hidden lg:block">
               {renderBookingSummary()}
             </div>
+          </div>
+
+          {/* Reviews Section */}
+          <div className="mt-12">
+            <SalonReviewsSection salonId={salon.id} />
           </div>
         </div>
       </div>

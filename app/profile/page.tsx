@@ -48,13 +48,23 @@ import {
   type Order,
   type OrderStatus,
 } from "@/lib/api/order";
+import { getMyReviews } from "@/lib/api/review";
+import type { Review } from "@/lib/types/review";
+import { ReviewsList } from "@/components/ReviewsList";
+import { ReviewForm } from "@/components/ReviewForm";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "appointments" | "orders" | "wishlist" | "settings"
+    "overview" | "appointments" | "orders" | "wishlist" | "reviews" | "settings"
   >("overview");
   const [appointmentFilter, setAppointmentFilter] = useState<
     "upcoming" | "past" | "cancelled"
@@ -73,6 +83,12 @@ export default function ProfilePage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
+
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -142,6 +158,14 @@ export default function ProfilePage() {
     }
   }, [activeTab, user]);
 
+  // Load reviews when reviews tab is active
+  useEffect(() => {
+    if (activeTab === "reviews" && user) {
+      loadReviews();
+      loadBookings(); // Also load bookings for "Rate Your Recent Visits" section
+    }
+  }, [activeTab, user]);
+
   const loadAddresses = async () => {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
@@ -184,6 +208,21 @@ export default function ProfilePage() {
       console.error("Failed to load orders:", error);
     } finally {
       setLoadingOrders(false);
+    }
+  };
+
+  const loadReviews = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    setLoadingReviews(true);
+    try {
+      const response = await getMyReviews(token, 1, 10);
+      setReviews(response.data || []);
+    } catch (error) {
+      console.error("Failed to load reviews:", error);
+    } finally {
+      setLoadingReviews(false);
     }
   };
 
@@ -442,6 +481,7 @@ export default function ProfilePage() {
                   },
                   { key: "orders", label: "My Orders", icon: ShoppingBag },
                   { key: "wishlist", label: "Wishlist", icon: Heart },
+                  { key: "reviews", label: "My Reviews", icon: Star },
                   { key: "settings", label: "Settings", icon: Edit },
                 ].map((tab) => (
                   <button
@@ -850,13 +890,26 @@ export default function ProfilePage() {
                                       {/* Action Buttons */}
                                       {appointmentFilter === "past" && (
                                         <div className="flex gap-2">
-                                          <Button
-                                            size="sm"
-                                            className="bg-orange-500 hover:bg-orange-600 flex-1"
-                                          >
-                                            <Star className="h-3 w-3 mr-1" />
-                                            Review
-                                          </Button>
+                                          {booking.status === "COMPLETED" &&
+                                            !reviews.some(
+                                              (review) =>
+                                                review.salonId ===
+                                                  booking.salonId &&
+                                                review.serviceId ===
+                                                  booking.serviceId
+                                            ) && (
+                                              <Button
+                                                size="sm"
+                                                onClick={() => {
+                                                  setReviewBooking(booking);
+                                                  setShowReviewDialog(true);
+                                                }}
+                                                className="bg-orange-500 hover:bg-orange-600 flex-1"
+                                              >
+                                                <Star className="h-3 w-3 mr-1" />
+                                                Write Review
+                                              </Button>
+                                            )}
                                           <Button
                                             size="sm"
                                             variant="outline"
@@ -1074,6 +1127,156 @@ export default function ProfilePage() {
                       </div>
                     </CardContent>
                   </Card>
+                )}
+
+                {activeTab === "reviews" && (
+                  <div className="space-y-6">
+                    <Card>
+                      <CardContent className="p-6 bg-[#ECE3DC]">
+                        <div className="flex items-center justify-between mb-6">
+                          <div>
+                            <h3 className="text-lg font-semibold">
+                              My Reviews
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Your reviews help others make better decisions
+                            </p>
+                          </div>
+                        </div>
+
+                        {loadingReviews ? (
+                          <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500 mx-auto"></div>
+                          </div>
+                        ) : reviews.length === 0 ? (
+                          <div className="text-center py-12 text-gray-500">
+                            <Star className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                            <p className="font-medium">No reviews yet</p>
+                            <p className="text-sm mt-1">
+                              After completing a booking, you can leave a review
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {reviews.map((review) => (
+                              <Card
+                                key={review.id}
+                                className="hover:shadow-lg transition-shadow"
+                              >
+                                <CardContent className="p-5">
+                                  <div className="space-y-3">
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between">
+                                      <div className="space-y-1">
+                                        <h4 className="font-semibold text-gray-900">
+                                          {review.salon?.name}
+                                        </h4>
+                                        {review.service && (
+                                          <p className="text-sm text-gray-600">
+                                            {review.service.title}
+                                          </p>
+                                        )}
+                                        <div className="flex gap-0.5">
+                                          {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star
+                                              key={star}
+                                              className={`w-4 h-4 ${
+                                                star <= review.rating
+                                                  ? "fill-yellow-400 text-yellow-400"
+                                                  : "text-gray-300"
+                                              }`}
+                                            />
+                                          ))}
+                                        </div>
+                                      </div>
+                                      <p className="text-sm text-gray-500">
+                                        {new Date(
+                                          review.createdAt
+                                        ).toLocaleDateString()}
+                                      </p>
+                                    </div>
+
+                                    {/* Comment */}
+                                    {review.comment && (
+                                      <p className="text-sm leading-relaxed text-gray-700">
+                                        {review.comment}
+                                      </p>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Completed bookings that can be reviewed */}
+                    <Card>
+                      <CardContent className="p-6 bg-[#ECE3DC]">
+                        <h3 className="text-lg font-semibold mb-6">
+                          Rate Your Recent Visits
+                        </h3>
+                        {(() => {
+                          const completedBookings = bookings.filter(
+                            (booking) =>
+                              booking.status === "COMPLETED" &&
+                              !reviews.some(
+                                (review) =>
+                                  review.salonId === booking.salonId &&
+                                  review.serviceId === booking.serviceId
+                              )
+                          );
+
+                          if (completedBookings.length === 0) {
+                            return (
+                              <div className="text-center py-8 text-gray-500">
+                                <p>No bookings to review at the moment</p>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="space-y-4">
+                              {completedBookings.slice(0, 5).map((booking) => (
+                                <Card
+                                  key={booking.id}
+                                  className="hover:shadow-lg transition-shadow"
+                                >
+                                  <CardContent className="p-5">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex-1">
+                                        <h4 className="font-semibold text-gray-900">
+                                          {booking.salon?.name}
+                                        </h4>
+                                        <p className="text-sm text-gray-600">
+                                          {booking.service?.title}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          {new Date(
+                                            booking.startTime
+                                          ).toLocaleDateString()}
+                                        </p>
+                                      </div>
+                                      <Button
+                                        onClick={() => {
+                                          setReviewBooking(booking);
+                                          setShowReviewDialog(true);
+                                        }}
+                                        className="bg-orange-500 hover:bg-orange-600"
+                                      >
+                                        Write Review
+                                      </Button>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+                  </div>
                 )}
 
                 {activeTab === "settings" && (
@@ -1685,6 +1888,32 @@ export default function ProfilePage() {
 
           <Footer />
           <Toaster />
+
+          {/* Review Dialog */}
+          <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Write a Review</DialogTitle>
+              </DialogHeader>
+              {reviewBooking && (
+                <ReviewForm
+                  salonId={reviewBooking.salonId}
+                  serviceId={reviewBooking.serviceId}
+                  salonName={reviewBooking.salon?.name}
+                  serviceName={reviewBooking.service?.title}
+                  onSuccess={() => {
+                    setShowReviewDialog(false);
+                    setReviewBooking(null);
+                    loadReviews();
+                  }}
+                  onCancel={() => {
+                    setShowReviewDialog(false);
+                    setReviewBooking(null);
+                  }}
+                />
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       </WishlistProvider>
     </CartProvider>
