@@ -4,9 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://probeauty-backend.onrender.com/";
+const API_BASE_URL = "https://probeauty-backend.onrender.com";
 
 export async function GET(
   request: NextRequest,

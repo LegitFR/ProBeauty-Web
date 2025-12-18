@@ -4,8 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL = "https://probeauty-backend.onrender.com";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,16 +21,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/v1/reviews/user/me?page=${page}&limit=${limit}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      }
-    );
+    const url = `${API_BASE_URL}/api/v1/reviews/user/me?page=${page}&limit=${limit}`;
+    console.log("[Reviews API] Fetching user reviews from:", url);
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
 
     const data = await response.json();
 
@@ -44,9 +43,13 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching reviews:", error);
+    console.error("[Reviews API] Error fetching reviews:", error);
+    console.error("[Reviews API] API_BASE_URL:", API_BASE_URL);
     return NextResponse.json(
-      { message: "Internal server error" },
+      {
+        message: "Internal server error",
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
