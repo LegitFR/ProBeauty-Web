@@ -25,6 +25,7 @@ import {
   Plus,
   Check,
   X,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,7 +49,7 @@ import {
   type Order,
   type OrderStatus,
 } from "@/lib/api/order";
-import { getMyReviews } from "@/lib/api/review";
+import { getMyReviews, deleteReview, updateReview } from "@/lib/api/review";
 import type { Review } from "@/lib/types/review";
 import { ReviewsList } from "@/components/ReviewsList";
 import { ReviewForm } from "@/components/ReviewForm";
@@ -58,6 +59,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -89,6 +101,10 @@ export default function ProfilePage() {
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletingReview, setDeletingReview] = useState<Review | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -224,6 +240,35 @@ export default function ProfilePage() {
     } finally {
       setLoadingReviews(false);
     }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!deletingReview) return;
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      toast.error("Please login to delete review");
+      return;
+    }
+
+    try {
+      await deleteReview(token, deletingReview.id);
+      toast.success("Review deleted successfully");
+      setShowDeleteDialog(false);
+      setDeletingReview(null);
+      loadReviews(); // Reload reviews
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete review"
+      );
+    }
+  };
+
+  const handleEditSuccess = () => {
+    setShowEditDialog(false);
+    setEditingReview(null);
+    loadReviews(); // Reload reviews
+    toast.success("Review updated successfully");
   };
 
   const handleCancelOrder = async (orderId: string) => {
@@ -1189,11 +1234,33 @@ export default function ProfilePage() {
                                           ))}
                                         </div>
                                       </div>
-                                      <p className="text-sm text-gray-500">
-                                        {new Date(
-                                          review.createdAt
-                                        ).toLocaleDateString()}
-                                      </p>
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-sm text-gray-500">
+                                          {new Date(
+                                            review.createdAt
+                                          ).toLocaleDateString()}
+                                        </p>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => {
+                                            setEditingReview(review);
+                                            setShowEditDialog(true);
+                                          }}
+                                        >
+                                          <Pencil className="w-4 h-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => {
+                                            setDeletingReview(review);
+                                            setShowDeleteDialog(true);
+                                          }}
+                                        >
+                                          <Trash2 className="w-4 h-4 text-red-500" />
+                                        </Button>
+                                      </div>
                                     </div>
 
                                     {/* Comment */}
@@ -1276,6 +1343,59 @@ export default function ProfilePage() {
                         })()}
                       </CardContent>
                     </Card>
+
+                    {/* Edit Review Dialog */}
+                    <Dialog
+                      open={showEditDialog}
+                      onOpenChange={setShowEditDialog}
+                    >
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Edit Your Review</DialogTitle>
+                        </DialogHeader>
+                        {editingReview && (
+                          <ReviewForm
+                            salonId={editingReview.salonId}
+                            serviceId={editingReview.serviceId || undefined}
+                            existingReview={editingReview}
+                            onSuccess={handleEditSuccess}
+                            onCancel={() => {
+                              setShowEditDialog(false);
+                              setEditingReview(null);
+                            }}
+                          />
+                        )}
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Delete Confirmation Dialog */}
+                    <AlertDialog
+                      open={showDeleteDialog}
+                      onOpenChange={setShowDeleteDialog}
+                    >
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Review</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this review? This
+                            action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel
+                            onClick={() => setDeletingReview(null)}
+                          >
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDeleteReview}
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 )}
 
