@@ -12,6 +12,7 @@ import { getStaffBySalon, Staff } from "@/lib/api/staff";
 import { getAccessToken, isAuthenticated } from "@/lib/api/auth";
 import { Salon } from "@/lib/api/salon";
 import { SalonReviewsSection } from "./SalonReviewsSection";
+import { getReviewsBySalon } from "@/lib/api/review";
 
 type BookingStep = "services" | "professional" | "time" | "confirm" | "login";
 
@@ -47,6 +48,10 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   // Authentication state
   const [userAuthenticated, setUserAuthenticated] = useState(false);
 
+  // Reviews state
+  const [averageRating, setAverageRating] = useState<number>(0);
+  const [totalReviews, setTotalReviews] = useState<number>(0);
+
   // Check authentication on mount
   useEffect(() => {
     setUserAuthenticated(isAuthenticated());
@@ -55,6 +60,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   // Load services when component mounts
   useEffect(() => {
     loadServices();
+    loadReviewStats();
   }, [salon.id]);
 
   // Load staff when service is selected
@@ -123,6 +129,17 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         titleLower.includes(keyword.toLowerCase())
       );
     });
+  };
+
+  const loadReviewStats = async () => {
+    try {
+      const response = await getReviewsBySalon(salon.id, 1, 1);
+      setAverageRating(response.averageRating || 0);
+      setTotalReviews(response.pagination.total || 0);
+    } catch (error) {
+      console.error("Error loading review stats:", error);
+      // Silently fail - reviews are not critical
+    }
   };
 
   const loadServices = async () => {
@@ -558,7 +575,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
               </div>
               <div className="flex-1">
                 <p className="font-medium text-black text-sm">
-                  {selectedStaff.user?.name || "Staff Member"}
+                  {selectedStaff.user?.name ||
+                    selectedStaff.name ||
+                    "Staff Member"}
                 </p>
                 <p className="text-xs text-gray-600">{selectedStaff.role}</p>
               </div>
@@ -1101,7 +1120,11 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
           {/* Reviews Section */}
           <div className="mt-12">
-            <SalonReviewsSection salonId={salon.id} />
+            <SalonReviewsSection
+              salonId={salon.id}
+              averageRating={averageRating}
+              totalReviews={totalReviews}
+            />
           </div>
         </div>
       </div>

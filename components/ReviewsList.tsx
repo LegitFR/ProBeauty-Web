@@ -97,9 +97,7 @@ export function ReviewsList({
           <Star
             key={star}
             className={`w-4 h-4 ${
-              star <= rating
-                ? "fill-yellow-400 text-yellow-400"
-                : "text-gray-300"
+              star <= rating ? "fill-[#FF7A00] text-[#FF7A00]" : "text-gray-300"
             }`}
           />
         ))}
@@ -111,11 +109,11 @@ export function ReviewsList({
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="p-6">
+          <Card key={i} className="p-6 bg-[#ECE3DC] border-2 border-[#1E1E1E]">
             <div className="animate-pulse space-y-3">
-              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-300 rounded w-1/4"></div>
+              <div className="h-3 bg-gray-300 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-300 rounded w-1/2"></div>
             </div>
           </Card>
         ))}
@@ -129,12 +127,12 @@ export function ReviewsList({
       {total > 0 && (
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-            <span className="text-2xl font-bold">
+            <Star className="w-6 h-6 fill-[#FF7A00] text-[#FF7A00]" />
+            <span className="text-2xl font-bold text-black">
               {averageRating.toFixed(1)}
             </span>
           </div>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-gray-600">
             Based on {total} {total === 1 ? "review" : "reviews"}
           </div>
         </div>
@@ -142,8 +140,8 @@ export function ReviewsList({
 
       {/* Reviews List */}
       {reviews.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-muted-foreground">
+        <Card className="p-8 text-center bg-[#ECE3DC] border-2 border-[#1E1E1E]">
+          <p className="text-gray-600 font-medium">
             No reviews yet. Be the first to review!
           </p>
         </Card>
@@ -153,23 +151,28 @@ export function ReviewsList({
             const isOwner = allowEdit && currentUserId === review.userId;
 
             return (
-              <Card key={review.id} className="p-6">
+              <Card
+                key={review.id}
+                className="p-6 bg-[#ECE3DC] border-2 border-[#1E1E1E]"
+              >
                 <div className="space-y-3">
                   {/* Header */}
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-medium">{review.user?.name}</p>
+                        <p className="font-semibold text-black">
+                          {review.user?.name}
+                        </p>
                         {renderStars(review.rating)}
                       </div>
                       {review.service && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-gray-600">
                           Service: {review.service.title}
                         </p>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-gray-600">
                         {new Date(review.createdAt).toLocaleDateString()}
                       </p>
                       {isOwner && (
@@ -201,7 +204,9 @@ export function ReviewsList({
 
                   {/* Comment */}
                   {review.comment && (
-                    <p className="text-sm leading-relaxed">{review.comment}</p>
+                    <p className="text-sm leading-relaxed text-black">
+                      {review.comment}
+                    </p>
                   )}
                 </div>
               </Card>

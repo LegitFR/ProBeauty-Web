@@ -29,20 +29,20 @@ export function SalonReviewsSection({
 
   return (
     <>
-      <Card>
-        <CardContent className="p-6">
+      <Card className="shadow-lg rounded-md">
+        <CardContent className="p-6 bg-[#ECE3DC]">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-xl font-semibold">Customer Reviews</h3>
+              <h3 className="text-xl font-bold text-black">Customer Reviews</h3>
               {totalReviews > 0 && (
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex items-center gap-1">
-                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                    <span className="text-lg font-bold">
+                    <Star className="w-5 h-5 fill-[#FF7A00] text-[#FF7A00]" />
+                    <span className="text-lg font-bold text-black">
                       {averageRating.toFixed(1)}
                     </span>
                   </div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-gray-600">
                     ({totalReviews} {totalReviews === 1 ? "review" : "reviews"})
                   </span>
                 </div>
@@ -51,16 +51,16 @@ export function SalonReviewsSection({
             <Button
               variant="outline"
               onClick={() => setShowAllReviews(true)}
-              className="shrink-0"
+              className="shrink-0 border-2 border-[#1E1E1E] hover:bg-[#FF7A00] hover:text-white hover:border-[#FF7A00] font-semibold"
             >
               View All Reviews
             </Button>
           </div>
 
           {totalReviews === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <Star className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No reviews yet</p>
+            <div className="text-center py-8 text-gray-600">
+              <Star className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+              <p className="font-medium">No reviews yet</p>
               <p className="text-sm mt-1">Be the first to review this salon!</p>
             </div>
           )}
@@ -68,7 +68,7 @@ export function SalonReviewsSection({
       </Card>
 
       <Dialog open={showAllReviews} onOpenChange={setShowAllReviews}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-[#ECE3DC]">
           <DialogHeader>
             <DialogTitle>All Reviews</DialogTitle>
           </DialogHeader>
