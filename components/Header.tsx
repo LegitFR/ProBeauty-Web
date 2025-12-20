@@ -22,6 +22,7 @@ import {
 import { AuthModal } from "./AuthModal";
 import { CartDrawer } from "./CartDrawer";
 import { WishlistDrawer } from "./WishlistDrawer";
+import { LanguageSwitcherWrapper } from "./LanguageSwitcherWrapper";
 import { getUser, logout } from "@/lib/api/auth";
 import Link from "next/link";
 import logoImage from "@/public/probeauty-header.png";
@@ -132,10 +133,15 @@ export function Header() {
             <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6">
               <a
                 href="#book"
-                className="text-gray-300 hover:text-white transition-colors duration-200 text-sm font-medium font-normal"
+                className="text-gray-300 hover:text-white transition-colors duration-200 text-sm font-medium"
               >
                 List Your Business
               </a>
+              <div className="w-px h-4 bg-gray-700"></div>
+
+              {/* Language Switcher */}
+              <LanguageSwitcherWrapper />
+
               <div className="w-px h-4 bg-gray-700"></div>
 
               {/* Show user menu or login button */}
@@ -145,7 +151,7 @@ export function Header() {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white font-semibold text-sm">
+                    <div className="w-8 h-8 rounded-full bg-linear-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white font-semibold text-sm">
                       {user.name?.charAt(0).toUpperCase()}
                     </div>
                     <span className="text-sm font-medium">{user.name}</span>
@@ -205,7 +211,7 @@ export function Header() {
                   }`}
                 />
                 {wishlistItems > 0 && (
-                  <Badge className="absolute -top-1 -right-1 bg-red-600 text-white text-xs min-w-[1rem] h-4 flex items-center justify-center">
+                  <Badge className="absolute -top-1 -right-1 bg-red-600 text-white text-xs min-w-4 h-4 flex items-center justify-center">
                     {wishlistItems}
                   </Badge>
                 )}
@@ -216,7 +222,7 @@ export function Header() {
               >
                 <ShoppingBag className="h-5 w-5" />
                 {totalItems > 0 && (
-                  <Badge className="absolute -top-1 -right-1 bg-orange-600 text-white text-xs min-w-[1rem] h-4 flex items-center justify-center">
+                  <Badge className="absolute -top-1 -right-1 bg-orange-600 text-white text-xs min-w-4 h-4 flex items-center justify-center">
                     {totalItems}
                   </Badge>
                 )}
@@ -241,7 +247,7 @@ export function Header() {
                   }`}
                 />
                 {wishlistItems > 0 && (
-                  <Badge className="absolute -top-1 -right-1 bg-red-600 text-white text-xs min-w-[1rem] h-4 flex items-center justify-center">
+                  <Badge className="absolute -top-1 -right-1 bg-red-600 text-white text-xs min-w-4 h-4 flex items-center justify-center">
                     {wishlistItems}
                   </Badge>
                 )}
@@ -252,7 +258,7 @@ export function Header() {
               >
                 <ShoppingBag className="h-5 w-5" />
                 {totalItems > 0 && (
-                  <Badge className="absolute -top-1 -right-1 bg-orange-600 text-white text-xs min-w-[1rem] h-4 flex items-center justify-center">
+                  <Badge className="absolute -top-1 -right-1 bg-orange-600 text-white text-xs min-w-4 h-4 flex items-center justify-center">
                     {totalItems}
                   </Badge>
                 )}
@@ -278,7 +284,7 @@ export function Header() {
                 {user && (
                   <div className="pb-3 border-b border-gray-700">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white font-semibold">
+                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white font-semibold">
                         {user.name?.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -322,7 +328,7 @@ export function Header() {
                         handleLogout();
                         setIsOpen(false);
                       }}
-                      className="block w-full text-left text-orange-400 hover:text-orange-600 transition-colors text-sm font-medium mb-3 flex items-center gap-2"
+                      className="w-full text-left text-orange-400 hover:text-orange-600 transition-colors text-sm font-medium mb-3 flex items-center gap-2"
                     >
                       <LogOut className="h-4 w-4" />
                       Sign Out

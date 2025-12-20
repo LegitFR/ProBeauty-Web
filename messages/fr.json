@@ -1,0 +1,74 @@
+{
+  "common": {
+    "languageSelector": "Langue",
+    "home": "Accueil",
+    "products": "Produits",
+    "salons": "Salons",
+    "profile": "Profil",
+    "cart": "Panier",
+    "wishlist": "Liste de souhaits",
+    "search": "Rechercher",
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "viewAll": "Voir tout",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès"
+  },
+  "hero": {
+    "title": "Découvrez votre expérience beauté parfaite",
+    "subtitle": "Réservez des rendez-vous dans les meilleurs salons et explorez des produits de beauté premium",
+    "bookNow": "Réserver maintenant",
+    "shopProducts": "Acheter des produits"
+  },
+  "features": {
+    "title": "Pourquoi nous choisir",
+    "easyBooking": {
+      "title": "Réservation facile",
+      "description": "Réservez vos rendez-vous de salon en quelques clics"
+    },
+    "qualityProducts": {
+      "title": "Produits de qualité",
+      "description": "Achetez dans notre sélection de produits de beauté premium"
+    },
+    "expertStyling": {
+      "title": "Stylistes experts",
+      "description": "Connectez-vous avec des professionnels de la beauté expérimentés"
+    }
+  },
+  "reviews": {
+    "title": "Avis clients",
+    "viewAllReviews": "Voir tous les avis",
+    "allReviews": "Tous les avis",
+    "noReviews": "Aucun avis pour le moment",
+    "beFirst": "Soyez le premier à évaluer ce salon !",
+    "writeReview": "Écrire un avis",
+    "rating": "Note",
+    "comment": "Commentaire",
+    "submit": "Soumettre",
+    "review": "avis",
+    "reviews": "avis"
+  },
+  "shop": {
+    "title": "Acheter des produits de beauté",
+    "addToCart": "Ajouter au panier",
+    "outOfStock": "Rupture de stock",
+    "viewDetails": "Voir les détails"
+  },
+  "footer": {
+    "about": "À propos",
+    "contact": "Contact",
+    "terms": "Conditions d'utilisation",
+    "privacy": "Politique de confidentialité",
+    "followUs": "Suivez-nous",
+    "allRightsReserved": "Tous droits réservés"
+  },
+  "checkout": {
+    "title": "Paiement",
+    "shippingAddress": "Adresse de livraison",
+    "paymentMethod": "Mode de paiement",
+    "orderSummary": "Récapitulatif de la commande",
+    "placeOrder": "Passer la commande",
+    "total": "Total"
+  }
+}

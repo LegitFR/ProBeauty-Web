@@ -93,7 +93,7 @@ export function AppDownload() {
                   }}
                   className="flex items-start gap-3 sm:gap-4"
                 >
-                  <motion.div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#FFFFFF1A] rounded-full flex items-center justify-center flex-shrink-0 p-2">
+                  <motion.div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#FFFFFF1A] rounded-full flex items-center justify-center shrink-0 p-2">
                     <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-[#F44A01]" />
                   </motion.div>
                   <div>
@@ -121,7 +121,7 @@ export function AppDownload() {
                 onClick={() => toast.info("Redirecting to App Store...")}
                 className="bg-[#FFFFFF1A] text-white hover:bg-black px-5 py-3 sm:px-6 sm:py-4 rounded-2xl group transition-all duration-300 transform hover:scale-105 shadow-lg h-auto"
               >
-                <Download className="h-5 w-5 sm:h-6 sm:w-6 mr-2.5 sm:mr-3 text-white flex-shrink-0" />
+                <Download className="h-5 w-5 sm:h-6 sm:w-6 mr-2.5 sm:mr-3 text-white shrink-0" />
                 <div className="text-left">
                   <div className="text-xs text-gray-300">Download for iOS</div>
                 </div>
@@ -134,7 +134,7 @@ export function AppDownload() {
                 }
                 className="bg-[#FFFFFF1A] text-white hover:bg-black px-5 py-3 sm:px-6 sm:py-4 rounded-2xl group transition-all duration-300 transform hover:scale-105 shadow-lg h-auto"
               >
-                <Download className="h-5 w-5 sm:h-6 sm:w-6 mr-2.5 sm:mr-3 text-white flex-shrink-0" />
+                <Download className="h-5 w-5 sm:h-6 sm:w-6 mr-2.5 sm:mr-3 text-white shrink-0" />
                 <div className="text-left">
                   <div className="text-xs text-gray-300">
                     Download for Android

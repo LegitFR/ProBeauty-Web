@@ -1,4 +1,4 @@
-import { fetchProducts, transformProducts } from "../../lib/api/products";
+import { fetchProducts, transformProducts } from "../../../lib/api/products";
 import ProductsClient from "./ProductsClient";
 
 export default async function ProductsPage() {

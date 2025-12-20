@@ -3,19 +3,19 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Header } from "../../components/Header";
-import { Footer } from "../../components/Footer";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Card, CardContent } from "../../components/ui/card";
-import { Badge } from "../../components/ui/badge";
-import { DisplayProduct } from "../../lib/api/products";
-import { CartProvider, useCart } from "../../components/CartContext";
+import { Header } from "../../../components/Header";
+import { Footer } from "../../../components/Footer";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Card, CardContent } from "../../../components/ui/card";
+import { Badge } from "../../../components/ui/badge";
+import { DisplayProduct } from "../../../lib/api/products";
+import { CartProvider, useCart } from "../../../components/CartContext";
 import {
   WishlistProvider,
   useWishlist,
-} from "../../components/WishlistContext";
-import { Toaster } from "../../components/Toaster";
+} from "../../../components/WishlistContext";
+import { Toaster } from "../../../components/Toaster";
 import { toast } from "sonner";
 import {
   Search,

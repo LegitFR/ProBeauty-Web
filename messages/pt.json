@@ -1,0 +1,74 @@
+{
+  "common": {
+    "languageSelector": "Idioma",
+    "home": "Início",
+    "products": "Produtos",
+    "salons": "Salões",
+    "profile": "Perfil",
+    "cart": "Carrinho",
+    "wishlist": "Lista de desejos",
+    "search": "Pesquisar",
+    "signIn": "Entrar",
+    "signOut": "Sair",
+    "viewAll": "Ver tudo",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso"
+  },
+  "hero": {
+    "title": "Descubra sua experiência de beleza perfeita",
+    "subtitle": "Reserve compromissos com os melhores salões e explore produtos de beleza premium",
+    "bookNow": "Reservar agora",
+    "shopProducts": "Comprar produtos"
+  },
+  "features": {
+    "title": "Por que nos escolher",
+    "easyBooking": {
+      "title": "Reserva fácil",
+      "description": "Reserve seus compromissos de salão em apenas alguns cliques"
+    },
+    "qualityProducts": {
+      "title": "Produtos de qualidade",
+      "description": "Compre em nossa seleção curada de produtos de beleza premium"
+    },
+    "expertStyling": {
+      "title": "Estilistas especialistas",
+      "description": "Conecte-se com profissionais de beleza experientes"
+    }
+  },
+  "reviews": {
+    "title": "Avaliações de clientes",
+    "viewAllReviews": "Ver todas as avaliações",
+    "allReviews": "Todas as avaliações",
+    "noReviews": "Ainda não há avaliações",
+    "beFirst": "Seja o primeiro a avaliar este salão!",
+    "writeReview": "Escrever uma avaliação",
+    "rating": "Classificação",
+    "comment": "Comentário",
+    "submit": "Enviar",
+    "review": "avaliação",
+    "reviews": "avaliações"
+  },
+  "shop": {
+    "title": "Comprar produtos de beleza",
+    "addToCart": "Adicionar ao carrinho",
+    "outOfStock": "Fora de estoque",
+    "viewDetails": "Ver detalhes"
+  },
+  "footer": {
+    "about": "Sobre nós",
+    "contact": "Contato",
+    "terms": "Termos de serviço",
+    "privacy": "Política de privacidade",
+    "followUs": "Siga-nos",
+    "allRightsReserved": "Todos os direitos reservados"
+  },
+  "checkout": {
+    "title": "Finalizar compra",
+    "shippingAddress": "Endereço de entrega",
+    "paymentMethod": "Método de pagamento",
+    "orderSummary": "Resumo do pedido",
+    "placeOrder": "Fazer pedido",
+    "total": "Total"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "common": {
+    "languageSelector": "Idioma",
+    "home": "Inicio",
+    "products": "Productos",
+    "salons": "Salones",
+    "profile": "Perfil",
+    "cart": "Carrito",
+    "wishlist": "Lista de deseos",
+    "search": "Buscar",
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión",
+    "viewAll": "Ver todo",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito"
+  },
+  "hero": {
+    "title": "Descubre tu experiencia de belleza perfecta",
+    "subtitle": "Reserva citas en los mejores salones y explora productos de belleza premium",
+    "bookNow": "Reservar ahora",
+    "shopProducts": "Comprar productos"
+  },
+  "features": {
+    "title": "Por qué elegirnos",
+    "easyBooking": {
+      "title": "Reserva fácil",
+      "description": "Reserva tus citas de salón en solo unos clics"
+    },
+    "qualityProducts": {
+      "title": "Productos de calidad",
+      "description": "Compra de nuestra selección curada de productos de belleza premium"
+    },
+    "expertStyling": {
+      "title": "Estilistas expertos",
+      "description": "Conéctate con profesionales de belleza experimentados"
+    }
+  },
+  "reviews": {
+    "title": "Reseñas de clientes",
+    "viewAllReviews": "Ver todas las reseñas",
+    "allReviews": "Todas las reseñas",
+    "noReviews": "Aún no hay reseñas",
+    "beFirst": "¡Sé el primero en reseñar este salón!",
+    "writeReview": "Escribir una reseña",
+    "rating": "Calificación",
+    "comment": "Comentario",
+    "submit": "Enviar",
+    "review": "reseña",
+    "reviews": "reseñas"
+  },
+  "shop": {
+    "title": "Comprar productos de belleza",
+    "addToCart": "Añadir al carrito",
+    "outOfStock": "Agotado",
+    "viewDetails": "Ver detalles"
+  },
+  "footer": {
+    "about": "Acerca de",
+    "contact": "Contacto",
+    "terms": "Términos de servicio",
+    "privacy": "Política de privacidad",
+    "followUs": "Síguenos",
+    "allRightsReserved": "Todos los derechos reservados"
+  },
+  "checkout": {
+    "title": "Finalizar compra",
+    "shippingAddress": "Dirección de envío",
+    "paymentMethod": "Método de pago",
+    "orderSummary": "Resumen del pedido",
+    "placeOrder": "Realizar pedido",
+    "total": "Total"
+  }
+}

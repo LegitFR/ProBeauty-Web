@@ -1,19 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Header } from "../components/Header";
-import { Hero } from "../components/Hero";
-import { FeaturesOverview } from "../components/FeaturesOverview";
-import { Shop } from "../components/Shop";
-import { SalonBooking } from "../components/SalonBooking";
-import { BusinessListing } from "../components/BusinessListing";
-import { AppDownload } from "../components/AppDownload";
-import { Testimonials } from "../components/Testimonials";
-import { Newsletter } from "../components/Newsletter";
-import { Footer } from "../components/Footer";
-import { CartProvider } from "../components/CartContext";
-import { WishlistProvider } from "../components/WishlistContext";
-import { Toaster } from "../components/Toaster";
+import { Header } from "@/components/Header";
+import { Hero } from "@/components/Hero";
+import { FeaturesOverview } from "@/components/FeaturesOverview";
+import { Shop } from "@/components/Shop";
+import { SalonBooking } from "@/components/SalonBooking";
+import { BusinessListing } from "@/components/BusinessListing";
+import { AppDownload } from "@/components/AppDownload";
+import { Testimonials } from "@/components/Testimonials";
+import { Newsletter } from "@/components/Newsletter";
+import { Footer } from "@/components/Footer";
+import { CartProvider } from "@/components/CartContext";
+import { WishlistProvider } from "@/components/WishlistContext";
+import { Toaster } from "@/components/Toaster";
 import { Salon } from "@/lib/api/salon";
 
 export default function HomeClient() {
