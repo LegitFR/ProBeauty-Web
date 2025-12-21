@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { ArrowLeft, Star, Check, User, X, Loader2 } from "lucide-react";
@@ -243,6 +243,42 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     }
   };
 
+  // Filter slots to ensure proper spacing based on service duration
+  const filterSlotsByServiceDuration = (slots: TimeSlot[]): TimeSlot[] => {
+    if (!selectedService || slots.length === 0) return slots;
+
+    const serviceDurationMs = selectedService.durationMinutes * 60 * 1000;
+    const filtered: TimeSlot[] = [];
+    let lastSelectedSlotTime: number | null = null;
+
+    // Sort slots by start time
+    const sortedSlots = [...slots].sort(
+      (a, b) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    );
+
+    for (const slot of sortedSlots) {
+      const slotStartTime = new Date(slot.startTime).getTime();
+
+      // If this is the first slot or enough time has passed since the last selected slot
+      if (
+        lastSelectedSlotTime === null ||
+        slotStartTime >= lastSelectedSlotTime + serviceDurationMs
+      ) {
+        filtered.push(slot);
+        if (slot.available) {
+          lastSelectedSlotTime = slotStartTime;
+        }
+      }
+    }
+
+    console.log(
+      `Filtered slots based on ${selectedService.durationMinutes} min service duration: ${sortedSlots.length} -> ${filtered.length} slots`
+    );
+
+    return filtered;
+  };
+
   const loadAvailableSlots = async () => {
     if (!selectedService || !selectedStaff || !selectedDate) return;
 
@@ -253,6 +289,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       console.log(`Salon ID: ${salon.id}`);
       console.log(`Service ID: ${selectedService.id}`);
       console.log(`Staff ID: ${selectedStaff.id}`);
+      console.log(
+        `Service Duration: ${selectedService.durationMinutes} minutes`
+      );
 
       // Call the backend availability API which properly validates staff availability and existing bookings
       const response = await getAvailableSlots({
@@ -265,17 +304,43 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       console.log("Backend availability response:", response);
 
       if (response.data && response.data.slots) {
+        console.log("=== TIME SLOT ANALYSIS ===");
+        console.log("Sample raw slots from backend:");
+        response.data.slots.slice(0, 3).forEach((slot, idx) => {
+          console.log(`Slot ${idx}:`, {
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            available: slot.available,
+            parsedStart: new Date(slot.startTime).toString(),
+            localHours: new Date(slot.startTime).getHours(),
+            utcHours: new Date(slot.startTime).getUTCHours(),
+          });
+        });
+
+        // Filter slots based on service duration to prevent overlapping bookings
+        const durationFilteredSlots = filterSlotsByServiceDuration(
+          response.data.slots
+        );
+
         // Filter to only show available slots
-        const availableSlots = response.data.slots.filter(
+        const availableSlots = durationFilteredSlots.filter(
           (slot) => slot.available
         );
 
         console.log(
-          `Received ${response.data.slots.length} total slots, ${availableSlots.length} available`
+          `Received ${response.data.slots.length} total slots, ${durationFilteredSlots.length} after duration filter, ${availableSlots.length} available`
         );
+        console.log("Sample available slots after filtering:");
+        availableSlots.slice(0, 3).forEach((slot, idx) => {
+          console.log(`Available Slot ${idx}:`, {
+            startTime: slot.startTime,
+            formatted: formatTime(slot.startTime),
+          });
+        });
 
         if (availableSlots.length === 0) {
-          const date = new Date(selectedDate);
+          const [year, month, day] = selectedDate.split("-").map(Number);
+          const date = new Date(year, month - 1, day);
           const dayOfWeek = date.toLocaleDateString("en-US", {
             weekday: "long",
           });
@@ -284,7 +349,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
           );
         }
 
-        setAvailableSlots(response.data.slots);
+        setAvailableSlots(durationFilteredSlots);
       } else {
         console.warn("No slots data in response");
         setAvailableSlots([]);
@@ -304,34 +369,57 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   // Check if a staff member is available on a specific day
   const isStaffAvailableOnDay = (dateString: string): boolean => {
     if (!selectedStaff || !selectedStaff.availability) {
+      console.log(
+        `No staff or availability data for ${dateString}, returning true`
+      );
       return true; // If no staff selected or no availability info, assume available
     }
 
-    const date = new Date(dateString);
+    // Parse date string as local date to avoid timezone issues
+    // dateString is in format "YYYY-MM-DD"
+    const [year, month, day] = dateString.split("-").map(Number);
+    const date = new Date(year, month - 1, day); // month is 0-indexed
     const dayOfWeek = date
       .toLocaleDateString("en-US", { weekday: "long" })
       .toLowerCase();
+
+    console.log(`Checking availability for ${dateString} (${dayOfWeek})`);
+    console.log("Staff availability:", selectedStaff.availability);
+    console.log("Available keys:", Object.keys(selectedStaff.availability));
+    console.log("Looking for key:", dayOfWeek);
 
     const dayAvailability =
       selectedStaff.availability[
         dayOfWeek as keyof typeof selectedStaff.availability
       ];
 
-    if (!dayAvailability || !dayAvailability.isAvailable) {
-      return false;
-    }
+    console.log(`${dayOfWeek} availability object:`, dayAvailability);
+    console.log(`dayAvailability exists:`, !!dayAvailability);
+    console.log(`dayAvailability.isAvailable:`, dayAvailability?.isAvailable);
 
-    return true;
+    const result = !!(dayAvailability && dayAvailability.isAvailable);
+    console.log(`Final result for ${dateString}:`, result);
+
+    return result;
   };
 
-  // Generate calendar dates
-  const generateCalendarDates = () => {
+  // Generate calendar dates - recalculate when staff changes
+  const calendarDates = useMemo(() => {
     const dates = [];
     const today = new Date();
+    // Set to start of day to avoid timezone issues
+    today.setHours(0, 0, 0, 0);
+
     for (let i = 0; i < 14; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
-      const fullDate = date.toISOString().split("T")[0];
+
+      // Format date as YYYY-MM-DD using local date components
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const fullDate = `${year}-${month}-${day}`;
+
       const isAvailable = isStaffAvailableOnDay(fullDate);
 
       dates.push({
@@ -342,10 +430,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         isAvailable,
       });
     }
+    console.log("Generated calendar dates:", dates);
     return dates;
-  };
-
-  const calendarDates = generateCalendarDates();
+  }, [selectedStaff]);
 
   // Step management
   const steps = [
@@ -497,11 +584,16 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   // Format time for display
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
-    return date.toLocaleTimeString("en-US", {
+    const formatted = date.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
     });
+
+    // Uncomment for debugging:
+    // console.log(`formatTime: ${isoString} -> ${formatted} (local hours: ${date.getHours()}, UTC hours: ${date.getUTCHours()})`);
+
+    return formatted;
   };
 
   // Render booking summary sidebar
