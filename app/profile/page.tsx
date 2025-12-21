@@ -742,7 +742,8 @@ export default function ProfilePage() {
                                 const now = new Date();
                                 const startTime = new Date(b.startTime);
                                 return (
-                                  startTime < now &&
+                                  (startTime < now ||
+                                    b.status === "COMPLETED") &&
                                   b.status !== "CANCELLED" &&
                                   b.status !== "NO_SHOW"
                                 );
@@ -789,7 +790,8 @@ export default function ProfilePage() {
                                 );
                               } else if (appointmentFilter === "past") {
                                 return (
-                                  startTime < now &&
+                                  (startTime < now ||
+                                    booking.status === "COMPLETED") &&
                                   booking.status !== "CANCELLED" &&
                                   booking.status !== "NO_SHOW"
                                 );
