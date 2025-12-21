@@ -25,6 +25,8 @@ import { WishlistDrawer } from "./WishlistDrawer";
 import { getUser, logout } from "@/lib/api/auth";
 import Link from "next/link";
 import logoImage from "@/public/probeauty-header.png";
+import { LanguageSelector } from "./LanguageSelector";
+import GoogleTranslate from "./GoogleTranslate";
 
 export function Header() {
   const pathname = usePathname();
@@ -136,6 +138,10 @@ export function Header() {
               >
                 List Your Business
               </a>
+              <div className="w-px h-4 bg-gray-700"></div>
+
+              {/* Language Selector */}
+              <LanguageSelector />
               <div className="w-px h-4 bg-gray-700"></div>
 
               {/* Show user menu or login button */}
@@ -300,6 +306,11 @@ export function Header() {
                   </div>
                 )}
 
+                {/* Language Selector in Mobile */}
+                <div className="pb-3 border-b border-gray-700">
+                  <LanguageSelector />
+                </div>
+
                 <a
                   href="#shop"
                   className="block text-gray-300 hover:text-white transition-colors text-sm font-medium"
@@ -353,6 +364,9 @@ export function Header() {
           )}
         </div>
       </header>
+
+      {/* Google Translate - Hidden component */}
+      <GoogleTranslate />
 
       {/* Modals */}
       <AuthModal
