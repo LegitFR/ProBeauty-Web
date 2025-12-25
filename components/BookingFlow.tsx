@@ -581,17 +581,20 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     setCurrentStep("confirm");
   };
 
-  // Format time for display
+  // Format time for display - Display in UTC time
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
+
+    // Display in UTC time
     const formatted = date.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
+      timeZone: "UTC",
     });
 
     // Uncomment for debugging:
-    // console.log(`formatTime: ${isoString} -> ${formatted} (local hours: ${date.getHours()}, UTC hours: ${date.getUTCHours()})`);
+    // console.log(`formatTime: ${isoString} -> ${formatted} UTC (ISO: ${date.toISOString()})`);
 
     return formatted;
   };
