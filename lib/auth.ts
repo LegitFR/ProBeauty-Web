@@ -10,7 +10,8 @@
 export function isAuthenticated(): boolean {
   if (typeof window === "undefined") return false;
 
-  const token = localStorage.getItem("authToken");
+  const token =
+    localStorage.getItem("accessToken") || localStorage.getItem("authToken");
   return !!token;
 }
 
@@ -21,7 +22,9 @@ export function isAuthenticated(): boolean {
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
 
-  return localStorage.getItem("authToken");
+  return (
+    localStorage.getItem("accessToken") || localStorage.getItem("authToken")
+  );
 }
 
 /**

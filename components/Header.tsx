@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useCart } from "./CartContext";
 import { useWishlist } from "./WishlistContext";
+import { NotificationBell } from "./NotificationBell";
 import {
   navigationActions,
   setAuthModalHandlers,
@@ -194,7 +195,8 @@ export function Header() {
                   Log in
                 </button>
               )}
-
+              {/* Notification Bell - Only show when logged in */}
+              {user && <NotificationBell />}
               <button
                 onClick={() => setShowWishlistDrawer(true)}
                 className="relative p-2 text-gray-300 hover:text-white transition-colors group"
