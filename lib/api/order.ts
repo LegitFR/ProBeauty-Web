@@ -64,6 +64,11 @@ export interface SingleOrderResponse {
   data: Order;
 }
 
+export interface CreateOrderRequest {
+  addressId: string;
+  notes?: string;
+}
+
 /**
  * Get all orders for the authenticated user
  */
@@ -121,28 +126,29 @@ export async function getOrderById(
  */
 export async function createOrder(
   token: string,
-  data: {
-    addressId: string;
-    notes?: string;
-  }
+  data: CreateOrderRequest
 ): Promise<SingleOrderResponse> {
-  const response = await fetch(API_BASE_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
+  try {
+    const response = await fetch(API_BASE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
 
-  if (!response.ok) {
-    const errorData = await response
-      .json()
-      .catch(() => ({ message: "Failed to create order" }));
-    throw new Error(errorData.message || "Failed to create order");
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.message || "Failed to create order");
+    }
+
+    return responseData;
+  } catch (error: any) {
+    console.error("Create order error:", error);
+    throw error;
   }
-
-  return await response.json();
 }
 
 /**

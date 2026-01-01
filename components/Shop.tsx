@@ -36,6 +36,7 @@ import {
 import { motion } from "motion/react";
 import { useCart } from "./CartContext";
 import { useWishlist } from "./WishlistContext";
+import { AuthModal } from "./AuthModal";
 import { toast } from "sonner";
 import {
   DisplayProduct,
@@ -55,6 +56,21 @@ export function Shop() {
   const [apiProducts, setApiProducts] = useState<DisplayProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem("accessToken");
+      const user = localStorage.getItem("user");
+      setIsAuthenticated(!!(token && user));
+    };
+
+    checkAuth();
+    window.addEventListener("storage", checkAuth);
+    return () => window.removeEventListener("storage", checkAuth);
+  }, []);
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   // Fetch products on mount
@@ -126,6 +142,12 @@ export function Shop() {
   }, []);
 
   const handleAddToCart = (product: any) => {
+    if (!isAuthenticated) {
+      toast.error("Please log in to add items to cart");
+      setShowAuthModal(true);
+      return;
+    }
+
     addToCart({
       id: product.id,
       name: product.name,
@@ -583,7 +605,7 @@ export function Shop() {
                           Added
                         </>
                       ) : (
-                        "Select Size"
+                        "Add to Cart"
                       )}
                     </Button>
                   </Card>
@@ -632,6 +654,12 @@ export function Shop() {
           </div>
         </motion.div> */}
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </section>
   );
 }
