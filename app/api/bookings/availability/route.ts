@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://probeauty-backend.onrender.com";
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://probeauty-backend.onrender.com/api/v1";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const url = `${BACKEND_URL}/api/v1/bookings/availability?${searchParams.toString()}`;
+    const url = `${BACKEND_URL}/bookings/availability?${searchParams.toString()}`;
 
     console.log(
       `Fetching availability with params: ${searchParams.toString()}`

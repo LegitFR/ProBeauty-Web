@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL = "https://probeauty-backend.onrender.com";
+const API_BASE_URL = "https://probeauty-backend.onrender.com/api/v1";
 
 export async function GET(
   request: NextRequest,
@@ -31,7 +31,7 @@ export async function GET(
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/favourites/check/${productId}`,
+      `${API_BASE_URL}/favourites/check/${productId}`,
       {
         method: "GET",
         headers: {

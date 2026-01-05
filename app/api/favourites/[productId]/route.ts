@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL = "https://probeauty-backend.onrender.com";
+const API_BASE_URL = "https://probeauty-backend.onrender.com/api/v1";
 
 export async function DELETE(
   request: NextRequest,
@@ -30,16 +30,13 @@ export async function DELETE(
       );
     }
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/v1/favourites/${productId}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`${API_BASE_URL}/favourites/${productId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     const data = await response.json();
 

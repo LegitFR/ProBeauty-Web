@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com";
+  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com/api/v1";
 
 /**
  * POST /api/orders/checkout
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/v1/orders/checkout`, {
+    const response = await fetch(`${BACKEND_URL}/orders/checkout`, {
       method: "POST",
       headers: {
         Authorization: token,

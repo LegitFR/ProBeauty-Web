@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL = "https://probeauty-backend.onrender.com";
+const API_BASE_URL = "https://probeauty-backend.onrender.com/api/v1";
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +17,7 @@ export async function GET(
     const limit = searchParams.get("limit") || "10";
 
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/reviews/salon/${salonId}?page=${page}&limit=${limit}`,
+      `${API_BASE_URL}/reviews/salon/${salonId}?page=${page}&limit=${limit}`,
       {
         method: "GET",
         headers: {

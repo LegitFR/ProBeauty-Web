@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://probeauty-backend.onrender.com";
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://probeauty-backend.onrender.com/api/v1";
 
 export async function GET(request: Request) {
   try {
@@ -9,7 +10,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     const response = await fetch(
-      `${BACKEND_URL}/api/v1/bookings?${searchParams.toString()}`,
+      `${BACKEND_URL}/bookings?${searchParams.toString()}`,
       {
         method: "GET",
         headers: {
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
     const token = request.headers.get("authorization");
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/v1/bookings`, {
+    const response = await fetch(`${BACKEND_URL}/bookings`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://probeauty-backend.onrender.com/api/v1";
 
 export async function GET(
   request: Request,
@@ -8,7 +10,7 @@ export async function GET(
 ) {
   const params = await props.params;
   try {
-    const response = await fetch(`${BACKEND_URL}/api/v1/staff/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/staff/${params.id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

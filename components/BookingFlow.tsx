@@ -39,6 +39,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   // Selection states
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [isAnyStaff, setIsAnyStaff] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
 
@@ -72,10 +73,10 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
   // Load available slots when staff and date are selected
   useEffect(() => {
-    if (selectedService && selectedStaff && selectedDate) {
+    if (selectedService && (selectedStaff || isAnyStaff) && selectedDate) {
       loadAvailableSlots();
     }
-  }, [selectedService, selectedStaff, selectedDate]);
+  }, [selectedService, selectedStaff, isAnyStaff, selectedDate]);
 
   // Filter categories and their keyword mappings
   const filterCategories = [
@@ -203,23 +204,81 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
           "Staff data from salon:",
           JSON.stringify(salonStaff, null, 2)
         );
-        setStaff(salonStaff as Staff[]);
+
+        // Filter staff by selected service if service data is available
+        let filteredStaff = salonStaff as Staff[];
+        if (selectedService) {
+          filteredStaff = salonStaff.filter((staff: any) => {
+            // Check if staff has services field and can perform the selected service
+            if (staff.services && Array.isArray(staff.services)) {
+              return staff.services.some(
+                (s: any) => s.id === selectedService.id
+              );
+            }
+            // Check if staff has serviceIds field
+            if (staff.serviceIds && Array.isArray(staff.serviceIds)) {
+              return staff.serviceIds.includes(selectedService.id);
+            }
+            // If no service data, include the staff (backward compatibility)
+            return true;
+          }) as Staff[];
+          console.log(
+            `Filtered to ${filteredStaff.length} staff members who can perform service: ${selectedService.title}`
+          );
+        }
+
+        setStaff(filteredStaff);
         setStaffLoading(false);
         return;
       }
 
-      // If not, fetch from API (fallback)
-      console.log("Fetching staff from API...");
-      const response = await getStaffBySalon(salon.id);
+      // If not, fetch from API (fallback) - pass serviceId to get filtered staff
+      console.log(
+        `Fetching staff from API${
+          selectedService ? ` for service: ${selectedService.title}` : ""
+        }...`
+      );
+      const response = await getStaffBySalon(salon.id, selectedService?.id);
       // Ensure response.data is an array
       const staffData = Array.isArray(response.data) ? response.data : [];
-      setStaff(staffData);
+
+      // Additional client-side filtering if backend doesn't support serviceId filtering
+      let filteredStaffData = staffData;
+      if (selectedService && staffData.length > 0) {
+        filteredStaffData = staffData.filter((staff) => {
+          // Check if staff has services field and can perform the selected service
+          if (staff.services && Array.isArray(staff.services)) {
+            return staff.services.some((s) => s.id === selectedService.id);
+          }
+          // Check if staff has serviceIds field
+          if (staff.serviceIds && Array.isArray(staff.serviceIds)) {
+            return staff.serviceIds.includes(selectedService.id);
+          }
+          // If no service data, include the staff (backward compatibility)
+          return true;
+        });
+
+        if (filteredStaffData.length < staffData.length) {
+          console.log(
+            `Client-side filtered from ${staffData.length} to ${filteredStaffData.length} staff members`
+          );
+        }
+      }
+
+      setStaff(filteredStaffData);
 
       // If no staff available, show a helpful message
-      if (staffData.length === 0) {
-        console.warn("No staff members available for this salon");
+      if (filteredStaffData.length === 0) {
+        console.warn(
+          selectedService
+            ? `No staff members can perform service: ${selectedService.title}`
+            : "No staff members available for this salon"
+        );
         toast.info(
-          "No staff members are currently available at this salon. Please try again later or contact the salon directly."
+          selectedService
+            ? `No staff members are available to perform "${selectedService.title}". Please select a different service or choose "Any Available Staff".`
+            : "No staff members are currently available at this salon. Please try again later or contact the salon directly.",
+          { duration: 6000 }
         );
       }
     } catch (error: any) {
@@ -280,7 +339,8 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   };
 
   const loadAvailableSlots = async () => {
-    if (!selectedService || !selectedStaff || !selectedDate) return;
+    if (!selectedService || (!selectedStaff && !isAnyStaff) || !selectedDate)
+      return;
 
     setSlotsLoading(true);
     try {
@@ -288,7 +348,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       console.log(`Selected Date: ${selectedDate}`);
       console.log(`Salon ID: ${salon.id}`);
       console.log(`Service ID: ${selectedService.id}`);
-      console.log(`Staff ID: ${selectedStaff.id}`);
+      console.log(`Staff ID: ${isAnyStaff ? "ANY STAFF" : selectedStaff?.id}`);
       console.log(
         `Service Duration: ${selectedService.durationMinutes} minutes`
       );
@@ -297,7 +357,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       const response = await getAvailableSlots({
         salonId: salon.id,
         serviceId: selectedService.id,
-        staffId: selectedStaff.id,
+        staffId: isAnyStaff ? undefined : selectedStaff!.id,
         date: selectedDate,
       });
 
@@ -446,7 +506,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       key: "professional",
       label: "Professional",
       active: currentStep === "professional",
-      completed: selectedStaff !== null,
+      completed: selectedStaff !== null || isAnyStaff,
     },
     {
       key: "time",
@@ -472,6 +532,14 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     console.log("Selected staff:", JSON.stringify(staffMember, null, 2));
     console.log("Staff availability:", staffMember.availability);
     setSelectedStaff(staffMember);
+    setIsAnyStaff(false);
+    setCurrentStep("time");
+  };
+
+  const handleAnyStaffSelect = () => {
+    console.log("=== ANY STAFF SELECTED ===");
+    setSelectedStaff(null);
+    setIsAnyStaff(true);
     setCurrentStep("time");
   };
 
@@ -512,7 +580,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   };
 
   const handleBookingConfirm = async () => {
-    if (!selectedService || !selectedStaff || !selectedTime) {
+    if (!selectedService || (!selectedStaff && !isAnyStaff) || !selectedTime) {
       toast.error("Please complete all booking details");
       return;
     }
@@ -542,12 +610,18 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       console.log("\nStaff availability for the day:");
       console.log(JSON.stringify(selectedStaff?.availability, null, 2));
 
-      const response = await createBooking(token, {
+      // Prepare booking data - exclude staffId if any staff is selected
+      const bookingData: any = {
         salonId: salon.id,
         serviceId: selectedService.id,
-        staffId: selectedStaff.id,
         startTime: selectedTime,
-      });
+      };
+
+      if (!isAnyStaff && selectedStaff) {
+        bookingData.staffId = selectedStaff.id;
+      }
+
+      const response = await createBooking(token, bookingData);
 
       console.log("Booking created successfully:", response.data);
 
@@ -563,7 +637,21 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       onClose();
     } catch (error: any) {
       console.error("Error creating booking:", error);
-      toast.error(error.message || "Failed to create booking");
+
+      // Provide specific error messages based on the error
+      if (error.message?.includes("Staff cannot perform this service")) {
+        toast.error(
+          `The selected staff member cannot perform "${selectedService?.title}". Please select a different staff member or choose "Any Available Staff".`,
+          { duration: 6000 }
+        );
+      } else if (error.message?.includes("not available")) {
+        toast.error(
+          "The selected time slot is no longer available. Please select a different time.",
+          { duration: 5000 }
+        );
+      } else {
+        toast.error(error.message || "Failed to create booking");
+      }
     } finally {
       setBookingLoading(false);
     }
@@ -659,7 +747,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         )}
 
         {/* Selected Staff */}
-        {selectedStaff && (
+        {(selectedStaff || isAnyStaff) && (
           <div className="mb-6 pb-6 border-b">
             <h4 className="font-medium text-black mb-3 text-sm">
               Professional
@@ -670,11 +758,17 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
               </div>
               <div className="flex-1">
                 <p className="font-medium text-black text-sm">
-                  {selectedStaff.user?.name ||
-                    selectedStaff.name ||
-                    "Staff Member"}
+                  {isAnyStaff
+                    ? "Any Available Staff"
+                    : selectedStaff?.user?.name ||
+                      selectedStaff?.name ||
+                      "Staff Member"}
                 </p>
-                <p className="text-xs text-gray-600">{selectedStaff.role}</p>
+                <p className="text-xs text-gray-600">
+                  {isAnyStaff
+                    ? "First available professional"
+                    : selectedStaff?.role}
+                </p>
               </div>
             </div>
           </div>
@@ -900,6 +994,38 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         </div>
                       ) : (
                         <div className="space-y-4">
+                          {/* Any Staff Option */}
+                          <Card
+                            className="p-5 cursor-pointer hover:border-gray-300 transition-all duration-200 bg-gradient-to-r from-orange-50 to-purple-50 border-2 border-[#FF7A00]"
+                            onClick={handleAnyStaffSelect}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-[#FF7A00] to-[#F65000] shrink-0 flex items-center justify-center">
+                                  <User className="h-7 w-7 text-white" />
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold text-black">
+                                    Any Available Staff
+                                  </h3>
+                                  <p className="text-sm text-gray-600">
+                                    First available professional
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    We'll assign the best available staff member
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                className="bg-[#FF7A00] text-white border-[#FF7A00] hover:bg-[#F65000] hover:border-[#F65000] px-6 py-4 rounded-2xl"
+                              >
+                                Select
+                              </Button>
+                            </div>
+                          </Card>
+
+                          {/* Individual Staff Members */}
                           {staff.map((staffMember) => {
                             // Get staff name - check multiple possible locations
                             const staffName =

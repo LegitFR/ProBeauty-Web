@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL = "https://probeauty-backend.onrender.com";
+const API_BASE_URL = "https://probeauty-backend.onrender.com/api/v1";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const url = `${API_BASE_URL}/api/v1/reviews/user/me?page=${page}&limit=${limit}`;
+    const url = `${API_BASE_URL}/reviews/user/me?page=${page}&limit=${limit}`;
     console.log("[Reviews API] Fetching user reviews from:", url);
 
     const response = await fetch(url, {

@@ -233,6 +233,8 @@ export function Header() {
 
             {/* Mobile Menu Button */}
             <div className="lg:hidden flex items-center space-x-2 sm:space-x-3">
+              {/* Notification Bell - Only show when logged in */}
+              {user && <NotificationBell />}
               <button
                 onClick={() => setShowWishlistDrawer(true)}
                 className="relative p-2 text-gray-300 hover:text-white transition-colors"

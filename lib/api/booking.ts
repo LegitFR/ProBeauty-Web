@@ -93,7 +93,7 @@ export async function createBooking(
   data: {
     salonId: string;
     serviceId: string;
-    staffId: string;
+    staffId?: string;
     startTime: string;
   }
 ): Promise<SingleBookingResponse> {
@@ -134,10 +134,18 @@ export async function createBooking(
 export async function getAvailableSlots(params: {
   salonId: string;
   serviceId: string;
-  staffId: string;
+  staffId?: string;
   date: string;
 }): Promise<AvailabilityResponse> {
-  const queryParams = new URLSearchParams(params);
+  // Filter out undefined values from params
+  const filteredParams: Record<string, string> = {};
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined) {
+      filteredParams[key] = value;
+    }
+  });
+
+  const queryParams = new URLSearchParams(filteredParams);
   const response = await fetch(`${API_BASE_URL}/availability?${queryParams}`);
   if (!response.ok) {
     const errorData = await response

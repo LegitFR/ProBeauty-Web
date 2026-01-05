@@ -41,6 +41,11 @@ export interface SalonStaff {
   salonId: string;
   role: string;
   availability: StaffAvailability;
+  services?: Array<{
+    id: string;
+    title?: string;
+  }>; // Services this staff member can perform
+  serviceIds?: string[]; // Alternative: just service IDs
   userId?: string;
   user?: {
     id: string;

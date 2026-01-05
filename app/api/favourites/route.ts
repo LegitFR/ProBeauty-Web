@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL = "https://probeauty-backend.onrender.com";
+const API_BASE_URL = "https://probeauty-backend.onrender.com/api/v1";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/favourites`, {
+    const response = await fetch(`${API_BASE_URL}/favourites`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/favourites?page=${page}&limit=${limit}`,
+      `${API_BASE_URL}/favourites?page=${page}&limit=${limit}`,
       {
         method: "GET",
         headers: {

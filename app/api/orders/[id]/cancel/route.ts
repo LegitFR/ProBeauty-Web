@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com";
+  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com/api/v1";
 
 export async function POST(
   request: NextRequest,
@@ -17,7 +17,7 @@ export async function POST(
     }
 
     const { id } = await params;
-    const response = await fetch(`${BACKEND_URL}/api/v1/orders/${id}/cancel`, {
+    const response = await fetch(`${BACKEND_URL}/orders/${id}/cancel`, {
       method: "POST",
       headers: {
         Authorization: token,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com";
+  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com/api/v1";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,9 +17,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const queryString = searchParams.toString();
 
-    const url = `${BACKEND_URL}/api/v1/orders${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${BACKEND_URL}/orders${queryString ? `?${queryString}` : ""}`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -60,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/v1/orders`, {
+    const response = await fetch(`${BACKEND_URL}/orders`, {
       method: "POST",
       headers: {
         Authorization: token,
