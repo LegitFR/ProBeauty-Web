@@ -61,8 +61,7 @@ export async function fetchProducts(limit: number = 50): Promise<ApiProduct[]> {
         headers: {
           "Content-Type": "application/json",
         },
-        cache: "no-store", // Always fetch fresh data
-        // Alternative for ISR: next: { revalidate: 300 } // Revalidate every 5 minutes
+        next: { revalidate: 60 }, // Revalidate every 60 seconds for fresh data
       }
     );
 

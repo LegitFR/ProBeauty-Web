@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Header } from "../../components/Header";
@@ -15,6 +15,7 @@ import {
   WishlistProvider,
   useWishlist,
 } from "../../components/WishlistContext";
+import { AuthModal } from "../../components/AuthModal";
 import { Toaster } from "../../components/Toaster";
 import { toast } from "sonner";
 import {
@@ -35,6 +36,21 @@ interface ProductsClientProps {
 function ProductsContent({ products }: ProductsClientProps) {
   const router = useRouter();
   const { addToCart } = useCart();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem("accessToken");
+      const user = localStorage.getItem("user");
+      setIsAuthenticated(!!(token && user));
+    };
+
+    checkAuth();
+    window.addEventListener("storage", checkAuth);
+    return () => window.removeEventListener("storage", checkAuth);
+  }, []);
   const {
     items: wishlistItems,
     addToWishlist,
@@ -105,6 +121,12 @@ function ProductsContent({ products }: ProductsClientProps) {
   }, [products, searchQuery, selectedCategory, priceRange, sortBy]);
 
   const handleAddToCart = (product: DisplayProduct) => {
+    if (!isAuthenticated) {
+      toast.error("Please log in to add items to cart");
+      setShowAuthModal(true);
+      return;
+    }
+
     addToCart({
       id: product.id,
       name: product.name,
@@ -427,7 +449,7 @@ function ProductsContent({ products }: ProductsClientProps) {
                               Added
                             </>
                           ) : product.inStock ? (
-                            "Select Size"
+                            "Add to Cart"
                           ) : (
                             "Out of Stock"
                           )}
@@ -443,6 +465,10 @@ function ProductsContent({ products }: ProductsClientProps) {
       </main>
 
       <Footer />
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
       <Toaster />
     </div>
   );

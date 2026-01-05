@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com";
+  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com/api/v1";
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     });
 
     const response = await fetch(
-      `${BACKEND_URL}/api/v1/notifications?${queryParams.toString()}`,
+      `${BACKEND_URL}/notifications?${queryParams.toString()}`,
       {
         method: "GET",
         headers: {

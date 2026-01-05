@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL = "https://probeauty-backend.onrender.com";
+const API_BASE_URL = "https://probeauty-backend.onrender.com/api/v1";
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/reviews`, {
+    const response = await fetch(`${API_BASE_URL}/reviews`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

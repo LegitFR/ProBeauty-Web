@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://probeauty-backend.onrender.com/api/v1";
 
 export async function GET(
   request: Request,
@@ -10,16 +12,13 @@ export async function GET(
   try {
     const token = request.headers.get("authorization");
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/v1/bookings/${params.id}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: token }),
-        },
-      }
-    );
+    const response = await fetch(`${BACKEND_URL}/bookings/${params.id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: token }),
+      },
+    });
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
@@ -41,17 +40,14 @@ export async function PUT(
     const token = request.headers.get("authorization");
     const body = await request.json();
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/v1/bookings/${params.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: token }),
-        },
-        body: JSON.stringify(body),
-      }
-    );
+    const response = await fetch(`${BACKEND_URL}/bookings/${params.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: token }),
+      },
+      body: JSON.stringify(body),
+    });
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
@@ -72,16 +68,13 @@ export async function DELETE(
   try {
     const token = request.headers.get("authorization");
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/v1/bookings/${params.id}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: token }),
-        },
-      }
-    );
+    const response = await fetch(`${BACKEND_URL}/bookings/${params.id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: token }),
+      },
+    });
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });

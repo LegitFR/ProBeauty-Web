@@ -42,6 +42,11 @@ export interface Staff {
   salonId: string;
   role?: string; // Role might not exist in the data
   availability: StaffAvailability;
+  services?: Array<{
+    id: string;
+    title?: string;
+  }>; // Services this staff member can perform
+  serviceIds?: string[]; // Alternative: just service IDs
   userId?: string;
   user?: {
     id: string;
@@ -63,10 +68,18 @@ export interface SingleStaffResponse {
 
 /**
  * Get all staff members for a salon
+ * @param serviceId Optional service ID to filter staff who can perform this service
  */
-export async function getStaffBySalon(salonId: string): Promise<StaffResponse> {
+export async function getStaffBySalon(
+  salonId: string,
+  serviceId?: string
+): Promise<StaffResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/salon/${salonId}`);
+    // Build URL with optional serviceId parameter
+    const url = serviceId
+      ? `${API_BASE_URL}/salon/${salonId}?serviceId=${serviceId}`
+      : `${API_BASE_URL}/salon/${salonId}`;
+    const response = await fetch(url);
 
     // Try to get the response text first
     const responseText = await response.text();

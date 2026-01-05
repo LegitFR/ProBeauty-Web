@@ -106,9 +106,9 @@ export function NotificationList({ onClose }: NotificationListProps) {
   };
 
   return (
-    <div className="flex flex-col h-[500px] bg-[#ECE3DC]">
+    <div className="flex flex-col h-[400px] sm:h-[500px] max-h-[70vh] sm:max-h-[80vh] bg-[#ECE3DC] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-3 sm:p-4 border-b shrink-0">
         <div>
           <h3 className="font-semibold text-lg">Notifications</h3>
           {unreadCount > 0 && (
@@ -131,7 +131,10 @@ export function NotificationList({ onClose }: NotificationListProps) {
       </div>
 
       {/* Notifications List */}
-      <ScrollArea className="flex-1">
+      <ScrollArea
+        className="flex-1 overflow-auto"
+        style={{ maxHeight: "calc(500px - 80px)" }}
+      >
         {isLoading && notifications.length === 0 ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com";
+  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com/api/v1";
 
 export async function PUT(
   request: NextRequest,
@@ -20,7 +20,7 @@ export async function PUT(
     const { id: notificationId } = await params;
 
     const response = await fetch(
-      `${BACKEND_URL}/api/v1/notifications/${notificationId}/read`,
+      `${BACKEND_URL}/notifications/${notificationId}/read`,
       {
         method: "PUT",
         headers: {
@@ -65,7 +65,7 @@ export async function DELETE(
     const { id: notificationId } = await params;
 
     const response = await fetch(
-      `${BACKEND_URL}/api/v1/notifications/${notificationId}`,
+      `${BACKEND_URL}/notifications/${notificationId}`,
       {
         method: "DELETE",
         headers: {

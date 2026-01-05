@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://probeauty-backend.onrender.com/api/v1";
 
 export async function POST(
   request: Request,
@@ -11,7 +13,7 @@ export async function POST(
     const token = request.headers.get("authorization");
 
     const response = await fetch(
-      `${BACKEND_URL}/api/v1/bookings/${params.id}/confirm`,
+      `${BACKEND_URL}/bookings/${params.id}/confirm`,
       {
         method: "POST",
         headers: {

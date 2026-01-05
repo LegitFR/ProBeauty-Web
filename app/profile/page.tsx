@@ -105,6 +105,10 @@ export default function ProfilePage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletingReview, setDeletingReview] = useState<Review | null>(null);
+
+  // Order detail modal state
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderDetailDialog, setShowOrderDetailDialog] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -1126,9 +1130,10 @@ export default function ProfilePage() {
                                 <div className="flex gap-2 pt-2">
                                   <Button
                                     size="sm"
-                                    onClick={() =>
-                                      router.push(`/orders/${order.id}`)
-                                    }
+                                    onClick={() => {
+                                      setSelectedOrder(order);
+                                      setShowOrderDetailDialog(true);
+                                    }}
                                     className="bg-orange-500 hover:bg-orange-600 flex-1"
                                   >
                                     View Details
@@ -2033,6 +2038,157 @@ export default function ProfilePage() {
                     setReviewBooking(null);
                   }}
                 />
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Order Detail Dialog */}
+          <Dialog
+            open={showOrderDetailDialog}
+            onOpenChange={setShowOrderDetailDialog}
+          >
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Order Details</DialogTitle>
+              </DialogHeader>
+              {selectedOrder && (
+                <div className="space-y-4">
+                  {/* Order Info */}
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="text-sm text-gray-600">Order ID</p>
+                      <p className="font-medium">
+                        #{selectedOrder.id.slice(0, 8)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Status</p>
+                      <Badge
+                        className={
+                          selectedOrder.status === "DELIVERED"
+                            ? "bg-green-100 text-green-800"
+                            : selectedOrder.status === "CANCELLED"
+                            ? "bg-red-100 text-red-800"
+                            : selectedOrder.status === "SHIPPED"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }
+                      >
+                        {selectedOrder.status}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Order Date</p>
+                      <p className="font-medium">
+                        {new Date(selectedOrder.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Total Amount</p>
+                      <p className="font-bold text-orange-600">
+                        ${selectedOrder.total}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Salon Info */}
+                  {selectedOrder.salon && (
+                    <div className="p-4 border rounded-lg">
+                      <h3 className="font-semibold mb-2">Salon Information</h3>
+                      <div className="text-sm text-gray-600">
+                        <p className="font-medium">
+                          {selectedOrder.salon.name}
+                        </p>
+                        <p className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {selectedOrder.salon.address}
+                        </p>
+                        {selectedOrder.salon.verified && (
+                          <Badge className="mt-2 bg-green-100 text-green-800">
+                            Verified
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Order Items */}
+                  <div className="border rounded-lg">
+                    <h3 className="font-semibold p-4 border-b flex items-center gap-2">
+                      <ShoppingBag className="h-4 w-4" />
+                      Order Items
+                    </h3>
+                    <div className="divide-y">
+                      {selectedOrder.orderItems?.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-4 flex items-center gap-4"
+                        >
+                          {item.product?.images?.[0] && (
+                            <img
+                              src={item.product.images[0]}
+                              alt={item.product.title || "Product"}
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <p className="font-medium">
+                              {item.product?.title || "Product"}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              ${item.unitPrice} × {item.quantity}
+                            </p>
+                            {item.product?.sku && (
+                              <p className="text-xs text-gray-500">
+                                SKU: {item.product.sku}
+                              </p>
+                            )}
+                          </div>
+                          <p className="font-semibold text-orange-600">
+                            $
+                            {(
+                              parseFloat(item.unitPrice) * item.quantity
+                            ).toFixed(2)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Order Total */}
+                    <div className="p-4 border-t bg-gray-50">
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>Total</span>
+                        <span className="text-orange-600">
+                          ${selectedOrder.total}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-4">
+                    {(selectedOrder.status === "PENDING" ||
+                      selectedOrder.status === "CONFIRMED") && (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          handleCancelOrder(selectedOrder.id);
+                          setShowOrderDetailDialog(false);
+                        }}
+                        className="border-red-500 text-red-600 hover:bg-red-50"
+                      >
+                        Cancel Order
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowOrderDetailDialog(false)}
+                      className="ml-auto"
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </div>
               )}
             </DialogContent>
           </Dialog>

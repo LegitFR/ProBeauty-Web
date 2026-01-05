@@ -258,7 +258,7 @@ export function AuthModal({
         email: signupForm.email,
         phone: signupForm.phone || "0000000000", // Default if not provided
         password: signupForm.password,
-        role: signupForm.role,
+        role: "customer", // Always default to customer
       });
 
       toast.success(
@@ -671,8 +671,8 @@ export function AuthModal({
                         </div>
                       </div>
 
-                      {/* Row 2: Phone and Account Type */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Row 2: Phone */}
+                      <div className="grid grid-cols-1 gap-3">
                         <div className="space-y-1.5">
                           <Label
                             htmlFor="signup-phone"
@@ -699,33 +699,6 @@ export function AuthModal({
                               maxLength={10}
                             />
                           </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <Label
-                            htmlFor="signup-role"
-                            className="text-sm font-medium text-[#1e1e1e]"
-                          >
-                            Account Type
-                          </Label>
-                          <select
-                            id="signup-role"
-                            className="w-full h-10 px-3 border border-[#1e1e1e] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-transparent"
-                            value={signupForm.role}
-                            onChange={(e) =>
-                              setSignupForm({
-                                ...signupForm,
-                                role: e.target.value as
-                                  | "customer"
-                                  | "salon_owner",
-                              })
-                            }
-                            disabled={isLoading}
-                            required
-                          >
-                            <option value="customer">Customer</option>
-                            <option value="salon_owner">Salon Owner</option>
-                          </select>
                         </div>
                       </div>
 

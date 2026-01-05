@@ -222,7 +222,8 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       fetchNotifications({ page: 1 });
       refreshUnreadCount();
     }
-  }, [isAuth, fetchNotifications, refreshUnreadCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuth]);
 
   // Poll for new notifications every 30 seconds
   useEffect(() => {

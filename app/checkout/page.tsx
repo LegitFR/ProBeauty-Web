@@ -38,6 +38,14 @@ import {
   type ApiCartItem,
   type CartResponse,
 } from "@/lib/api/cart";
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
+import { stripePromise } from "@/lib/stripe/config";
+import { StripePaymentForm } from "@/components/StripePaymentForm";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -63,6 +71,9 @@ function CheckoutContent() {
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [apiCart, setApiCart] = useState<CartResponse | null>(null);
   const [isLoadingCart, setIsLoadingCart] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
 
   // Placeholder products for demo
   const placeholderProducts = [
@@ -117,6 +128,7 @@ function CheckoutContent() {
             item.product.images[0] ||
             "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400",
           brand: "",
+          salonId: item.product.salonId, // Keep salonId for validation
         })
       );
       console.log("Mapped API items:", mappedItems);
@@ -145,6 +157,7 @@ function CheckoutContent() {
     expiryDate: "",
     cvv: "",
     saveAddress: false,
+    notes: "",
   });
 
   useEffect(() => {
@@ -333,46 +346,144 @@ function CheckoutContent() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handlePlaceOrder = async () => {
-    // Validation for payment
-    if (paymentMethod === "card") {
-      if (
-        !formData.cardNumber ||
-        !formData.cardName ||
-        !formData.expiryDate ||
-        !formData.cvv
-      ) {
-        toast.error("Please complete payment details");
-        return;
-      }
+  const handleInitiateCheckout = async () => {
+    // Ensure user is authenticated
+    if (!token || !isAuthenticated) {
+      toast.error("Please log in to place an order");
+      setShowAuthModal(true);
+      return;
     }
 
-    if (paymentMethod === "upi") {
-      // UPI validation can be added here
+    // Ensure address is selected
+    if (!selectedAddressId) {
+      toast.error("Please select or add a delivery address");
+      setCurrentStep(1);
+      return;
+    }
+
+    // Validate cart doesn't contain items from multiple salons
+    if (
+      apiCart?.data?.cart?.cartItems &&
+      apiCart.data.cart.cartItems.length > 0
+    ) {
+      const salonIds = new Set(
+        apiCart.data.cart.cartItems.map(
+          (item: ApiCartItem) => item.product.salonId
+        )
+      );
+
+      console.log("=== FRONTEND SALON VALIDATION ===");
+      console.log(
+        "Number of items in cart:",
+        apiCart.data.cart.cartItems.length
+      );
+      console.log("Unique salon IDs:", Array.from(salonIds));
+      console.log("Number of unique salons:", salonIds.size);
+      console.log(
+        "Cart items with salon info:",
+        apiCart.data.cart.cartItems.map((item: ApiCartItem) => ({
+          productId: item.productId,
+          title: item.product.title,
+          salonId: item.product.salonId,
+        }))
+      );
+
+      if (salonIds.size > 1) {
+        console.error("❌ Multiple salons detected in FRONTEND validation!");
+        toast.error(
+          "Your cart contains items from multiple salons. Please checkout items from one salon at a time.",
+          {
+            duration: 5000,
+          }
+        );
+        return;
+      } else {
+        console.log("✅ Frontend validation passed - single salon");
+      }
     }
 
     setIsProcessing(true);
 
-    // Simulate payment processing
-    setTimeout(async () => {
-      setIsProcessing(false);
-      toast.success("Order placed successfully! 🎉");
+    try {
+      // Create checkout session and order with PAYMENT_PENDING status
+      console.log("=== CREATING CHECKOUT SESSION ===");
+      console.log("Address ID:", selectedAddressId);
+      console.log("Notes:", formData.notes || "(none)");
+      console.log(
+        "Creating checkout session with addressId:",
+        selectedAddressId
+      );
+      const response = await fetch("/api/orders/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          addressId: selectedAddressId,
+          notes: formData.notes || undefined,
+        }),
+      });
 
-      // Clear cart
-      if (token && apiCart) {
-        // Clear API cart for authenticated users
-        await clearCart(token);
-        console.log("✅ API cart cleared");
-      } else if (cartItems.length > 0) {
-        // Clear CartContext for guest users
-        cartItems.forEach((item) => removeFromCart(item.id));
+      const data = await response.json();
+
+      console.log("=== CHECKOUT API RESPONSE ===");
+      console.log("Response status:", response.status);
+      console.log("Response OK:", response.ok);
+      console.log("Response data:", JSON.stringify(data, null, 2));
+
+      if (!response.ok) {
+        console.error("❌ Backend/Proxy returned error:", data.message);
+        // Handle specific error cases with helpful messages
+        if (data.message?.includes("multiple salons")) {
+          console.error(
+            "❌ BACKEND VALIDATION says multiple salons - this is a BACKEND issue!"
+          );
+          toast.error(
+            "Your cart contains items from multiple salons. Please remove items from other salons before proceeding.",
+            {
+              duration: 5000,
+            }
+          );
+        } else if (data.message?.includes("Cart is empty")) {
+          toast.error("Your cart is empty. Please add items before checkout.");
+          router.push("/products");
+        } else if (data.message?.includes("Insufficient stock")) {
+          toast.error(
+            data.message ||
+              "Some items are out of stock. Please update your cart.",
+            {
+              duration: 5000,
+            }
+          );
+        } else {
+          throw new Error(data.message || "Failed to create checkout session");
+        }
+        setIsProcessing(false);
+        return;
       }
 
-      // Redirect to confirmation or home
-      setTimeout(() => {
-        router.push("/");
-      }, 1500);
-    }, 2000);
+      console.log("✅ Checkout session created:", data);
+
+      // Set clientSecret and orderId for Stripe payment
+      setClientSecret(data.data.clientSecret);
+      setOrderId(data.data.order.id);
+      setPaymentIntentId(data.data.paymentIntentId);
+      setIsProcessing(false);
+
+      toast.success(
+        "Ready for payment! Complete payment below to confirm your order.",
+        {
+          duration: 5000,
+        }
+      );
+    } catch (error: any) {
+      console.error("❌ Failed to create checkout session:", error);
+      toast.error(
+        error.message || "Failed to initiate checkout. Please try again."
+      );
+      setIsProcessing(false);
+    }
   };
 
   // Use API cart summary if available, otherwise use CartContext
@@ -380,8 +491,7 @@ function CheckoutContent() {
     ? parseFloat(apiCart.data.summary.subtotal.toString())
     : getTotalPrice();
   const totalItems = apiCart?.data?.summary?.totalItems || getTotalItems();
-  const tax = totalPrice * 0.2; // 20% VAT
-  const finalTotal = totalPrice + tax;
+  const finalTotal = totalPrice; // No VAT - just product prices
 
   // Log whenever items or totals change
   useEffect(() => {
@@ -390,9 +500,8 @@ function CheckoutContent() {
     console.log("Items:", items);
     console.log("Total Price:", totalPrice);
     console.log("Total Items:", totalItems);
-    console.log("Tax:", tax);
     console.log("Final Total:", finalTotal);
-  }, [items, totalPrice, totalItems, tax, finalTotal]);
+  }, [items, totalPrice, totalItems, finalTotal]);
 
   // Expose reload function to window for manual testing
   useEffect(() => {
@@ -497,6 +606,92 @@ function CheckoutContent() {
             </p>
           </div>
         </div>
+
+        {/* Multiple Salons Warning Banner */}
+        {apiCart?.data?.cart?.cartItems &&
+          apiCart.data.cart.cartItems.length > 0 &&
+          (() => {
+            const salonIds = new Set(
+              apiCart.data.cart.cartItems.map(
+                (item: ApiCartItem) => item.product.salonId
+              )
+            );
+            return salonIds.size > 1;
+          })() && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 bg-orange-50 border-2 border-orange-300 rounded-xl p-6"
+            >
+              <div className="flex items-start gap-3 mb-4">
+                <div className="flex-shrink-0 mt-0.5">
+                  <svg
+                    className="h-5 w-5 text-orange-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-orange-900 mb-1">
+                    Multiple Salons in Cart
+                  </h3>
+                  <p className="text-sm text-orange-800 mb-3">
+                    Your cart contains products from multiple salons. Orders can
+                    only include items from one salon at a time.
+                  </p>
+
+                  {/* Show salon breakdown */}
+                  <div className="space-y-2">
+                    {Array.from(
+                      new Set(
+                        apiCart.data.cart.cartItems.map(
+                          (item: ApiCartItem) => item.product.salonId
+                        )
+                      )
+                    ).map((salonId) => {
+                      const salonItems = apiCart.data.cart.cartItems.filter(
+                        (item: ApiCartItem) => item.product.salonId === salonId
+                      );
+                      return (
+                        <div
+                          key={salonId}
+                          className="bg-white rounded-lg p-3 border border-orange-200"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-semibold text-gray-700 mb-1">
+                                Salon: {salonId.substring(0, 8)}...
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                {salonItems.length} item(s):{" "}
+                                {salonItems
+                                  .map((item) => item.product.title)
+                                  .join(", ")}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <p className="text-xs text-orange-700 mt-3 font-medium">
+                    💡 Tip: Go to your cart and remove items from unwanted
+                    salons, or complete this order first and place a separate
+                    order for items from the other salon.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
         {/* STEP 1: Details Form */}
         {currentStep === 1 && (
@@ -787,6 +982,34 @@ function CheckoutContent() {
                         </div>
                       </div>
 
+                      {/* Order Notes/Special Instructions */}
+                      <div className="space-y-2 mt-4">
+                        <Label
+                          htmlFor="notes"
+                          className="text-[#1E1E1E] font-medium"
+                        >
+                          Delivery Instructions (Optional)
+                        </Label>
+                        <textarea
+                          id="notes"
+                          name="notes"
+                          placeholder="e.g., Please deliver between 2-5 PM, Ring doorbell twice"
+                          value={formData.notes}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              notes: e.target.value,
+                            })
+                          }
+                          maxLength={500}
+                          rows={3}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:border-[#FF6A00] focus:outline-none bg-transparent resize-none"
+                        />
+                        <p className="text-xs text-gray-500 text-right">
+                          {formData.notes.length}/500 characters
+                        </p>
+                      </div>
+
                       {isAuthenticated && (
                         <>
                           <Separator className="my-4" />
@@ -903,183 +1126,81 @@ function CheckoutContent() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-6 space-y-4 bg-[#ECE3DC]">
-                    <RadioGroup
-                      value={paymentMethod}
-                      onValueChange={setPaymentMethod}
-                    >
-                      <div
-                        className={`flex items-center space-x-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                          paymentMethod === "card"
-                            ? "border-[#FF6A00] bg-orange-50"
-                            : "border-gray-300 hover:border-gray-400"
-                        }`}
-                      >
-                        <RadioGroupItem value="card" id="card" />
-                        <Label
-                          htmlFor="card"
-                          className="flex items-center gap-2 cursor-pointer flex-1"
-                        >
-                          <CreditCard className="h-5 w-5" />
-                          <span className="font-medium">
-                            Credit / Debit Card
-                          </span>
-                        </Label>
-                        <div className="flex gap-2">
-                          <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg"
-                            alt="Visa"
-                            className="h-6"
-                          />
-                          <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
-                            alt="Mastercard"
-                            className="h-6"
-                          />
+                    {!clientSecret ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-600 mb-4">
+                          Click "Proceed to Payment" button below to initialize
+                          secure payment
+                        </p>
+                        <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                          <Lock className="h-4 w-4" />
+                          <span>Powered by Stripe</span>
                         </div>
                       </div>
-                      <div
-                        className={`flex items-center space-x-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                          paymentMethod === "upi"
-                            ? "border-[#FF6A00] bg-orange-50"
-                            : "border-gray-300 hover:border-gray-400"
-                        }`}
-                      >
-                        <RadioGroupItem value="upi" id="upi" />
-                        <Label
-                          htmlFor="upi"
-                          className="flex items-center gap-2 cursor-pointer flex-1"
-                        >
-                          <Wallet className="h-5 w-5" />
-                          <span className="font-medium">UPI</span>
-                        </Label>
-                        <Badge
-                          variant="outline"
-                          className="bg-green-50 text-green-700 border-green-200"
-                        >
-                          Instant
-                        </Badge>
-                      </div>
-                      <div
-                        className={`flex items-center space-x-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                          paymentMethod === "cod"
-                            ? "border-[#FF6A00] bg-orange-50"
-                            : "border-gray-300 hover:border-gray-400"
-                        }`}
-                      >
-                        <RadioGroupItem value="cod" id="cod" />
-                        <Label
-                          htmlFor="cod"
-                          className="flex items-center gap-2 cursor-pointer flex-1"
-                        >
-                          <ShoppingBag className="h-5 w-5" />
-                          <span className="font-medium">Cash on Delivery</span>
-                        </Label>
-                      </div>
-                    </RadioGroup>
-
-                    {/* Card Details Form */}
-                    {paymentMethod === "card" && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="space-y-4 pt-4 border-t-2"
-                      >
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="cardNumber"
-                            className="text-[#1E1E1E] font-medium"
-                          >
-                            Card Number
-                          </Label>
-                          <Input
-                            id="cardNumber"
-                            name="cardNumber"
-                            placeholder="1234 5678 9012 3456"
-                            value={formData.cardNumber}
-                            onChange={handleInputChange}
-                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
-                            maxLength={19}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="cardName"
-                            className="text-[#1E1E1E] font-medium"
-                          >
-                            Cardholder Name
-                          </Label>
-                          <Input
-                            id="cardName"
-                            name="cardName"
-                            placeholder="John Doe"
-                            value={formData.cardName}
-                            onChange={handleInputChange}
-                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label
-                              htmlFor="expiryDate"
-                              className="text-[#1E1E1E] font-medium"
-                            >
-                              Expiry Date
-                            </Label>
-                            <Input
-                              id="expiryDate"
-                              name="expiryDate"
-                              placeholder="MM/YY"
-                              value={formData.expiryDate}
-                              onChange={handleInputChange}
-                              className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
-                              maxLength={5}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label
-                              htmlFor="cvv"
-                              className="text-[#1E1E1E] font-medium"
-                            >
-                              CVV
-                            </Label>
-                            <Input
-                              id="cvv"
-                              name="cvv"
-                              type="password"
-                              placeholder="123"
-                              value={formData.cvv}
-                              onChange={handleInputChange}
-                              className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
-                              maxLength={3}
-                            />
+                    ) : (
+                      <>
+                        {/* Payment Pending Warning */}
+                        <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 mb-4">
+                          <div className="flex items-start gap-3">
+                            <div className="shrink-0 mt-0.5">
+                              <svg
+                                className="h-5 w-5 text-amber-600"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-amber-900 mb-1">
+                                Payment Required to Complete Order
+                              </h4>
+                              <p className="text-sm text-amber-800 leading-relaxed">
+                                Your order is being prepared for payment.{" "}
+                                <strong>
+                                  Complete the payment below to confirm your
+                                  order.
+                                </strong>{" "}
+                                If you leave this page without paying, your
+                                order will NOT be placed and items will remain
+                                in your cart.
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </motion.div>
+
+                        <Elements
+                          stripe={stripePromise}
+                          options={{
+                            clientSecret,
+                            appearance: {
+                              theme: "stripe",
+                              variables: {
+                                colorPrimary: "#FF6A00",
+                              },
+                            },
+                          }}
+                        >
+                          <StripePaymentForm
+                            orderId={orderId || ""}
+                            onSuccess={() => {
+                              toast.success(
+                                "Payment processing... Redirecting to confirmation page."
+                              );
+                            }}
+                            onError={(error) => {
+                              console.error("Payment error:", error);
+                            }}
+                          />
+                        </Elements>
+                      </>
                     )}
 
-                    {paymentMethod === "upi" && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="space-y-4 pt-4 border-t-2"
-                      >
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="upiId"
-                            className="text-[#1E1E1E] font-medium"
-                          >
-                            UPI ID
-                          </Label>
-                          <Input
-                            id="upiId"
-                            placeholder="yourname@upi"
-                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
-                          />
-                        </div>
-                      </motion.div>
-                    )}
+                    {/* Card Details Form - Now handled by Stripe Elements */}
                   </CardContent>
                 </Card>
 
@@ -1166,12 +1287,6 @@ function CheckoutContent() {
                             Free
                           </span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-700">VAT (20%)</span>
-                          <span className="font-semibold text-[#1E1E1E]">
-                            £{tax.toFixed(2)}
-                          </span>
-                        </div>
 
                         <Separator className="my-3" />
 
@@ -1194,8 +1309,8 @@ function CheckoutContent() {
 
                       {/* Place Order Button */}
                       <Button
-                        onClick={handlePlaceOrder}
-                        disabled={isProcessing}
+                        onClick={handleInitiateCheckout}
+                        disabled={isProcessing || !!clientSecret}
                         className="w-full bg-linear-to-r from-[#FF6A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-6 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
                       >
                         {isProcessing ? (
@@ -1203,10 +1318,15 @@ function CheckoutContent() {
                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             Processing...
                           </div>
+                        ) : clientSecret ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <CheckCircle2 className="h-5 w-5" />
+                            <span>Proceed to Payment Below</span>
+                          </div>
                         ) : (
                           <div className="flex items-center justify-center gap-2">
                             <Lock className="h-5 w-5" />
-                            <span>Complete Purchase</span>
+                            <span>Proceed to Payment</span>
                           </div>
                         )}
                       </Button>

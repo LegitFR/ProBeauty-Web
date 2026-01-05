@@ -125,7 +125,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           {item.name}
                         </h4>
                         <p className="text-sm text-gray-500">
-                          £{item.price.toFixed(2)} each
+                          £{Number(item.price).toFixed(2)} each
                         </p>
                         <div className="flex items-center mt-2">
                           <Button
