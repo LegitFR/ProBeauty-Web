@@ -1213,7 +1213,7 @@ export default function ProfilePage() {
                             {reviews.map((review) => (
                               <Card
                                 key={review.id}
-                                className="hover:shadow-lg transition-shadow"
+                                className="hover:shadow-lg transition-shadow bg-[#ECE3DC]"
                               >
                                 <CardContent className="p-5">
                                   <div className="space-y-3">
@@ -1286,7 +1286,7 @@ export default function ProfilePage() {
                     </Card>
 
                     {/* Completed bookings that can be reviewed */}
-                    <Card>
+                    <Card className="bg-[#ECE3DC]">
                       <CardContent className="p-6 bg-[#ECE3DC]">
                         <h3 className="text-lg font-semibold mb-6">
                           Rate Your Recent Visits
@@ -1315,7 +1315,7 @@ export default function ProfilePage() {
                               {completedBookings.slice(0, 5).map((booking) => (
                                 <Card
                                   key={booking.id}
-                                  className="hover:shadow-lg transition-shadow"
+                                  className="hover:shadow-lg transition-shadow bg-[#ECE3DC]"
                                 >
                                   <CardContent className="p-5">
                                     <div className="flex items-center justify-between">
