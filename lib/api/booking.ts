@@ -7,6 +7,8 @@ const API_BASE_URL = "/api/bookings";
 
 export type BookingStatus =
   | "PENDING"
+  | "PAYMENT_PENDING"
+  | "PAYMENT_FAILED"
   | "CONFIRMED"
   | "COMPLETED"
   | "CANCELLED"

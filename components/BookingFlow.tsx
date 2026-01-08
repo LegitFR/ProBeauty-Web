@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { ArrowLeft, Star, Check, User, X, Loader2 } from "lucide-react";
@@ -42,6 +43,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   const [isAnyStaff, setIsAnyStaff] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "onspot">(
+    "onspot"
+  );
 
   // Filter state
   const [selectedFilter, setSelectedFilter] = useState<string>("Featured");
@@ -573,9 +577,81 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
   const handleConfirmClick = () => {
     if (userAuthenticated) {
-      handleBookingConfirm();
+      if (paymentMethod === "stripe") {
+        handleStripeCheckout();
+      } else {
+        handleBookingConfirm();
+      }
     } else {
       setCurrentStep("login");
+    }
+  };
+
+  const handleStripeCheckout = async () => {
+    if (!selectedService || (!selectedStaff && !isAnyStaff) || !selectedTime) {
+      toast.error("Please complete all booking details");
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) {
+      toast.error("Please login to continue");
+      setCurrentStep("login");
+      return;
+    }
+
+    setBookingLoading(true);
+    try {
+      // Prepare booking data for Stripe checkout
+      const bookingData: any = {
+        salonId: salon.id,
+        serviceId: selectedService.id,
+        startTime: selectedTime,
+      };
+
+      if (!isAnyStaff && selectedStaff) {
+        bookingData.staffId = selectedStaff.id;
+      }
+
+      // Call booking checkout endpoint
+      const response = await fetch("/api/bookings/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create checkout session");
+      }
+
+      // Redirect to payment page with client secret and booking ID
+      const { clientSecret, booking } = data.data;
+
+      // Store booking details in sessionStorage for the payment page
+      sessionStorage.setItem(
+        "pendingBooking",
+        JSON.stringify({
+          bookingId: booking.id,
+          clientSecret,
+          salonName: salon.name,
+          serviceName: selectedService.title,
+          startTime: selectedTime,
+          price: selectedService.price,
+        })
+      );
+
+      // Navigate to payment page
+      window.location.href = `/bookings/${booking.id}/payment`;
+    } catch (error: any) {
+      console.error("Error creating stripe checkout:", error);
+      toast.error(error.message || "Failed to initiate payment");
+    } finally {
+      setBookingLoading(false);
     }
   };
 
@@ -1071,8 +1147,17 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-4">
-                                    <div className="w-14 h-14 rounded-full overflow-hidden bg-linear-to-br from-orange-100 to-purple-100 shrink-0 flex items-center justify-center">
-                                      <User className="h-7 w-7 text-[#FF7A00]" />
+                                    <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-orange-100 to-purple-100 shrink-0 flex items-center justify-center relative">
+                                      {staffMember.image ? (
+                                        <Image
+                                          src={staffMember.image}
+                                          alt={staffName}
+                                          fill
+                                          className="object-cover"
+                                        />
+                                      ) : (
+                                        <User className="h-7 w-7 text-[#FF7A00]" />
+                                      )}
                                     </div>
                                     <div>
                                       <h3 className="font-semibold text-black">
@@ -1264,6 +1349,102 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         {renderBookingSummary()}
                       </div>
 
+                      {/* Payment Method Selection */}
+                      <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-black mb-4">
+                          Payment Method
+                        </h3>
+                        <div className="space-y-3">
+                          {/* Pay with Stripe */}
+                          <button
+                            onClick={() => setPaymentMethod("stripe")}
+                            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                              paymentMethod === "stripe"
+                                ? "border-[#FF7A00] bg-orange-50"
+                                : "border-[#CBCBCB] bg-white hover:border-[#1E1E1E]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                    paymentMethod === "stripe"
+                                      ? "bg-[#FF7A00]"
+                                      : "bg-[#CBCBCB]"
+                                  }`}
+                                >
+                                  <svg
+                                    className="w-6 h-6 text-white"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-black">
+                                    Pay with Stripe
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    Secure online payment
+                                  </p>
+                                </div>
+                              </div>
+                              {paymentMethod === "stripe" && (
+                                <Check className="h-5 w-5 text-[#FF7A00]" />
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Pay on Spot */}
+                          <button
+                            onClick={() => setPaymentMethod("onspot")}
+                            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                              paymentMethod === "onspot"
+                                ? "border-[#FF7A00] bg-orange-50"
+                                : "border-[#CBCBCB] bg-white hover:border-[#1E1E1E]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                    paymentMethod === "onspot"
+                                      ? "bg-[#FF7A00]"
+                                      : "bg-[#CBCBCB]"
+                                  }`}
+                                >
+                                  <svg
+                                    className="w-6 h-6 text-white"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                                    />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-black">
+                                    Pay on Spot
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    Pay after your appointment
+                                  </p>
+                                </div>
+                              </div>
+                              {paymentMethod === "onspot" && (
+                                <Check className="h-5 w-5 text-[#FF7A00]" />
+                              )}
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
                       <Button
                         onClick={handleConfirmClick}
                         disabled={bookingLoading}
@@ -1272,8 +1453,12 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         {bookingLoading ? (
                           <>
                             <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                            Creating booking...
+                            {paymentMethod === "stripe"
+                              ? "Redirecting to payment..."
+                              : "Creating booking..."}
                           </>
+                        ) : paymentMethod === "stripe" ? (
+                          "Proceed to Payment"
                         ) : (
                           "Confirm Appointment"
                         )}

@@ -39,6 +39,7 @@ export interface StaffAvailability {
 export interface Staff {
   id: string;
   name?: string; // Name is directly on staff object
+  image?: string | null; // Staff profile image URL from Cloudinary
   salonId: string;
   role?: string; // Role might not exist in the data
   availability: StaffAvailability;

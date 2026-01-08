@@ -387,19 +387,6 @@ function CheckoutContent() {
           salonId: item.product.salonId,
         }))
       );
-
-      if (salonIds.size > 1) {
-        console.error("❌ Multiple salons detected in FRONTEND validation!");
-        toast.error(
-          "Your cart contains items from multiple salons. Please checkout items from one salon at a time.",
-          {
-            duration: 5000,
-          }
-        );
-        return;
-      } else {
-        console.log("✅ Frontend validation passed - single salon");
-      }
     }
 
     setIsProcessing(true);
@@ -606,92 +593,6 @@ function CheckoutContent() {
             </p>
           </div>
         </div>
-
-        {/* Multiple Salons Warning Banner */}
-        {apiCart?.data?.cart?.cartItems &&
-          apiCart.data.cart.cartItems.length > 0 &&
-          (() => {
-            const salonIds = new Set(
-              apiCart.data.cart.cartItems.map(
-                (item: ApiCartItem) => item.product.salonId
-              )
-            );
-            return salonIds.size > 1;
-          })() && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 bg-orange-50 border-2 border-orange-300 rounded-xl p-6"
-            >
-              <div className="flex items-start gap-3 mb-4">
-                <div className="flex-shrink-0 mt-0.5">
-                  <svg
-                    className="h-5 w-5 text-orange-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-orange-900 mb-1">
-                    Multiple Salons in Cart
-                  </h3>
-                  <p className="text-sm text-orange-800 mb-3">
-                    Your cart contains products from multiple salons. Orders can
-                    only include items from one salon at a time.
-                  </p>
-
-                  {/* Show salon breakdown */}
-                  <div className="space-y-2">
-                    {Array.from(
-                      new Set(
-                        apiCart.data.cart.cartItems.map(
-                          (item: ApiCartItem) => item.product.salonId
-                        )
-                      )
-                    ).map((salonId) => {
-                      const salonItems = apiCart.data.cart.cartItems.filter(
-                        (item: ApiCartItem) => item.product.salonId === salonId
-                      );
-                      return (
-                        <div
-                          key={salonId}
-                          className="bg-white rounded-lg p-3 border border-orange-200"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-xs font-semibold text-gray-700 mb-1">
-                                Salon: {salonId.substring(0, 8)}...
-                              </p>
-                              <p className="text-xs text-gray-600">
-                                {salonItems.length} item(s):{" "}
-                                {salonItems
-                                  .map((item) => item.product.title)
-                                  .join(", ")}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <p className="text-xs text-orange-700 mt-3 font-medium">
-                    💡 Tip: Go to your cart and remove items from unwanted
-                    salons, or complete this order first and place a separate
-                    order for items from the other salon.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
 
         {/* STEP 1: Details Form */}
         {currentStep === 1 && (

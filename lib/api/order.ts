@@ -152,6 +152,33 @@ export async function createOrder(
 }
 
 /**
+ * Update order status (salon owner only)
+ */
+export async function updateOrderStatus(
+  token: string,
+  orderId: string,
+  status: OrderStatus
+): Promise<SingleOrderResponse> {
+  const response = await fetch(`${API_BASE_URL}/${orderId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response
+      .json()
+      .catch(() => ({ message: "Failed to update order status" }));
+    throw new Error(errorData.message || "Failed to update order status");
+  }
+
+  return await response.json();
+}
+
+/**
  * Cancel an order
  */
 export async function cancelOrder(
@@ -170,6 +197,38 @@ export async function cancelOrder(
       .json()
       .catch(() => ({ message: "Failed to cancel order" }));
     throw new Error(errorData.message || "Failed to cancel order");
+  }
+
+  return await response.json();
+}
+
+/**
+ * Get all orders (admin only)
+ */
+export async function getAllOrdersAdmin(
+  token: string,
+  filters?: {
+    page?: number;
+    limit?: number;
+    status?: OrderStatus;
+    salonId?: string;
+  }
+): Promise<OrdersResponse> {
+  const queryParams = new URLSearchParams();
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) queryParams.append(key, value.toString());
+    });
+  }
+
+  const response = await fetch(`${API_BASE_URL}/admin?${queryParams}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch admin orders");
   }
 
   return await response.json();

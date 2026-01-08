@@ -1,26 +1,30 @@
-# Orders & Stripe Payment Integration
+# Orders & Bookings Stripe Payment Integration
 
-This document describes the integration of the Orders API and Stripe payment flow with the checkout functionality.
+This document describes the integration of the Orders and Bookings APIs with Stripe payment flow.
 
 ## Overview
 
-The system has been integrated with Stripe payment processing, allowing users to securely pay for their orders using Stripe's payment infrastructure. The flow uses webhooks to confirm payments asynchronously.
+The system has been integrated with Stripe payment processing, allowing users to securely pay for both **product orders** and **service bookings** using Stripe's payment infrastructure. The flow uses webhooks to confirm payments asynchronously.
 
 ## Base URL
 
 All API requests are proxied through Next.js API routes to the backend:
 
 - Backend: `https://probeauty-backend.onrender.com`
-- Proxy: `/api/orders`
-- Checkout Proxy: `/api/orders/checkout`
+- Orders Proxy: `/api/orders`
+- Orders Checkout: `/api/orders/checkout`
+- Bookings Proxy: `/api/bookings`
+- Bookings Checkout: `/api/bookings/checkout`
 
 ## Payment Flow Architecture
 
 > **⚠️ IMPORTANT - Notification Timing:**  
-> Order notifications should ONLY be sent when payment is confirmed (status: `CONFIRMED`), NOT when the order is created (status: `PAYMENT_PENDING`).  
+> Order/Booking notifications should ONLY be sent when payment is confirmed (status: `CONFIRMED`), NOT when created (status: `PAYMENT_PENDING`).  
 > See [PAYMENT_NOTIFICATION_FIX.md](PAYMENT_NOTIFICATION_FIX.md) for details on fixing premature notifications.
 
 ### Webhook-Driven Payment Confirmation
+
+**Order Payment Flow:**
 
 ```
 1. User clicks "Proceed to Payment"
@@ -33,6 +37,22 @@ All API requests are proxied through Next.js API routes to the backend:
 8. Stripe sends webhook to backend
 9. Backend updates Order status to CONFIRMED
 10. Frontend polls order status and shows success
+```
+
+**Booking Payment Flow:**
+
+```
+1. User selects service, time slot, and staff
+2. User clicks "Proceed to Payment"
+3. Frontend calls POST /api/bookings/checkout
+4. Backend creates Booking (PAYMENT_PENDING) + Stripe PaymentIntent
+5. Backend returns { clientSecret, bookingId, paymentIntentId }
+6. Frontend displays Stripe payment form
+7. User enters card details
+8. Stripe processes payment
+9. Stripe sends webhook to backend
+10. Backend updates Booking status to CONFIRMED
+11. Frontend polls booking status and shows success
 ```
 
 ## Integration Points
@@ -84,9 +104,9 @@ All API requests are proxied through Next.js API routes to the backend:
 
 ### 2. API Endpoints
 
-**Location:** [lib/api/order.ts](lib/api/order.ts)
+**Orders Location:** [lib/api/order.ts](lib/api/order.ts)
 
-Available functions:
+Available order functions:
 
 ```typescript
 // Create order from cart
@@ -98,18 +118,56 @@ getOrders(token: string, filters?: {...}): Promise<OrdersResponse>
 // Get single order details
 getOrderById(token: string, orderId: string): Promise<SingleOrderResponse>
 
+// Update order status (salon owner only)
+updateOrderStatus(token: string, orderId: string, status: OrderStatus): Promise<SingleOrderResponse>
+
 // Cancel an order
 cancelOrder(token: string, orderId: string): Promise<SingleOrderResponse>
+
+// Get all orders (admin only)
+getAllOrdersAdmin(token: string, filters?: {...}): Promise<OrdersResponse>
+```
+
+**Bookings Location:** [lib/api/booking.ts](lib/api/booking.ts)
+
+Available booking functions:
+
+```typescript
+// Create booking
+createBooking(token: string, data: CreateBookingRequest): Promise<SingleBookingResponse>
+
+// Get all user bookings
+getBookings(token: string, filters?: {...}): Promise<BookingsResponse>
+
+// Get single booking details
+getBookingById(token: string, bookingId: string): Promise<SingleBookingResponse>
+
+// Cancel a booking
+cancelBooking(token: string, bookingId: string): Promise<SingleBookingResponse>
 ```
 
 ### 3. API Routes (Proxies)
 
-**Location:** `app/api/orders/`
+**Order Routes:** `app/api/orders/`
 
 - `POST /api/orders` - Create order
-- `GET /api/orders` - Get all orders
+- `GET /api/orders` - Get all orders (user orders)
+- `GET /api/orders/admin` - Get all orders (admin only)
 - `GET /api/orders/[id]` - Get order details
+- `GET /api/orders/[id]/payment` - Get payment details for order
+- `PATCH /api/orders/[id]/status` - Update order status (salon owner only)
 - `POST /api/orders/[id]/cancel` - Cancel order
+- `POST /api/orders/checkout` - Create checkout session with Stripe
+
+**Booking Routes:** `app/api/bookings/`
+
+- `POST /api/bookings` - Create booking
+- `GET /api/bookings` - Get all bookings (user bookings)
+- `GET /api/bookings/[id]` - Get booking details
+- `GET /api/bookings/[id]/payment` - Get payment details for booking
+- `POST /api/bookings/[id]/confirm` - Confirm booking
+- `POST /api/bookings/[id]/complete` - Complete booking
+- `POST /api/bookings/checkout` - Create checkout session with Stripe
 
 All routes require authentication via Bearer token.
 
@@ -143,9 +201,74 @@ All routes require authentication via Bearer token.
 
 ```
 PENDING → PAYMENT_PENDING → CONFIRMED → SHIPPED → DELIVERED
-   ↓           ↓               ↓
-CANCELLED   PAYMENT_FAILED  CANCELLED
+   ↓           ↓      ↓         ↓
+CANCELLED  PAYMENT_FAILED  CANCELLED
+              ↓
+          PAYMENT_PENDING (retry)
+              ↓
+          CANCELLED
 ```
+
+## Booking Status Flow
+
+```
+PENDING → PAYMENT_PENDING → CONFIRMED → COMPLETED
+   ↓           ↓               ↓
+CANCELLED  PAYMENT_FAILED  CANCELLED
+              ↓
+          PAYMENT_PENDING (retry)
+              ↓
+          CANCELLED
+```
+
+## Payment Status Flow
+
+```
+pending → processing → succeeded
+              ↓
+           failed / canceled → refunded
+```
+
+### Valid Order Status Transitions
+
+- `PENDING` → `PAYMENT_PENDING`, `CONFIRMED`, `CANCELLED`
+- `PAYMENT_PENDING` → `CONFIRMED`, `PAYMENT_FAILED`, `CANCELLED`
+- `PAYMENT_FAILED` → `PAYMENT_PENDING` (retry), `CANCELLED`
+- `CONFIRMED` → `SHIPPED`, `CANCELLED`
+- `SHIPPED` → `DELIVERED`
+- `DELIVERED` → (terminal state)
+- `CANCELLED` → (terminal state)
+
+### Valid Booking Status Transitions
+
+- `PENDING` → `PAYMENT_PENDING`, `CONFIRMED`, `CANCELLED`
+- `PAYMENT_PENDING` → `CONFIRMED`, `PAYMENT_FAILED`, `CANCELLED`
+- `PAYMENT_FAILED` → `PAYMENT_PENDING` (retry), `CANCELLED`
+- `CONFIRMED` → `COMPLETED`, `CANCELLED`
+- `COMPLETED` → (terminal state)
+- `CANCELLED` → (terminal state)
+
+### Cancellation Rules
+
+Orders can be cancelled when their status is:
+
+- `PENDING`
+- `PAYMENT_PENDING`
+- `PAYMENT_FAILED`
+- `CONFIRMED`
+
+Bookings can be cancelled when their status is:
+
+- `PENDING`
+- `PAYMENT_PENDING`
+- `PAYMENT_FAILED`
+- `CONFIRMED`
+
+Orders/Bookings cannot be cancelled when:
+
+- `SHIPPED` - Already in transit
+- `DELIVERED` - Already received
+- `CANCELLED` - Already cancelled
 
 ## Features Implemented
 
@@ -155,6 +278,30 @@ CANCELLED   PAYMENT_FAILED  CANCELLED
 - Requires authentication
 - Uses selected address
 - Supports optional delivery notes
+- Creates Stripe PaymentIntent
+- Returns clientSecret for frontend payment
+
+✅ **Booking Creation**
+
+- Integrated with booking flow
+- Requires authentication
+- Service, time slot, and staff selection
+- Creates Stripe PaymentIntent
+- Returns clientSecret for frontend payment
+
+✅ **Payment Processing**
+
+- Stripe Elements integration
+- Webhook-driven confirmation
+- Status polling for real-time updates
+- Support for both orders and bookings
+- Payment status tracking
+- Idempotency with stripeEventId
+
+✅ **Payment Status Endpoints**
+
+- GET /api/orders/[id]/payment - View order payment details
+- GET /api/bookings/[id]/payment - View booking payment details
 
 ✅ **Cart Clearing**
 
@@ -183,9 +330,32 @@ CANCELLED   PAYMENT_FAILED  CANCELLED
 ✅ **Success Page**
 
 - Redirects to payment success page
-- Displays order ID
-- Links to order details
-- Links to continue shopping
+- Displays order/booking ID
+- Status polling for confirmation
+- Links to order/booking details
+- Handles both orders and bookings
+- Different UI for orders vs bookings
+
+✅ **Order Management in Profile**
+
+- View order history with pagination support
+- Filter by status and salon
+- Detailed order view with all items
+- Order cancellation for eligible statuses
+- Status-based badge colors (PENDING, PAYMENT_PENDING, PAYMENT_FAILED, CONFIRMED, SHIPPED, DELIVERED, CANCELLED)
+- View salon information
+- Track order lifecycle
+
+✅ **Booking Management in Profile**
+
+- View booking history
+- Detailed booking view
+- Booking cancellation for eligible statuses
+- View service and staff details
+- Track appointment status
+- Status-based badge colors (PENDING, PAYMENT_PENDING, PAYMENT_FAILED, CONFIRMED, SHIPPED, DELIVERED, CANCELLED)
+- View salon information
+- Track order lifecycle
 
 ## Backend API Features
 
@@ -214,6 +384,8 @@ To test the integration:
 
 ## Error Scenarios Handled
 
+**Orders:**
+
 - ❌ User not authenticated → Shows auth modal
 - ❌ No address selected → Error + redirect to step 1
 - ❌ Cart empty → Backend error
@@ -222,21 +394,60 @@ To test the integration:
 - ❌ Invalid address → Backend 404 error
 - ❌ Network errors → Generic error message
 
+**Bookings:**
+
+- ❌ User not authenticated → Shows auth modal
+- ❌ Service not available → Backend error
+- ❌ Time slot already booked → Backend error
+- ❌ Invalid booking details → Validation error
+- ❌ Network errors → Generic error message
+
+**Payment:**
+
+- ❌ Stripe not loaded → User-friendly message
+- ❌ Payment declined → Error from Stripe
+- ❌ Payment timeout → Timeout message after 60s
+- ❌ Webhook failure → Backend logs and retry
+
 ## Future Enhancements
 
-- [ ] Payment gateway integration
-- [ ] Order tracking page
+- [x] Payment gateway integration (Stripe)
+- [x] Order tracking page (Profile page - Orders tab)
+- [x] Booking tracking page (Profile page - Appointments tab)
 - [ ] Email notifications
-- [ ] Order history in profile
-- [ ] Status update webhooks
-- [ ] Retry failed payments
+- [x] Order history in profile
+- [x] Booking history in profile
+- [x] Status update functionality (salon owner)
+- [x] Payment status endpoints
+- [ ] Retry failed payments UI
 - [ ] Invoice generation
+- [x] Admin order management endpoint
+- [x] Booking checkout with payment
+- [x] Unified payment success page
 
 ## Related Files
+
+**Orders:**
 
 - [app/checkout/page.tsx](app/checkout/page.tsx) - Checkout page with order integration
 - [lib/api/order.ts](lib/api/order.ts) - Order API client
 - [app/api/orders/route.ts](app/api/orders/route.ts) - Order API proxy routes
-- [app/payment-success/page.tsx](app/payment-success/page.tsx) - Success page
+- [app/api/orders/checkout/route.ts](app/api/orders/checkout/route.ts) - Order checkout with Stripe
+- [app/api/orders/[id]/payment/route.ts](app/api/orders/[id]/payment/route.ts) - Order payment details
+- [lib/hooks/useOrderStatus.ts](lib/hooks/useOrderStatus.ts) - Order status polling hook
+
+**Bookings:**
+
+- [lib/api/booking.ts](lib/api/booking.ts) - Booking API client
+- [app/api/bookings/route.ts](app/api/bookings/route.ts) - Booking API proxy routes
+- [app/api/bookings/checkout/route.ts](app/api/bookings/checkout/route.ts) - Booking checkout with Stripe
+- [app/api/bookings/[id]/payment/route.ts](app/api/bookings/[id]/payment/route.ts) - Booking payment details
+- [lib/hooks/useBookingStatus.ts](lib/hooks/useBookingStatus.ts) - Booking status polling hook
+
+**Shared:**
+
+- [app/payment-success/page.tsx](app/payment-success/page.tsx) - Unified success page for orders and bookings
+- [components/StripePaymentForm.tsx](components/StripePaymentForm.tsx) - Stripe payment form component
+- [lib/stripe/config.ts](lib/stripe/config.ts) - Stripe configuration
 - [lib/api/cart.ts](lib/api/cart.ts) - Cart API client
 - [lib/api/address.ts](lib/api/address.ts) - Address API client

@@ -12,15 +12,18 @@ import {
   ArrowRight,
   Loader2,
   XCircle,
+  Calendar,
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useOrderStatus } from "@/lib/hooks/useOrderStatus";
+import { useBookingStatus } from "@/lib/hooks/useBookingStatus";
 
 function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
+  const bookingId = searchParams.get("bookingId");
   const [mounted, setMounted] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
@@ -31,16 +34,32 @@ function PaymentSuccessContent() {
     setToken(accessToken);
   }, []);
 
-  // Poll order status to check if payment is confirmed
-  const { order, status, loading, error } = useOrderStatus(
-    orderId,
-    token,
-    mounted && !!orderId
-  );
+  // Poll order status if orderId is provided
+  const {
+    order,
+    status: orderStatus,
+    loading: orderLoading,
+    error: orderError,
+  } = useOrderStatus(orderId, token, mounted && !!orderId);
+
+  // Poll booking status if bookingId is provided
+  const {
+    booking,
+    status: bookingStatus,
+    loading: bookingLoading,
+    error: bookingError,
+  } = useBookingStatus(bookingId, token, mounted && !!bookingId);
 
   if (!mounted) {
     return null;
   }
+
+  // Determine which entity we're tracking
+  const isOrder = !!orderId;
+  const isBooking = !!bookingId;
+  const status = isOrder ? orderStatus : bookingStatus;
+  const loading = isOrder ? orderLoading : bookingLoading;
+  const error = isOrder ? orderError : bookingError;
 
   const isPaymentConfirmed = status === "CONFIRMED";
   const isPaymentFailed = status === "PAYMENT_FAILED" || status === "CANCELLED";
@@ -99,8 +118,9 @@ function PaymentSuccessContent() {
                     Payment Confirmed! 🎉
                   </h1>
                   <p className="text-lg text-gray-600 mb-6">
-                    Thank you for your order. Your payment has been confirmed
-                    and your order is being processed.
+                    {isOrder
+                      ? "Thank you for your order. Your payment has been confirmed and your order is being processed."
+                      : "Thank you for your booking. Your payment has been confirmed and your appointment is scheduled."}
                   </p>
                 </>
               )}
@@ -123,13 +143,15 @@ function PaymentSuccessContent() {
                 </div>
               )}
 
-              {orderId && (
+              {(orderId || bookingId) && (
                 <div className="bg-gray-50 rounded-lg p-4 mb-6 inline-block">
-                  <p className="text-sm text-gray-600 mb-1">Order ID</p>
-                  <p className="text-lg font-mono font-semibold text-[#FF6A00]">
-                    {orderId}
+                  <p className="text-sm text-gray-600 mb-1">
+                    {isOrder ? "Order ID" : "Booking ID"}
                   </p>
-                  {order && (
+                  <p className="text-lg font-mono font-semibold text-[#FF6A00]">
+                    {orderId || bookingId}
+                  </p>
+                  {(order || booking) && (
                     <p className="text-sm text-gray-500 mt-2">
                       Status: <span className="font-semibold">{status}</span>
                     </p>
@@ -139,7 +161,7 @@ function PaymentSuccessContent() {
 
               {!isPaymentPending && (
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
-                  {orderId && isPaymentConfirmed && (
+                  {isOrder && orderId && isPaymentConfirmed && (
                     <Link href={`/profile?tab=orders&orderId=${orderId}`}>
                       <Button
                         className="bg-[#FF6A00] hover:bg-orange-600 text-white px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
@@ -151,13 +173,29 @@ function PaymentSuccessContent() {
                     </Link>
                   )}
 
+                  {isBooking && bookingId && isPaymentConfirmed && (
+                    <Link href={`/profile?tab=appointments`}>
+                      <Button
+                        className="bg-[#FF6A00] hover:bg-orange-600 text-white px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                        size="lg"
+                      >
+                        <Calendar className="mr-2 h-5 w-5" />
+                        View Appointment
+                      </Button>
+                    </Link>
+                  )}
+
                   <Link href="/">
                     <Button
                       variant="outline"
                       className="border-2 border-[#FF6A00] text-[#FF6A00] hover:text-white px-8 py-6 text-lg font-semibold"
                       size="lg"
                     >
-                      {isPaymentFailed ? "Try Again" : "Continue Shopping"}
+                      {isPaymentFailed
+                        ? "Try Again"
+                        : isBooking
+                        ? "Back to Home"
+                        : "Continue Shopping"}
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>

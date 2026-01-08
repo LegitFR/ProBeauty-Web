@@ -1052,12 +1052,16 @@ export default function ProfilePage() {
                                         ? "bg-blue-100 text-blue-700 hover:bg-blue-100"
                                         : order.status === "CONFIRMED"
                                         ? "bg-purple-100 text-purple-700 hover:bg-purple-100"
+                                        : order.status === "PAYMENT_PENDING"
+                                        ? "bg-orange-100 text-orange-700 hover:bg-orange-100"
+                                        : order.status === "PAYMENT_FAILED"
+                                        ? "bg-rose-100 text-rose-700 hover:bg-rose-100"
                                         : order.status === "CANCELLED"
                                         ? "bg-red-100 text-red-700 hover:bg-red-100"
                                         : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
                                     }`}
                                   >
-                                    {order.status.replace("_", " ")}
+                                    {order.status.replace(/_/g, " ")}
                                   </Badge>
                                 </div>
 
@@ -1139,6 +1143,8 @@ export default function ProfilePage() {
                                     View Details
                                   </Button>
                                   {(order.status === "PENDING" ||
+                                    order.status === "PAYMENT_PENDING" ||
+                                    order.status === "PAYMENT_FAILED" ||
                                     order.status === "CONFIRMED") && (
                                     <Button
                                       size="sm"
@@ -1146,7 +1152,7 @@ export default function ProfilePage() {
                                       onClick={() =>
                                         handleCancelOrder(order.id)
                                       }
-                                      className="border-red-500 text-red-600 hover:bg-red-50 flex-1"
+                                      className="border-red-500 text-red-600 hover:bg-red-50 hover:text-[#1e1e1e] flex-1"
                                     >
                                       Cancel
                                     </Button>
@@ -1439,7 +1445,7 @@ export default function ProfilePage() {
                               type="email"
                               value={user.email}
                               disabled
-                              className="w-full px-4 py-3 border-2 border-gray-200 border-2 rounded-xl bg-[#ECE3DC] cursor-not-allowed text-gray-600"
+                              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-[#ECE3DC] cursor-not-allowed text-gray-600"
                             />
                             <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                               <span className="inline-block w-1 h-1 bg-gray-400 rounded-full"></span>
@@ -2067,14 +2073,20 @@ export default function ProfilePage() {
                         className={
                           selectedOrder.status === "DELIVERED"
                             ? "bg-green-100 text-green-800"
-                            : selectedOrder.status === "CANCELLED"
-                            ? "bg-red-100 text-red-800"
                             : selectedOrder.status === "SHIPPED"
                             ? "bg-blue-100 text-blue-800"
+                            : selectedOrder.status === "CONFIRMED"
+                            ? "bg-purple-100 text-purple-800"
+                            : selectedOrder.status === "PAYMENT_PENDING"
+                            ? "bg-orange-100 text-orange-800"
+                            : selectedOrder.status === "PAYMENT_FAILED"
+                            ? "bg-rose-100 text-rose-800"
+                            : selectedOrder.status === "CANCELLED"
+                            ? "bg-red-100 text-red-800"
                             : "bg-yellow-100 text-yellow-800"
                         }
                       >
-                        {selectedOrder.status}
+                        {selectedOrder.status.replace(/_/g, " ")}
                       </Badge>
                     </div>
                     <div>
@@ -2168,6 +2180,8 @@ export default function ProfilePage() {
                   {/* Action Buttons */}
                   <div className="flex gap-2 pt-4">
                     {(selectedOrder.status === "PENDING" ||
+                      selectedOrder.status === "PAYMENT_PENDING" ||
+                      selectedOrder.status === "PAYMENT_FAILED" ||
                       selectedOrder.status === "CONFIRMED") && (
                       <Button
                         variant="outline"

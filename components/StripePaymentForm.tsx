@@ -1,6 +1,6 @@
 /**
  * Stripe Payment Form Component
- * Handles Stripe Elements payment processing
+ * Handles Stripe Elements payment processing for orders and bookings
  */
 
 "use client";
@@ -16,13 +16,15 @@ import { Lock } from "lucide-react";
 import { toast } from "sonner";
 
 interface StripePaymentFormProps {
-  orderId: string;
+  orderId?: string;
+  bookingId?: string;
   onSuccess: () => void;
   onError: (error: string) => void;
 }
 
 export function StripePaymentForm({
   orderId,
+  bookingId,
   onSuccess,
   onError,
 }: StripePaymentFormProps) {
@@ -41,10 +43,15 @@ export function StripePaymentForm({
     setIsProcessing(true);
 
     try {
+      // Construct return URL based on order or booking
+      const returnUrl = orderId
+        ? `${window.location.origin}/payment-success?orderId=${orderId}`
+        : `${window.location.origin}/payment-success?bookingId=${bookingId}`;
+
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/payment-success?orderId=${orderId}`,
+          return_url: returnUrl,
         },
       });
 
