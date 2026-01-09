@@ -54,6 +54,8 @@ export interface Staff {
     name: string;
     email: string;
     phone?: string;
+    profilePicture?: string | null; // User profile picture as fallback
+    image?: string | null; // Alternative image field
   };
 }
 

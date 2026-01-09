@@ -209,6 +209,18 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
           JSON.stringify(salonStaff, null, 2)
         );
 
+        // Debug: Log image field information
+        salonStaff.forEach((staff: any, index: number) => {
+          console.log(`Staff ${index} image fields:`, {
+            id: staff.id,
+            name: staff.name || staff.user?.name,
+            image: staff.image,
+            profilePicture: staff.profilePicture,
+            userImage: staff.user?.image,
+            userProfilePicture: staff.user?.profilePicture,
+          });
+        });
+
         // Filter staff by selected service if service data is available
         let filteredStaff = salonStaff as Staff[];
         if (selectedService) {
@@ -245,6 +257,19 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       const response = await getStaffBySalon(salon.id, selectedService?.id);
       // Ensure response.data is an array
       const staffData = Array.isArray(response.data) ? response.data : [];
+
+      // Debug: Log image field information from API response
+      console.log(`Received ${staffData.length} staff members from API`);
+      staffData.forEach((staff: any, index: number) => {
+        console.log(`API Staff ${index} image fields:`, {
+          id: staff.id,
+          name: staff.name || staff.user?.name,
+          image: staff.image,
+          profilePicture: staff.profilePicture,
+          userImage: staff.user?.image,
+          userProfilePicture: staff.user?.profilePicture,
+        });
+      });
 
       // Additional client-side filtering if backend doesn't support serviceId filtering
       let filteredStaffData = staffData;
@@ -1113,6 +1138,14 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                             const staffRole =
                               staffMember.role || "Professional";
 
+                            // Get staff image - check multiple possible locations
+                            const staffImage =
+                              staffMember.image || // Direct image field (primary)
+                              (staffMember as any).profilePicture || // profilePicture field (alternative)
+                              (staffMember as any).user?.profilePicture || // User object profilePicture (fallback)
+                              (staffMember as any).user?.image || // User object image (fallback)
+                              null; // No image available
+
                             // Check available days for this staff
                             const availableDays: string[] = [];
                             if (staffMember.availability) {
@@ -1148,9 +1181,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-4">
                                     <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-orange-100 to-purple-100 shrink-0 flex items-center justify-center relative">
-                                      {staffMember.image ? (
+                                      {staffImage ? (
                                         <Image
-                                          src={staffMember.image}
+                                          src={staffImage}
                                           alt={staffName}
                                           fill
                                           className="object-cover"

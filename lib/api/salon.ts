@@ -38,8 +38,10 @@ export interface StaffAvailability {
 
 export interface SalonStaff {
   id: string;
+  name?: string; // Staff member name
+  image?: string | null; // Staff profile image URL
   salonId: string;
-  role: string;
+  role?: string;
   availability: StaffAvailability;
   services?: Array<{
     id: string;
@@ -52,6 +54,8 @@ export interface SalonStaff {
     name: string;
     email: string;
     phone?: string;
+    profilePicture?: string | null; // User profile picture as fallback
+    image?: string | null; // Alternative image field
   };
 }
 
