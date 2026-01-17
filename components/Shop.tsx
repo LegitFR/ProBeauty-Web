@@ -77,7 +77,7 @@ export function Shop() {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const products = await fetchProductsClient(50);
+        const products = await fetchProductsClient({ limit: 50 });
         const transformedProducts = transformProducts(products);
         setApiProducts(transformedProducts);
       } catch (error) {

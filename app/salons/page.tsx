@@ -10,11 +10,13 @@ import { Toaster } from "@/components/Toaster";
 import { AuthModal } from "@/components/AuthModal";
 import { getSalons, type Salon } from "@/lib/api/salon";
 import { isAuthenticated } from "@/lib/api/auth";
-import { Star, Calendar, Badge as BadgeIcon, Search } from "lucide-react";
+import { Star, Calendar, Badge as BadgeIcon, Search, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { useOffers } from "@/lib/hooks/useOffers";
+import { OfferBadge } from "@/components/OfferBadge";
 
 export default function SalonsPage() {
   const router = useRouter();
@@ -24,10 +26,13 @@ export default function SalonsPage() {
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterVerified, setFilterVerified] = useState<boolean | undefined>(
-    undefined
+    undefined,
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Fetch all active offers
+  const { offers: allOffers } = useOffers();
 
   useEffect(() => {
     setMounted(true);
@@ -68,8 +73,15 @@ export default function SalonsPage() {
   };
 
   const filteredSalons = salons.filter((salon) =>
-    salon.name.toLowerCase().includes(searchQuery.toLowerCase())
+    salon.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  // Get offers for a specific salon
+  const getSalonOffers = (salonId: string) => {
+    return allOffers.filter(
+      (offer) => offer.salonId === salonId && offer.offerType === "salon",
+    );
+  };
 
   const getDayStatus = (salon: Salon) => {
     const days = [
@@ -191,76 +203,92 @@ export default function SalonsPage() {
               </Card>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-4">
-                {filteredSalons.map((salon, index) => (
-                  <Card
-                    key={salon.id}
-                    className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] shadow-md hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden flex flex-col cursor-pointer group"
-                    onClick={() => router.push(`/salons/${salon.id}/book`)}
-                  >
-                    {/* Image Section */}
-                    <div className="relative aspect-video overflow-hidden bg-transparent p-4">
-                      <img
-                        src={
-                          salon.thumbnail ||
-                          (salon.images && salon.images.length > 0
-                            ? salon.images[0]
-                            : "")
-                        }
-                        alt={salon.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-lg"
-                      />
-                    </div>
+                {filteredSalons.map((salon, index) => {
+                  const salonOffers = getSalonOffers(salon.id);
+                  const hasOffers = salonOffers.length > 0;
 
-                    <CardContent className="p-3 flex flex-col grow">
-                      {/* Salon Name */}
-                      <h3 className="text-base font-semibold text-[#1E1E1E] leading-tight line-clamp-2 mb-2">
-                        {salon.name}
-                      </h3>
+                  return (
+                    <Card
+                      key={salon.id}
+                      className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] shadow-md hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden flex flex-col cursor-pointer group"
+                      onClick={() => router.push(`/salons/${salon.id}/book`)}
+                    >
+                      {/* Image Section */}
+                      <div className="relative aspect-video overflow-hidden bg-transparent p-4">
+                        <img
+                          src={
+                            salon.thumbnail ||
+                            (salon.images && salon.images.length > 0
+                              ? salon.images[0]
+                              : "")
+                          }
+                          alt={salon.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-lg"
+                        />
 
-                      {/* Rating */}
-                      <div className="flex items-center gap-1 mb-2">
-                        <span className="text-sm font-medium text-[#1E1E1E]">
-                          4.5
-                        </span>
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3.5 w-3.5 ${
-                                i < 4
-                                  ? "fill-[#F44A01] text-[#F44A01]"
-                                  : "fill-gray-300 text-gray-300"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-xs text-[#616161]">(1200)</span>
+                        {/* Active Offers Badge */}
+                        {hasOffers && (
+                          <div className="absolute top-2 right-2 z-10">
+                            <Badge className="bg-gradient-to-r from-[#F44A01] to-[#FF6A00] text-white border-0 text-xs font-semibold shadow-md">
+                              <Tag className="w-3 h-3 mr-1" />
+                              {salonOffers.length}{" "}
+                              {salonOffers.length === 1 ? "Offer" : "Offers"}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Location */}
-                      <p className="text-sm text-[#1E1E1E] mb-2 line-clamp-2">
-                        {salon.address}
-                      </p>
+                      <CardContent className="p-3 flex flex-col grow">
+                        {/* Salon Name */}
+                        <h3 className="text-base font-semibold text-[#1E1E1E] leading-tight line-clamp-2 mb-2">
+                          {salon.name}
+                        </h3>
 
-                      {/* Badge */}
-                      <p className="text-xs text-[#616161] mb-2">
-                        {salon.verified ? "verified salon" : "beauty salon"}
-                      </p>
-                    </CardContent>
+                        {/* Rating */}
+                        <div className="flex items-center gap-1 mb-2">
+                          <span className="text-sm font-medium text-[#1E1E1E]">
+                            4.5
+                          </span>
+                          <div className="flex items-center gap-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-3.5 w-3.5 ${
+                                  i < 4
+                                    ? "fill-[#F44A01] text-[#F44A01]"
+                                    : "fill-gray-300 text-gray-300"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs text-[#616161]">(1200)</span>
+                        </div>
 
-                    {/* Book Button */}
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/salons/${salon.id}/book`);
-                      }}
-                      className="w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 bg-[#1E1E1E] hover:bg-[#2a2a2a] text-[#ECE3DC] font-medium text-xs p-7"
-                    >
-                      <Calendar className="h-3 w-3 mr-1" />
-                      Book Appointment
-                    </Button>
-                  </Card>
-                ))}
+                        {/* Location */}
+                        <p className="text-sm text-[#1E1E1E] mb-2 line-clamp-2">
+                          {salon.address}
+                        </p>
+
+                        {/* Badge */}
+                        <p className="text-xs text-[#616161] mb-2">
+                          {salon.verified ? "verified salon" : "beauty salon"}
+                        </p>
+                      </CardContent>
+
+                      {/* Book Button */}
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/salons/${salon.id}/book`);
+                        }}
+                        className="w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 bg-[#1E1E1E] hover:bg-[#2a2a2a] text-[#ECE3DC] font-medium text-xs p-7"
+                      >
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Book Appointment
+                      </Button>
+                    </Card>
+                  );
+                })}
               </div>
             )}
 
@@ -289,7 +317,7 @@ export default function SalonsPage() {
                     >
                       {page}
                     </Button>
-                  )
+                  ),
                 )}
                 <Button
                   variant="outline"

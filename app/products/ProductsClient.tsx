@@ -28,6 +28,8 @@ import {
   ChevronDown,
   ArrowLeft,
 } from "lucide-react";
+import { OfferBadge, OfferTimer } from "../../components/OfferBadge";
+import { useOffers } from "../../lib/hooks/useOffers";
 
 /**
  * NOTE: Search Implementation
@@ -88,6 +90,9 @@ function ProductsContent({ products }: ProductsClientProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
 
+  // Fetch all active offers for products
+  const { offers: allOffers } = useOffers();
+
   // Get unique categories
   const categories = useMemo(() => {
     const cats = new Set(products.map((p) => p.category));
@@ -99,6 +104,15 @@ function ProductsContent({ products }: ProductsClientProps) {
     return wishlistItems.some((item) => item.id === productId);
   };
 
+  // Get offers for a specific product
+  const getProductOffers = (productId: string, salonId?: string) => {
+    return allOffers.filter(
+      (offer) =>
+        (offer.offerType === "salon" && offer.salonId === salonId) ||
+        (offer.offerType === "product" && offer.productId === productId),
+    );
+  };
+
   // Filter and sort products
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
@@ -108,7 +122,7 @@ function ProductsContent({ products }: ProductsClientProps) {
       filtered = filtered.filter(
         (p) =>
           p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.brand.toLowerCase().includes(searchQuery.toLowerCase())
+          p.brand.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
@@ -324,7 +338,7 @@ function ProductsContent({ products }: ProductsClientProps) {
                           {range === "100-200" && "£100 - £200"}
                           {range === "over200" && "Over £200"}
                         </button>
-                      )
+                      ),
                     )}
                   </div>
                 </div>
@@ -395,6 +409,11 @@ function ProductsContent({ products }: ProductsClientProps) {
                 {filteredProducts.map((product, index) => {
                   const isAdded = addedItems.has(product.id);
                   const isFavorite = isInWishlist(product.id);
+                  const productOffers = getProductOffers(
+                    product.id,
+                    product.salonId,
+                  );
+                  const bestOffer = productOffers[0]; // Show the first/best offer
 
                   return (
                     <motion.div
@@ -413,6 +432,14 @@ function ProductsContent({ products }: ProductsClientProps) {
                             alt={product.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-lg"
                           />
+
+                          {/* Offer Badge - Top Left */}
+                          {bestOffer && (
+                            <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                              <OfferBadge offer={bestOffer} size="sm" />
+                              <OfferTimer endsAt={bestOffer.endsAt} />
+                            </div>
+                          )}
 
                           {/* Wishlist Button - Top Right */}
                           <motion.button

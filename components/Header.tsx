@@ -133,10 +133,17 @@ export function Header() {
             <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6">
               <a
                 href="#book"
-                className="text-gray-300 hover:text-white transition-colors duration-200 text-sm font-medium font-normal"
+                className="text-gray-300 hover:text-white transition-colors duration-200 text-sm font-medium"
               >
                 List Your Business
               </a>
+              <Link
+                href="/offers"
+                className="text-gray-300 hover:text-white transition-colors duration-200 text-sm font-medium flex items-center gap-1.5"
+              >
+                <span className="inline-block animate-pulse">🎁</span>
+                Offers
+              </Link>
               <div className="w-px h-4 bg-gray-700"></div>
 
               {/* Show user menu or login button */}
@@ -318,6 +325,14 @@ export function Header() {
                 >
                   Salons
                 </a>
+                <Link
+                  href="/offers"
+                  className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm font-medium"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <span className="animate-pulse">🎁</span>
+                  Special Offers
+                </Link>
 
                 <div className="border-t border-gray-700 pt-3">
                   {user ? (
@@ -326,7 +341,7 @@ export function Header() {
                         handleLogout();
                         setIsOpen(false);
                       }}
-                      className="block w-full text-left text-orange-400 hover:text-orange-600 transition-colors text-sm font-medium mb-3 flex items-center gap-2"
+                      className="flex items-center gap-2 w-full text-left text-orange-400 hover:text-orange-600 transition-colors text-sm font-medium mb-3"
                     >
                       <LogOut className="h-4 w-4" />
                       Sign Out

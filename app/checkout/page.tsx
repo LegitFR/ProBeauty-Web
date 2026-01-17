@@ -46,6 +46,8 @@ import {
 } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe/config";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
+import { OfferSelector } from "@/components/OfferSelector";
+import type { Offer } from "@/lib/types/offer";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -65,7 +67,7 @@ function CheckoutContent() {
   const [token, setToken] = useState<string | null>(null);
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
-    null
+    null,
   );
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
@@ -74,6 +76,37 @@ function CheckoutContent() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+
+  // Offer state - support multiple offers
+  const [selectedOffers, setSelectedOffers] = useState<
+    Array<{ offer: Offer; discount: number }>
+  >([]);
+  const offerDiscount = selectedOffers.reduce(
+    (sum, item) => sum + item.discount,
+    0,
+  );
+
+  // Show toast notification when offers change (but not on initial mount)
+  const [offersInitialized, setOffersInitialized] = useState(false);
+  useEffect(() => {
+    if (!offersInitialized) {
+      setOffersInitialized(true);
+      return;
+    }
+
+    const totalDiscount = selectedOffers.reduce(
+      (sum, item) => sum + item.discount,
+      0,
+    );
+    if (selectedOffers.length > 0) {
+      toast.success(
+        `🎉 ${selectedOffers.length} offer${selectedOffers.length > 1 ? "s" : ""} applied! You saved £${totalDiscount.toFixed(2)}`,
+        { duration: 3000 },
+      );
+    } else if (offersInitialized) {
+      toast.info("Offers removed", { duration: 2000 });
+    }
+  }, [selectedOffers.length]);
 
   // Placeholder products for demo
   const placeholderProducts = [
@@ -129,7 +162,7 @@ function CheckoutContent() {
             "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400",
           brand: "",
           salonId: item.product.salonId, // Keep salonId for validation
-        })
+        }),
       );
       console.log("Mapped API items:", mappedItems);
       return mappedItems;
@@ -202,7 +235,7 @@ function CheckoutContent() {
     console.log("=== Loading Cart from API ===");
     console.log(
       "Token:",
-      userToken ? `${userToken.substring(0, 20)}...` : "none"
+      userToken ? `${userToken.substring(0, 20)}...` : "none",
     );
     setIsLoadingCart(true);
     try {
@@ -210,11 +243,11 @@ function CheckoutContent() {
       console.log("✅ Cart API Response:", cartData);
       console.log(
         "📦 Full response object:",
-        JSON.stringify(cartData, null, 2)
+        JSON.stringify(cartData, null, 2),
       );
       console.log(
         "Cart items count:",
-        cartData?.data?.cart?.cartItems?.length || 0
+        cartData?.data?.cart?.cartItems?.length || 0,
       );
       console.log("Cart summary:", cartData?.data?.summary);
 
@@ -291,7 +324,16 @@ function CheckoutContent() {
   };
 
   const handleContinueToPayment = async () => {
-    // Validation for Step 1
+    // If user has selected a saved address (not creating a new one)
+    if (selectedAddressId && !showNewAddressForm && savedAddresses.length > 0) {
+      // Just validate that an address is selected, skip form validation
+      console.log("Using saved address:", selectedAddressId);
+      setCurrentStep(2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // Validation for Step 1 - Only when creating a new address
     if (
       !formData.email ||
       !formData.phone ||
@@ -334,6 +376,7 @@ function CheckoutContent() {
           isDefault: savedAddresses.length === 0,
         });
         setSavedAddresses([...savedAddresses, newAddress]);
+        setSelectedAddressId(newAddress.id); // Auto-select the newly created address
         console.log("✅ Address saved successfully:", newAddress);
         toast.success("Address saved successfully!");
       } catch (error) {
@@ -368,14 +411,14 @@ function CheckoutContent() {
     ) {
       const salonIds = new Set(
         apiCart.data.cart.cartItems.map(
-          (item: ApiCartItem) => item.product.salonId
-        )
+          (item: ApiCartItem) => item.product.salonId,
+        ),
       );
 
       console.log("=== FRONTEND SALON VALIDATION ===");
       console.log(
         "Number of items in cart:",
-        apiCart.data.cart.cartItems.length
+        apiCart.data.cart.cartItems.length,
       );
       console.log("Unique salon IDs:", Array.from(salonIds));
       console.log("Number of unique salons:", salonIds.size);
@@ -385,7 +428,7 @@ function CheckoutContent() {
           productId: item.productId,
           title: item.product.title,
           salonId: item.product.salonId,
-        }))
+        })),
       );
     }
 
@@ -398,7 +441,7 @@ function CheckoutContent() {
       console.log("Notes:", formData.notes || "(none)");
       console.log(
         "Creating checkout session with addressId:",
-        selectedAddressId
+        selectedAddressId,
       );
       const response = await fetch("/api/orders/checkout", {
         method: "POST",
@@ -424,13 +467,13 @@ function CheckoutContent() {
         // Handle specific error cases with helpful messages
         if (data.message?.includes("multiple salons")) {
           console.error(
-            "❌ BACKEND VALIDATION says multiple salons - this is a BACKEND issue!"
+            "❌ BACKEND VALIDATION says multiple salons - this is a BACKEND issue!",
           );
           toast.error(
             "Your cart contains items from multiple salons. Please remove items from other salons before proceeding.",
             {
               duration: 5000,
-            }
+            },
           );
         } else if (data.message?.includes("Cart is empty")) {
           toast.error("Your cart is empty. Please add items before checkout.");
@@ -441,7 +484,7 @@ function CheckoutContent() {
               "Some items are out of stock. Please update your cart.",
             {
               duration: 5000,
-            }
+            },
           );
         } else {
           throw new Error(data.message || "Failed to create checkout session");
@@ -462,12 +505,12 @@ function CheckoutContent() {
         "Ready for payment! Complete payment below to confirm your order.",
         {
           duration: 5000,
-        }
+        },
       );
     } catch (error: any) {
       console.error("❌ Failed to create checkout session:", error);
       toast.error(
-        error.message || "Failed to initiate checkout. Please try again."
+        error.message || "Failed to initiate checkout. Please try again.",
       );
       setIsProcessing(false);
     }
@@ -478,7 +521,7 @@ function CheckoutContent() {
     ? parseFloat(apiCart.data.summary.subtotal.toString())
     : getTotalPrice();
   const totalItems = apiCart?.data?.summary?.totalItems || getTotalItems();
-  const finalTotal = totalPrice; // No VAT - just product prices
+  const finalTotal = totalPrice - offerDiscount; // Apply offer discount
 
   // Log whenever items or totals change
   useEffect(() => {
@@ -1090,7 +1133,7 @@ function CheckoutContent() {
                             orderId={orderId || ""}
                             onSuccess={() => {
                               toast.success(
-                                "Payment processing... Redirecting to confirmation page."
+                                "Payment processing... Redirecting to confirmation page.",
                               );
                             }}
                             onError={(error) => {
@@ -1168,6 +1211,20 @@ function CheckoutContent() {
 
                       <Separator className="my-4" />
 
+                      {/* Offer Selector - Only show if there are items */}
+                      {items.length > 0 && (
+                        <OfferSelector
+                          cartItems={items}
+                          amount={totalPrice}
+                          onOffersApplied={(offers) => {
+                            setSelectedOffers(offers);
+                          }}
+                          selectedOffers={selectedOffers}
+                        />
+                      )}
+
+                      <Separator className="my-4" />
+
                       {/* Price Breakdown */}
                       <div className="space-y-3 bg-[#ECE3DC] p-4 rounded-xl">
                         <div className="flex justify-between text-sm">
@@ -1179,6 +1236,38 @@ function CheckoutContent() {
                             £{totalPrice.toFixed(2)}
                           </span>
                         </div>
+
+                        {/* Offer Discount */}
+                        {offerDiscount > 0 && (
+                          <div className="space-y-1">
+                            {selectedOffers.map(({ offer, discount }) => (
+                              <div
+                                key={offer.id}
+                                className="flex justify-between text-sm"
+                              >
+                                <span className="text-green-700 font-medium flex items-center gap-1">
+                                  <Badge className="bg-linear-to-r from-[#F44A01] to-[#FF6A00] text-white text-xs px-2 py-0.5">
+                                    {offer.title}
+                                  </Badge>
+                                </span>
+                                <span className="font-semibold text-green-600">
+                                  -£{discount.toFixed(2)}
+                                </span>
+                              </div>
+                            ))}
+                            {selectedOffers.length > 1 && (
+                              <div className="flex justify-between text-sm pt-1 border-t border-green-200">
+                                <span className="text-green-800 font-bold">
+                                  Total Discount
+                                </span>
+                                <span className="font-bold text-green-600">
+                                  -£{offerDiscount.toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-700 flex items-center gap-1">
                             Shipping
@@ -1197,12 +1286,13 @@ function CheckoutContent() {
                               Total Amount
                             </p>
                             <span className="text-2xl font-bold text-[#FF6A00]">
-                              £{finalTotal.toFixed(2)}
+                              £{(totalPrice - offerDiscount).toFixed(2)}
                             </span>
                           </div>
                           <div className="text-right">
                             <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                              Save £{(totalPrice * 0.15).toFixed(2)}
+                              Save £
+                              {(offerDiscount + totalPrice * 0.15).toFixed(2)}
                             </Badge>
                           </div>
                         </div>

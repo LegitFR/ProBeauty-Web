@@ -14,6 +14,8 @@ import { getAccessToken, isAuthenticated } from "@/lib/api/auth";
 import { Salon } from "@/lib/api/salon";
 import { SalonReviewsSection } from "./SalonReviewsSection";
 import { getReviewsBySalon } from "@/lib/api/review";
+import { OfferSelector } from "./OfferSelector";
+import type { Offer } from "@/lib/types/offer";
 
 type BookingStep = "services" | "professional" | "time" | "confirm" | "login";
 
@@ -44,7 +46,16 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"stripe" | "onspot">(
-    "onspot"
+    "onspot",
+  );
+
+  // Offer state - support multiple offers
+  const [selectedOffers, setSelectedOffers] = useState<
+    Array<{ offer: Offer; discount: number }>
+  >([]);
+  const offerDiscount = selectedOffers.reduce(
+    (sum, item) => sum + item.discount,
+    0,
   );
 
   // Filter state
@@ -131,7 +142,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     return services.filter((service) => {
       const titleLower = service.title.toLowerCase();
       return filter.keywords.some((keyword) =>
-        titleLower.includes(keyword.toLowerCase())
+        titleLower.includes(keyword.toLowerCase()),
       );
     });
   };
@@ -172,7 +183,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       const validServices = allServices.filter((service) => {
         if (service.salonId !== salon.id) {
           console.warn(
-            `Service ${service.id} (${service.title}) belongs to salon ${service.salonId}, not ${salon.id}. Filtering out.`
+            `Service ${service.id} (${service.title}) belongs to salon ${service.salonId}, not ${salon.id}. Filtering out.`,
           );
           return false;
         }
@@ -183,7 +194,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         console.warn(
           `Filtered out ${
             allServices.length - validServices.length
-          } invalid services`
+          } invalid services`,
         );
       }
 
@@ -206,7 +217,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         console.log(`Using ${salonStaff.length} staff members from salon data`);
         console.log(
           "Staff data from salon:",
-          JSON.stringify(salonStaff, null, 2)
+          JSON.stringify(salonStaff, null, 2),
         );
 
         // Debug: Log image field information
@@ -228,7 +239,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
             // Check if staff has services field and can perform the selected service
             if (staff.services && Array.isArray(staff.services)) {
               return staff.services.some(
-                (s: any) => s.id === selectedService.id
+                (s: any) => s.id === selectedService.id,
               );
             }
             // Check if staff has serviceIds field
@@ -239,7 +250,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
             return true;
           }) as Staff[];
           console.log(
-            `Filtered to ${filteredStaff.length} staff members who can perform service: ${selectedService.title}`
+            `Filtered to ${filteredStaff.length} staff members who can perform service: ${selectedService.title}`,
           );
         }
 
@@ -252,7 +263,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       console.log(
         `Fetching staff from API${
           selectedService ? ` for service: ${selectedService.title}` : ""
-        }...`
+        }...`,
       );
       const response = await getStaffBySalon(salon.id, selectedService?.id);
       // Ensure response.data is an array
@@ -289,7 +300,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
         if (filteredStaffData.length < staffData.length) {
           console.log(
-            `Client-side filtered from ${staffData.length} to ${filteredStaffData.length} staff members`
+            `Client-side filtered from ${staffData.length} to ${filteredStaffData.length} staff members`,
           );
         }
       }
@@ -301,13 +312,13 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         console.warn(
           selectedService
             ? `No staff members can perform service: ${selectedService.title}`
-            : "No staff members available for this salon"
+            : "No staff members available for this salon",
         );
         toast.info(
           selectedService
             ? `No staff members are available to perform "${selectedService.title}". Please select a different service or choose "Any Available Staff".`
             : "No staff members are currently available at this salon. Please try again later or contact the salon directly.",
-          { duration: 6000 }
+          { duration: 6000 },
         );
       }
     } catch (error: any) {
@@ -320,7 +331,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       ) {
         toast.error(
           "Unable to load staff information due to a technical issue. Please try selecting a different salon or contact support.",
-          { duration: 6000 }
+          { duration: 6000 },
         );
       } else {
         toast.error(error.message || "Failed to load staff members");
@@ -342,7 +353,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     // Sort slots by start time
     const sortedSlots = [...slots].sort(
       (a, b) =>
-        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
     );
 
     for (const slot of sortedSlots) {
@@ -361,7 +372,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     }
 
     console.log(
-      `Filtered slots based on ${selectedService.durationMinutes} min service duration: ${sortedSlots.length} -> ${filtered.length} slots`
+      `Filtered slots based on ${selectedService.durationMinutes} min service duration: ${sortedSlots.length} -> ${filtered.length} slots`,
     );
 
     return filtered;
@@ -379,7 +390,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       console.log(`Service ID: ${selectedService.id}`);
       console.log(`Staff ID: ${isAnyStaff ? "ANY STAFF" : selectedStaff?.id}`);
       console.log(
-        `Service Duration: ${selectedService.durationMinutes} minutes`
+        `Service Duration: ${selectedService.durationMinutes} minutes`,
       );
 
       // Call the backend availability API which properly validates staff availability and existing bookings
@@ -408,16 +419,16 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
         // Filter slots based on service duration to prevent overlapping bookings
         const durationFilteredSlots = filterSlotsByServiceDuration(
-          response.data.slots
+          response.data.slots,
         );
 
         // Filter to only show available slots
         const availableSlots = durationFilteredSlots.filter(
-          (slot) => slot.available
+          (slot) => slot.available,
         );
 
         console.log(
-          `Received ${response.data.slots.length} total slots, ${durationFilteredSlots.length} after duration filter, ${availableSlots.length} available`
+          `Received ${response.data.slots.length} total slots, ${durationFilteredSlots.length} after duration filter, ${availableSlots.length} available`,
         );
         console.log("Sample available slots after filtering:");
         availableSlots.slice(0, 3).forEach((slot, idx) => {
@@ -434,7 +445,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
             weekday: "long",
           });
           toast.info(
-            `No available time slots for ${dayOfWeek}. Please select a different date or staff member.`
+            `No available time slots for ${dayOfWeek}. Please select a different date or staff member.`,
           );
         }
 
@@ -447,7 +458,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       console.error("Error fetching available slots:", error);
       toast.error(
         error.message ||
-          "Failed to fetch available time slots. Please try again."
+          "Failed to fetch available time slots. Please try again.",
       );
       setAvailableSlots([]);
     } finally {
@@ -459,7 +470,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   const isStaffAvailableOnDay = (dateString: string): boolean => {
     if (!selectedStaff || !selectedStaff.availability) {
       console.log(
-        `No staff or availability data for ${dateString}, returning true`
+        `No staff or availability data for ${dateString}, returning true`,
       );
       return true; // If no staff selected or no availability info, assume available
     }
@@ -583,11 +594,11 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       console.log("Slot start time (ISO):", slot.startTime);
       console.log(
         "Slot start time (local):",
-        new Date(slot.startTime).toString()
+        new Date(slot.startTime).toString(),
       );
       console.log(
         "Slot start time (local hours):",
-        new Date(slot.startTime).getHours()
+        new Date(slot.startTime).getHours(),
       );
       setSelectedTime(slot.startTime);
     }
@@ -667,7 +678,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
           serviceName: selectedService.title,
           startTime: selectedTime,
           price: selectedService.price,
-        })
+        }),
       );
 
       // Navigate to payment page
@@ -728,12 +739,12 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
       toast.success(
         `Booking confirmed! Your appointment is scheduled for ${formatTime(
-          selectedTime
+          selectedTime,
         )} on ${new Date(selectedDate).toLocaleDateString("en-US", {
           month: "long",
           day: "numeric",
           year: "numeric",
-        })}`
+        })}`,
       );
       onClose();
     } catch (error: any) {
@@ -743,12 +754,12 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       if (error.message?.includes("Staff cannot perform this service")) {
         toast.error(
           `The selected staff member cannot perform "${selectedService?.title}". Please select a different staff member or choose "Any Available Staff".`,
-          { duration: 6000 }
+          { duration: 6000 },
         );
       } else if (error.message?.includes("not available")) {
         toast.error(
           "The selected time slot is no longer available. Please select a different time.",
-          { duration: 5000 }
+          { duration: 5000 },
         );
       } else {
         toast.error(error.message || "Failed to create booking");
@@ -898,11 +909,32 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         {/* Total */}
         {selectedService && (
           <div className="bg-[#ECE3DC] -mx-6 -mb-6 px-6 py-4">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-black">Total</span>
-              <span className="font-bold text-xl text-[#FF7A00]">
-                ${selectedService.price}
-              </span>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-700">Service Price</span>
+                <span className="font-semibold text-black">
+                  ${selectedService.price}
+                </span>
+              </div>
+              {offerDiscount > 0 && (
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-green-700 font-medium">
+                    Offer Discount
+                  </span>
+                  <span className="font-semibold text-green-600">
+                    -${offerDiscount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between items-center pt-2 border-t">
+                <span className="font-semibold text-black">Total</span>
+                <span className="font-bold text-xl text-[#FF7A00]">
+                  $
+                  {(parseFloat(selectedService.price) - offerDiscount).toFixed(
+                    2,
+                  )}
+                </span>
+              </div>
             </div>
           </div>
         )}
@@ -941,8 +973,8 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                       step.active
                         ? "bg-linear-to-r from-[#FD7501] to-[#F65000] text-white font-medium"
                         : step.completed
-                        ? "text-[#26D55A] font-medium"
-                        : "text-[#1E1E1E]"
+                          ? "text-[#26D55A] font-medium"
+                          : "text-[#1E1E1E]"
                     }`}
                   >
                     {step.label}
@@ -1166,7 +1198,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                 if (dayAvail && dayAvail.isAvailable) {
                                   availableDays.push(
                                     day.charAt(0).toUpperCase() +
-                                      day.slice(1, 3)
+                                      day.slice(1, 3),
                                   );
                                 }
                               });
@@ -1272,10 +1304,10 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                     isDisabled
                                       ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
                                       : selectedDate === dateObj.fullDate
-                                      ? "bg-[#FF7A00] text-white shadow-lg scale-105"
-                                      : dateObj.isToday
-                                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                                      : "hover:shadow-lg text-[#1E1E1E] bg-[#ECE3DC] border-2 border-[#CBCBCB] hover:border-[#FF7A00]"
+                                        ? "bg-[#FF7A00] text-white shadow-lg scale-105"
+                                        : dateObj.isToday
+                                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                                          : "hover:shadow-lg text-[#1E1E1E] bg-[#ECE3DC] border-2 border-[#CBCBCB] hover:border-[#FF7A00]"
                                   }`}
                                   title={
                                     isDisabled
@@ -1322,8 +1354,8 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                       selectedTime === slot.startTime
                                         ? "border-[#FF7A00] bg-orange-50 text-[#FF7A00] font-semibold"
                                         : slot.available
-                                        ? "border-[#CBCBCB] hover:border-[#1E1E1E] bg-[#ECE3DC] text-[#1E1E1E] hover:bg-[#CBCBCB]"
-                                        : "border-[#CBCBCB] bg-[#CBCBCB] text-[#616161] cursor-not-allowed"
+                                          ? "border-[#CBCBCB] hover:border-[#1E1E1E] bg-[#ECE3DC] text-[#1E1E1E] hover:bg-[#CBCBCB]"
+                                          : "border-[#CBCBCB] bg-[#CBCBCB] text-[#616161] cursor-not-allowed"
                                     }`}
                                   >
                                     <div className="flex items-center justify-center">
@@ -1381,6 +1413,26 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                       <div className="lg:hidden mb-6">
                         {renderBookingSummary()}
                       </div>
+
+                      {/* Offer Selection */}
+                      {selectedService && (
+                        <div className="mb-6">
+                          <OfferSelector
+                            cartItems={[
+                              {
+                                id: selectedService.id,
+                                salonId: salon.id,
+                                serviceId: selectedService.id,
+                              },
+                            ]}
+                            amount={parseFloat(selectedService.price)}
+                            onOffersApplied={(offers) => {
+                              setSelectedOffers(offers);
+                            }}
+                            selectedOffers={selectedOffers}
+                          />
+                        </div>
+                      )}
 
                       {/* Payment Method Selection */}
                       <div className="mb-6">

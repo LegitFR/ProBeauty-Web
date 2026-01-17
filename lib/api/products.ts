@@ -55,6 +55,7 @@ export interface DisplayProduct {
   badge: string;
   description: string;
   inStock: boolean;
+  salonId?: string;
 }
 
 /**
@@ -63,7 +64,7 @@ export interface DisplayProduct {
  * @returns Array of products or empty array on error
  */
 export async function fetchProducts(
-  filters: ProductFilters = {}
+  filters: ProductFilters = {},
 ): Promise<ApiProduct[]> {
   try {
     const params = new URLSearchParams();
@@ -87,7 +88,7 @@ export async function fetchProducts(
           "Content-Type": "application/json",
         },
         next: { revalidate: 60 }, // Revalidate every 60 seconds for fresh data
-      }
+      },
     );
 
     if (!response.ok) {
@@ -109,7 +110,7 @@ export async function fetchProducts(
  * @returns Array of products or empty array on error
  */
 export async function fetchProductsClient(
-  filters: ProductFilters = {}
+  filters: ProductFilters = {},
 ): Promise<ApiProduct[]> {
   try {
     const params = new URLSearchParams();
@@ -133,7 +134,7 @@ export async function fetchProductsClient(
           "Content-Type": "application/json",
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!response.ok) {
@@ -155,7 +156,7 @@ export async function fetchProductsClient(
  * @returns Array of products or empty array on error
  */
 export async function searchProducts(
-  filters: ProductFilters
+  filters: ProductFilters,
 ): Promise<ApiProduct[]> {
   try {
     if (!filters.q || filters.q.trim().length === 0) {
@@ -184,7 +185,7 @@ export async function searchProducts(
           "Content-Type": "application/json",
         },
         next: { revalidate: 30 }, // Revalidate every 30 seconds for search results
-      }
+      },
     );
 
     if (!response.ok) {
@@ -206,7 +207,7 @@ export async function searchProducts(
  * @returns Array of products or empty array on error
  */
 export async function searchProductsClient(
-  filters: ProductFilters
+  filters: ProductFilters,
 ): Promise<ApiProduct[]> {
   try {
     if (!filters.q || filters.q.trim().length === 0) {
@@ -235,7 +236,7 @@ export async function searchProductsClient(
           "Content-Type": "application/json",
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!response.ok) {
