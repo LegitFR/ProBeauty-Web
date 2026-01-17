@@ -29,6 +29,30 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
+/**
+ * NOTE: Search Implementation
+ *
+ * The backend now provides a fuzzy search API endpoint (/api/v1/products/search)
+ * with server-side filtering capabilities including:
+ * - Fuzzy matching on product title and SKU
+ * - Price range filtering (minPrice, maxPrice)
+ * - Salon filtering (salonId)
+ * - Stock availability filtering (inStock)
+ * - Pagination support
+ *
+ * Current Implementation: Client-side filtering (simple, works with initial data)
+ *
+ * Future Enhancement: For better performance with large product catalogs, consider:
+ * 1. Using searchProductsClient() from lib/api/products.ts for search queries
+ * 2. Implementing debounced API calls on search input
+ * 3. Showing loading states during search
+ * 4. Server-side pagination for browsing large result sets
+ *
+ * Available functions in lib/api/products.ts:
+ * - searchProductsClient({ q, minPrice, maxPrice, salonId, inStock, page, limit })
+ * - fetchProductsClient({ minPrice, maxPrice, salonId, inStock, page, limit })
+ */
+
 interface ProductsClientProps {
   products: DisplayProduct[];
 }

@@ -3,6 +3,8 @@
  * Handles product orders
  */
 
+import { isAuthExpired, handleAuthError } from "@/lib/utils/authErrorHandler";
+
 const API_BASE_URL = "/api/orders";
 
 export type OrderStatus =
@@ -79,7 +81,7 @@ export async function getOrders(
     limit?: number;
     status?: OrderStatus;
     salonId?: string;
-  }
+  },
 ): Promise<OrdersResponse> {
   const queryParams = new URLSearchParams();
   if (filters) {
@@ -95,7 +97,14 @@ export async function getOrders(
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch orders");
+    const errorData = await response.json().catch(() => ({}));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(errorData)) {
+      handleAuthError(errorData);
+    }
+
+    throw new Error(errorData.message || "Failed to fetch orders");
   }
 
   return await response.json();
@@ -106,7 +115,7 @@ export async function getOrders(
  */
 export async function getOrderById(
   token: string,
-  orderId: string
+  orderId: string,
 ): Promise<SingleOrderResponse> {
   const response = await fetch(`${API_BASE_URL}/${orderId}`, {
     headers: {
@@ -115,7 +124,14 @@ export async function getOrderById(
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch order");
+    const errorData = await response.json().catch(() => ({}));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(errorData)) {
+      handleAuthError(errorData);
+    }
+
+    throw new Error(errorData.message || "Failed to fetch order");
   }
 
   return await response.json();
@@ -126,7 +142,7 @@ export async function getOrderById(
  */
 export async function createOrder(
   token: string,
-  data: CreateOrderRequest
+  data: CreateOrderRequest,
 ): Promise<SingleOrderResponse> {
   try {
     const response = await fetch(API_BASE_URL, {
@@ -141,6 +157,11 @@ export async function createOrder(
     const responseData = await response.json();
 
     if (!response.ok) {
+      // Check for token expiration
+      if (response.status === 401 && isAuthExpired(responseData)) {
+        handleAuthError(responseData);
+      }
+
       throw new Error(responseData.message || "Failed to create order");
     }
 
@@ -157,7 +178,7 @@ export async function createOrder(
 export async function updateOrderStatus(
   token: string,
   orderId: string,
-  status: OrderStatus
+  status: OrderStatus,
 ): Promise<SingleOrderResponse> {
   const response = await fetch(`${API_BASE_URL}/${orderId}/status`, {
     method: "PATCH",
@@ -172,6 +193,12 @@ export async function updateOrderStatus(
     const errorData = await response
       .json()
       .catch(() => ({ message: "Failed to update order status" }));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(errorData)) {
+      handleAuthError(errorData);
+    }
+
     throw new Error(errorData.message || "Failed to update order status");
   }
 
@@ -183,7 +210,7 @@ export async function updateOrderStatus(
  */
 export async function cancelOrder(
   token: string,
-  orderId: string
+  orderId: string,
 ): Promise<SingleOrderResponse> {
   const response = await fetch(`${API_BASE_URL}/${orderId}/cancel`, {
     method: "POST",
@@ -196,6 +223,12 @@ export async function cancelOrder(
     const errorData = await response
       .json()
       .catch(() => ({ message: "Failed to cancel order" }));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(errorData)) {
+      handleAuthError(errorData);
+    }
+
     throw new Error(errorData.message || "Failed to cancel order");
   }
 
@@ -212,7 +245,7 @@ export async function getAllOrdersAdmin(
     limit?: number;
     status?: OrderStatus;
     salonId?: string;
-  }
+  },
 ): Promise<OrdersResponse> {
   const queryParams = new URLSearchParams();
   if (filters) {
@@ -228,7 +261,14 @@ export async function getAllOrdersAdmin(
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch admin orders");
+    const errorData = await response.json().catch(() => ({}));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(errorData)) {
+      handleAuthError(errorData);
+    }
+
+    throw new Error(errorData.message || "Failed to fetch admin orders");
   }
 
   return await response.json();

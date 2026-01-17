@@ -10,6 +10,7 @@ import {
   RemoveFavouriteResponse,
   AddToFavouritesData,
 } from "@/lib/types/favourite";
+import { isAuthExpired, handleAuthError } from "@/lib/utils/authErrorHandler";
 
 const API_BASE_URL = "/api/favourites";
 
@@ -21,7 +22,7 @@ const API_BASE_URL = "/api/favourites";
  */
 export async function addToFavourites(
   token: string,
-  data: AddToFavouritesData
+  data: AddToFavouritesData,
 ): Promise<SingleFavouriteResponse> {
   const response = await fetch(API_BASE_URL, {
     method: "POST",
@@ -36,6 +37,12 @@ export async function addToFavourites(
     const error = await response.json().catch(() => ({
       message: "Failed to add to favourites",
     }));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(error)) {
+      handleAuthError(error);
+    }
+
     throw new Error(error.message || "Failed to add to favourites");
   }
 
@@ -52,7 +59,7 @@ export async function addToFavourites(
 export async function getFavourites(
   token: string,
   page = 1,
-  limit = 10
+  limit = 10,
 ): Promise<FavouritesResponse> {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -71,6 +78,12 @@ export async function getFavourites(
     const error = await response.json().catch(() => ({
       message: "Failed to fetch favourites",
     }));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(error)) {
+      handleAuthError(error);
+    }
+
     throw new Error(error.message || "Failed to fetch favourites");
   }
 
@@ -85,7 +98,7 @@ export async function getFavourites(
  */
 export async function checkFavouriteStatus(
   token: string,
-  productId: string
+  productId: string,
 ): Promise<FavouriteStatusResponse> {
   const response = await fetch(`${API_BASE_URL}/check/${productId}`, {
     method: "GET",
@@ -99,6 +112,12 @@ export async function checkFavouriteStatus(
     const error = await response.json().catch(() => ({
       message: "Failed to check favourite status",
     }));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(error)) {
+      handleAuthError(error);
+    }
+
     throw new Error(error.message || "Failed to check favourite status");
   }
 
@@ -113,7 +132,7 @@ export async function checkFavouriteStatus(
  */
 export async function removeFromFavourites(
   token: string,
-  productId: string
+  productId: string,
 ): Promise<RemoveFavouriteResponse> {
   const response = await fetch(`${API_BASE_URL}/${productId}`, {
     method: "DELETE",
@@ -127,6 +146,12 @@ export async function removeFromFavourites(
     const error = await response.json().catch(() => ({
       message: "Failed to remove from favourites",
     }));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(error)) {
+      handleAuthError(error);
+    }
+
     throw new Error(error.message || "Failed to remove from favourites");
   }
 

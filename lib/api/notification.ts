@@ -11,6 +11,7 @@ import {
   MarkAsReadResponse,
   MarkAllAsReadResponse,
   DeleteNotificationResponse,
+  ClearAllNotificationsResponse,
   ApiErrorResponse,
 } from "@/lib/types/notification";
 
@@ -21,7 +22,7 @@ const API_BASE_URL = "/api/notifications";
  */
 export async function registerDeviceToken(
   token: string,
-  data: RegisterTokenRequest
+  data: RegisterTokenRequest,
 ): Promise<RegisterTokenResponse> {
   const response = await fetch(`${API_BASE_URL}/register-token`, {
     method: "POST",
@@ -46,7 +47,7 @@ export async function registerDeviceToken(
  */
 export async function getNotifications(
   token: string,
-  params?: GetNotificationsParams
+  params?: GetNotificationsParams,
 ): Promise<GetNotificationsResponse> {
   const queryParams = new URLSearchParams();
 
@@ -64,20 +65,40 @@ export async function getNotifications(
     queryParams.toString() ? `?${queryParams.toString()}` : ""
   }`;
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    credentials: "include",
-  });
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      credentials: "include",
+    });
 
-  if (!response.ok) {
-    const error: ApiErrorResponse = await response.json();
-    throw new Error(error.message || "Failed to fetch notifications");
+    const data = await response.json();
+
+    // If response is not ok but has notifications structure, return it anyway
+    // This handles graceful degradation when backend has issues
+    if (!response.ok) {
+      if (data.notifications && Array.isArray(data.notifications)) {
+        return data;
+      }
+      throw new Error(data.message || "Failed to fetch notifications");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching notifications:", error);
+    // Return empty notifications instead of throwing to prevent UI crashes
+    return {
+      notifications: [],
+      pagination: {
+        page: params?.page || 1,
+        limit: params?.limit || 20,
+        total: 0,
+        totalPages: 0,
+      },
+    };
   }
-
-  return response.json();
 }
 
 /**
@@ -85,7 +106,7 @@ export async function getNotifications(
  */
 export async function markNotificationAsRead(
   token: string,
-  notificationId: string
+  notificationId: string,
 ): Promise<MarkAsReadResponse> {
   const response = await fetch(`${API_BASE_URL}/${notificationId}/read`, {
     method: "PUT",
@@ -107,7 +128,7 @@ export async function markNotificationAsRead(
  * Mark all notifications as read
  */
 export async function markAllNotificationsAsRead(
-  token: string
+  token: string,
 ): Promise<MarkAllAsReadResponse> {
   const response = await fetch(`${API_BASE_URL}/read-all`, {
     method: "PUT",
@@ -120,7 +141,7 @@ export async function markAllNotificationsAsRead(
   if (!response.ok) {
     const error: ApiErrorResponse = await response.json();
     throw new Error(
-      error.message || "Failed to mark all notifications as read"
+      error.message || "Failed to mark all notifications as read",
     );
   }
 
@@ -132,7 +153,7 @@ export async function markAllNotificationsAsRead(
  */
 export async function deleteNotification(
   token: string,
-  notificationId: string
+  notificationId: string,
 ): Promise<DeleteNotificationResponse> {
   const response = await fetch(`${API_BASE_URL}/${notificationId}`, {
     method: "DELETE",
@@ -145,6 +166,28 @@ export async function deleteNotification(
   if (!response.ok) {
     const error: ApiErrorResponse = await response.json();
     throw new Error(error.message || "Failed to delete notification");
+  }
+
+  return response.json();
+}
+
+/**
+ * Clear all notifications (permanently delete all)
+ */
+export async function clearAllNotifications(
+  token: string,
+): Promise<ClearAllNotificationsResponse> {
+  const response = await fetch(`${API_BASE_URL}/clear-all`, {
+    method: "DELETE",
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error: ApiErrorResponse = await response.json();
+    throw new Error(error.message || "Failed to clear all notifications");
   }
 
   return response.json();

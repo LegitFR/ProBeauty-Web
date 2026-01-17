@@ -73,6 +73,11 @@ export interface DeleteNotificationResponse {
   message: string;
 }
 
+export interface ClearAllNotificationsResponse {
+  message: string;
+  deletedCount: number;
+}
+
 export interface ApiErrorResponse {
   success: false;
   message: string;

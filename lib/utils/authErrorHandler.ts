@@ -24,6 +24,9 @@ export function isAuthExpired(error: any): boolean {
     lowerError.includes("jwt expired") ||
     lowerError.includes("invalid token") ||
     lowerError.includes("token expired") ||
+    lowerError.includes("access token has expired") ||
+    lowerError.includes("access token expired") ||
+    lowerError.includes("access_token_expired") ||
     lowerError.includes("unauthorized") ||
     lowerError.includes("session expired")
   );
@@ -63,7 +66,7 @@ export function handleAuthError(error?: any): void {
  */
 export function checkAndHandleAuthError(
   response: Response,
-  data?: any
+  data?: any,
 ): boolean {
   // Check status code
   if (response.status === 401) {

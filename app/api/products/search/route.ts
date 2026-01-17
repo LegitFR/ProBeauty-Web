@@ -1,6 +1,6 @@
 /**
- * Products API Proxy Route
- * Proxies product requests to backend API to keep URL secure
+ * Products Search API Proxy Route
+ * Proxies product search requests to backend API with fuzzy matching
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -12,9 +12,18 @@ const BACKEND_URL =
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
+    const query = searchParams.get("q");
+
+    if (!query || query.trim().length === 0) {
+      return NextResponse.json(
+        { message: "Search query is required", data: [] },
+        { status: 400 }
+      );
+    }
 
     // Build query string from all possible parameters
     const params = new URLSearchParams();
+    params.append("q", query);
 
     // Pagination
     const page = searchParams.get("page");
@@ -26,15 +35,15 @@ export async function GET(request: NextRequest) {
     const salonId = searchParams.get("salonId");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
-    const inStock = searchParams.get("inStock") || "true";
+    const inStock = searchParams.get("inStock");
 
     if (salonId) params.append("salonId", salonId);
     if (minPrice) params.append("minPrice", minPrice);
     if (maxPrice) params.append("maxPrice", maxPrice);
-    params.append("inStock", inStock);
+    if (inStock) params.append("inStock", inStock);
 
     const response = await fetch(
-      `${BACKEND_URL}/products?${params.toString()}`,
+      `${BACKEND_URL}/products/search?${params.toString()}`,
       {
         method: "GET",
         headers: {
@@ -45,9 +54,9 @@ export async function GET(request: NextRequest) {
     );
 
     if (!response.ok) {
-      console.error(`[Products API] Backend error: ${response.status}`);
+      console.error(`[Products Search API] Backend error: ${response.status}`);
       return NextResponse.json(
-        { message: "Failed to fetch products", data: [] },
+        { message: "Failed to search products", data: [] },
         { status: response.status }
       );
     }
@@ -55,9 +64,13 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data, { status: 200 });
   } catch (error: any) {
-    console.error("[Products API] Error:", error);
+    console.error("[Products Search API] Error:", error);
     return NextResponse.json(
-      { message: "Failed to fetch products", data: [], error: error.message },
+      {
+        message: "Failed to search products",
+        data: [],
+        error: error.message,
+      },
       { status: 500 }
     );
   }

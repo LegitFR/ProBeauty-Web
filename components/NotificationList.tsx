@@ -31,6 +31,7 @@ export function NotificationList({ onClose }: NotificationListProps) {
     markAsRead,
     markAllAsRead,
     deleteNotif,
+    clearAll,
     loadMore,
     fetchNotifications,
   } = useNotifications();
@@ -66,14 +67,14 @@ export function NotificationList({ onClose }: NotificationListProps) {
           case "BookingDetails":
             if (notification.data.bookingId) {
               router.push(
-                `/profile?tab=bookings&id=${notification.data.bookingId}`
+                `/profile?tab=bookings&id=${notification.data.bookingId}`,
               );
             }
             break;
           case "OrderDetails":
             if (notification.data.orderId) {
               router.push(
-                `/profile?tab=orders&id=${notification.data.orderId}`
+                `/profile?tab=orders&id=${notification.data.orderId}`,
               );
             }
             break;
@@ -105,6 +106,22 @@ export function NotificationList({ onClose }: NotificationListProps) {
     }
   };
 
+  const handleClearAll = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to clear all notifications? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await clearAll();
+    } catch (error) {
+      console.error("Failed to clear all notifications:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col h-[400px] sm:h-[500px] max-h-[70vh] sm:max-h-[80vh] bg-[#ECE3DC] overflow-hidden">
       {/* Header */}
@@ -117,17 +134,30 @@ export function NotificationList({ onClose }: NotificationListProps) {
             </p>
           )}
         </div>
-        {unreadCount > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleMarkAllAsRead}
-            className="text-xs"
-          >
-            <CheckCheck className="h-4 w-4 mr-1" />
-            Mark all read
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleMarkAllAsRead}
+              className="text-xs"
+            >
+              <CheckCheck className="h-4 w-4 mr-1" />
+              Mark all read
+            </Button>
+          )}
+          {notifications.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearAll}
+              className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear all
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Notifications List */}
@@ -154,7 +184,7 @@ export function NotificationList({ onClose }: NotificationListProps) {
                 onClick={() => handleNotificationClick(notification)}
                 className={cn(
                   "flex gap-3 p-4 cursor-pointer transition-colors hover:bg-accent",
-                  !notification.isRead && "bg-blue-50/50 dark:bg-blue-950/20"
+                  !notification.isRead && "bg-blue-50/50 dark:bg-blue-950/20",
                 )}
               >
                 <div className="shrink-0 mt-1">

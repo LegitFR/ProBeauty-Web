@@ -30,6 +30,16 @@ interface ProductsResponse {
   };
 }
 
+export interface ProductFilters {
+  page?: number;
+  limit?: number;
+  salonId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+  q?: string; // Search query for search endpoint
+}
+
 export interface DisplayProduct {
   id: string;
   name: string;
@@ -49,13 +59,28 @@ export interface DisplayProduct {
 
 /**
  * Fetches all products from the backend API (Server-side only)
- * @param limit - Number of products to fetch (default: 50)
+ * @param filters - Filter options for products
  * @returns Array of products or empty array on error
  */
-export async function fetchProducts(limit: number = 50): Promise<ApiProduct[]> {
+export async function fetchProducts(
+  filters: ProductFilters = {}
+): Promise<ApiProduct[]> {
   try {
+    const params = new URLSearchParams();
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+    else params.append("limit", "50");
+    if (filters.salonId) params.append("salonId", filters.salonId);
+    if (filters.minPrice)
+      params.append("minPrice", filters.minPrice.toString());
+    if (filters.maxPrice)
+      params.append("maxPrice", filters.maxPrice.toString());
+    if (filters.inStock !== undefined)
+      params.append("inStock", filters.inStock.toString());
+    else params.append("inStock", "true");
+
     const response = await fetch(
-      `${API_BASE_URL}/products?limit=${limit}&inStock=true`,
+      `${API_BASE_URL}/products?${params.toString()}`,
       {
         method: "GET",
         headers: {
@@ -80,15 +105,28 @@ export async function fetchProducts(limit: number = 50): Promise<ApiProduct[]> {
 
 /**
  * Fetches products via Next.js API proxy (Client-side safe)
- * @param limit - Number of products to fetch (default: 50)
+ * @param filters - Filter options for products
  * @returns Array of products or empty array on error
  */
 export async function fetchProductsClient(
-  limit: number = 50
+  filters: ProductFilters = {}
 ): Promise<ApiProduct[]> {
   try {
+    const params = new URLSearchParams();
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+    else params.append("limit", "50");
+    if (filters.salonId) params.append("salonId", filters.salonId);
+    if (filters.minPrice)
+      params.append("minPrice", filters.minPrice.toString());
+    if (filters.maxPrice)
+      params.append("maxPrice", filters.maxPrice.toString());
+    if (filters.inStock !== undefined)
+      params.append("inStock", filters.inStock.toString());
+    else params.append("inStock", "true");
+
     const response = await fetch(
-      `${CLIENT_API_BASE_URL}?limit=${limit}&inStock=true`,
+      `${CLIENT_API_BASE_URL}?${params.toString()}`,
       {
         method: "GET",
         headers: {
@@ -107,6 +145,108 @@ export async function fetchProductsClient(
     return data.data || [];
   } catch (error) {
     console.error("Error fetching products:", error);
+    return [];
+  }
+}
+
+/**
+ * Searches products from the backend API with fuzzy matching (Server-side only)
+ * @param filters - Search query and filter options
+ * @returns Array of products or empty array on error
+ */
+export async function searchProducts(
+  filters: ProductFilters
+): Promise<ApiProduct[]> {
+  try {
+    if (!filters.q || filters.q.trim().length === 0) {
+      console.warn("Search query is required");
+      return [];
+    }
+
+    const params = new URLSearchParams();
+    params.append("q", filters.q);
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+    else params.append("limit", "50");
+    if (filters.salonId) params.append("salonId", filters.salonId);
+    if (filters.minPrice)
+      params.append("minPrice", filters.minPrice.toString());
+    if (filters.maxPrice)
+      params.append("maxPrice", filters.maxPrice.toString());
+    if (filters.inStock !== undefined)
+      params.append("inStock", filters.inStock.toString());
+
+    const response = await fetch(
+      `${API_BASE_URL}/products/search?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        next: { revalidate: 30 }, // Revalidate every 30 seconds for search results
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`API Error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
+    const data: ProductsResponse = await response.json();
+    return data.data || [];
+  } catch (error) {
+    console.error("Error searching products:", error);
+    return [];
+  }
+}
+
+/**
+ * Searches products via Next.js API proxy (Client-side safe)
+ * @param filters - Search query and filter options
+ * @returns Array of products or empty array on error
+ */
+export async function searchProductsClient(
+  filters: ProductFilters
+): Promise<ApiProduct[]> {
+  try {
+    if (!filters.q || filters.q.trim().length === 0) {
+      console.warn("Search query is required");
+      return [];
+    }
+
+    const params = new URLSearchParams();
+    params.append("q", filters.q);
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+    else params.append("limit", "50");
+    if (filters.salonId) params.append("salonId", filters.salonId);
+    if (filters.minPrice)
+      params.append("minPrice", filters.minPrice.toString());
+    if (filters.maxPrice)
+      params.append("maxPrice", filters.maxPrice.toString());
+    if (filters.inStock !== undefined)
+      params.append("inStock", filters.inStock.toString());
+
+    const response = await fetch(
+      `${CLIENT_API_BASE_URL}/search?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`API Error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
+    const data: ProductsResponse = await response.json();
+    return data.data || [];
+  } catch (error) {
+    console.error("Error searching products:", error);
     return [];
   }
 }

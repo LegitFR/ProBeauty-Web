@@ -17,6 +17,7 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteNotification,
+  clearAllNotifications,
   registerDeviceToken,
   getUnreadCount,
 } from "@/lib/api/notification";
@@ -34,19 +35,20 @@ interface NotificationContextType {
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotif: (notificationId: string) => Promise<void>;
+  clearAll: () => Promise<void>;
   registerDevice: (token: string, platform: Platform) => Promise<void>;
   refreshUnreadCount: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function useNotifications() {
   const context = useContext(NotificationContext);
   if (!context) {
     throw new Error(
-      "useNotifications must be used within NotificationProvider"
+      "useNotifications must be used within NotificationProvider",
     );
   }
   return context;
@@ -116,7 +118,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         setIsLoading(false);
       }
     },
-    [isAuth]
+    [isAuth],
   );
 
   // Load more notifications
@@ -135,8 +137,8 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
       setNotifications((prev) =>
         prev.map((notif) =>
-          notif.id === notificationId ? { ...notif, isRead: true } : notif
-        )
+          notif.id === notificationId ? { ...notif, isRead: true } : notif,
+        ),
       );
 
       setUnreadCount((prev) => Math.max(0, prev - 1));
@@ -155,7 +157,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       await markAllNotificationsAsRead(token);
 
       setNotifications((prev) =>
-        prev.map((notif) => ({ ...notif, isRead: true }))
+        prev.map((notif) => ({ ...notif, isRead: true })),
       );
 
       setUnreadCount(0);
@@ -177,7 +179,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         const deletedNotif = notifications.find((n) => n.id === notificationId);
 
         setNotifications((prev) =>
-          prev.filter((notif) => notif.id !== notificationId)
+          prev.filter((notif) => notif.id !== notificationId),
         );
 
         if (deletedNotif && !deletedNotif.isRead) {
@@ -188,8 +190,24 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         throw error;
       }
     },
-    [notifications]
+    [notifications],
   );
+
+  // Clear all notifications
+  const clearAll = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      await clearAllNotifications(token);
+
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Failed to clear all notifications:", error);
+      throw error;
+    }
+  }, []);
 
   // Register device token
   const registerDevice = useCallback(
@@ -213,7 +231,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         throw error;
       }
     },
-    [isAuth]
+    [isAuth],
   );
 
   // Initial fetch when authenticated
@@ -247,6 +265,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     markAsRead,
     markAllAsRead,
     deleteNotif,
+    clearAll,
     registerDevice,
     refreshUnreadCount,
   };

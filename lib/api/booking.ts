@@ -3,6 +3,8 @@
  * Handles appointment bookings
  */
 
+import { isAuthExpired, handleAuthError } from "@/lib/utils/authErrorHandler";
+
 const API_BASE_URL = "/api/bookings";
 
 export type BookingStatus =
@@ -97,7 +99,7 @@ export async function createBooking(
     serviceId: string;
     staffId?: string;
     startTime: string;
-  }
+  },
 ): Promise<SingleBookingResponse> {
   console.log("Creating booking with data:", data);
 
@@ -121,7 +123,7 @@ export async function createBooking(
       error = JSON.parse(responseText);
     } catch (e) {
       throw new Error(
-        `Failed to create booking: ${response.status} - ${responseText}`
+        `Failed to create booking: ${response.status} - ${responseText}`,
       );
     }
 
@@ -191,7 +193,7 @@ export async function getBookings(
     status?: BookingStatus;
     startDate?: string;
     endDate?: string;
-  }
+  },
 ): Promise<BookingsResponse> {
   const queryParams = new URLSearchParams();
   if (filters) {
@@ -205,7 +207,14 @@ export async function getBookings(
     },
   });
   if (!response.ok) {
-    throw new Error("Failed to fetch bookings");
+    const errorData = await response.json().catch(() => ({}));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(errorData)) {
+      handleAuthError(errorData);
+    }
+
+    throw new Error(errorData.message || "Failed to fetch bookings");
   }
   return await response.json();
 }
@@ -215,7 +224,7 @@ export async function getBookings(
  */
 export async function getBookingById(
   token: string,
-  id: string
+  id: string,
 ): Promise<SingleBookingResponse> {
   const response = await fetch(`${API_BASE_URL}/${id}`, {
     headers: {
@@ -223,7 +232,14 @@ export async function getBookingById(
     },
   });
   if (!response.ok) {
-    throw new Error("Failed to fetch booking");
+    const errorData = await response.json().catch(() => ({}));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(errorData)) {
+      handleAuthError(errorData);
+    }
+
+    throw new Error(errorData.message || "Failed to fetch booking");
   }
   return await response.json();
 }
@@ -238,7 +254,7 @@ export async function updateBooking(
     startTime: string;
     staffId: string;
     status: BookingStatus;
-  }>
+  }>,
 ): Promise<SingleBookingResponse> {
   const response = await fetch(`${API_BASE_URL}/${id}`, {
     method: "PUT",
@@ -249,7 +265,13 @@ export async function updateBooking(
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json().catch(() => ({}));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(error)) {
+      handleAuthError(error);
+    }
+
     throw new Error(error.message || "Failed to update booking");
   }
   return await response.json();
@@ -260,7 +282,7 @@ export async function updateBooking(
  */
 export async function cancelBooking(
   token: string,
-  id: string
+  id: string,
 ): Promise<SingleBookingResponse> {
   const response = await fetch(`${API_BASE_URL}/${id}`, {
     method: "DELETE",
@@ -269,7 +291,14 @@ export async function cancelBooking(
     },
   });
   if (!response.ok) {
-    throw new Error("Failed to cancel booking");
+    const errorData = await response.json().catch(() => ({}));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(errorData)) {
+      handleAuthError(errorData);
+    }
+
+    throw new Error(errorData.message || "Failed to cancel booking");
   }
   return await response.json();
 }
@@ -279,7 +308,7 @@ export async function cancelBooking(
  */
 export async function confirmBooking(
   token: string,
-  id: string
+  id: string,
 ): Promise<SingleBookingResponse> {
   const response = await fetch(`${API_BASE_URL}/${id}/confirm`, {
     method: "POST",
@@ -288,7 +317,14 @@ export async function confirmBooking(
     },
   });
   if (!response.ok) {
-    throw new Error("Failed to confirm booking");
+    const errorData = await response.json().catch(() => ({}));
+
+    // Check for token expiration
+    if (response.status === 401 && isAuthExpired(errorData)) {
+      handleAuthError(errorData);
+    }
+
+    throw new Error(errorData.message || "Failed to confirm booking");
   }
   return await response.json();
 }
@@ -298,7 +334,7 @@ export async function confirmBooking(
  */
 export async function completeBooking(
   token: string,
-  id: string
+  id: string,
 ): Promise<SingleBookingResponse> {
   const response = await fetch(`${API_BASE_URL}/${id}/complete`, {
     method: "POST",
