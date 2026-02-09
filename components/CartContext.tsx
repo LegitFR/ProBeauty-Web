@@ -14,6 +14,12 @@ import {
   type CartResponse,
   type ApiCartItem,
 } from "@/lib/api/cart";
+import {
+  getAccessToken,
+  getRefreshToken,
+  refreshAccessToken,
+  getUser,
+} from "@/lib/api/auth";
 
 interface CartItem {
   id: string | number; // Support both string (API) and number (fallback)
@@ -41,23 +47,57 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
-  // Check authentication status
+  // Check authentication status and refresh token if needed
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       try {
-        // Token is stored separately as "accessToken" in localStorage
-        const accessToken = localStorage.getItem("accessToken");
-        const userStr = localStorage.getItem("user");
+        // Check for access token and user data
+        const accessToken = getAccessToken();
+        const user = getUser();
+        const refreshToken = getRefreshToken();
 
-        if (accessToken && userStr) {
+        console.log("[CartContext] Auth check:", {
+          hasAccessToken: !!accessToken,
+          hasUser: !!user,
+          hasRefreshToken: !!refreshToken,
+        });
+
+        if (accessToken && user) {
           setToken(accessToken);
           setIsAuthenticated(true);
-          console.log("[CartContext] ✅ User authenticated");
+          console.log("[CartContext] ✅ User authenticated with valid token");
           return;
+        }
+
+        // If we have user data but no access token, try to refresh
+        if (user && refreshToken && !accessToken) {
+          console.log(
+            "[CartContext] User found but token missing, attempting refresh...",
+          );
+          try {
+            const result = await refreshAccessToken(refreshToken);
+            if (result.accessToken) {
+              setToken(result.accessToken);
+              setIsAuthenticated(true);
+              console.log("[CartContext] ✅ Token refreshed successfully");
+              return;
+            }
+          } catch (error: any) {
+            console.log(
+              "[CartContext] Token refresh failed, clearing auth:",
+              error.message,
+            );
+            // Don't throw - just clear auth state gracefully
+            setToken(null);
+            setIsAuthenticated(false);
+            setItems([]);
+            return;
+          }
         }
       } catch (error) {
         console.error("[CartContext] Auth check error:", error);
       }
+
       console.log("[CartContext] ⚠️ User not authenticated");
       setToken(null);
       setIsAuthenticated(false);
@@ -169,7 +209,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             return current.map((item) =>
               item.id === product.id
                 ? { ...item, quantity: item.quantity + 1 }
-                : item
+                : item,
             );
           }
           return [...current, { ...product, quantity: 1 }];
@@ -186,7 +226,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           return current.map((item) =>
             item.id === product.id
               ? { ...item, quantity: item.quantity + 1 }
-              : item
+              : item,
           );
         }
         return [...current, { ...product, quantity: 1 }];
@@ -221,7 +261,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         await updateCartItem(token, String(id), quantity);
         setItems((current) =>
-          current.map((item) => (item.id === id ? { ...item, quantity } : item))
+          current.map((item) =>
+            item.id === id ? { ...item, quantity } : item,
+          ),
         );
       } catch (error) {
         console.error("[CartContext] Failed to update quantity:", error);
@@ -230,7 +272,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } else {
       // Use localStorage when not authenticated
       setItems((current) =>
-        current.map((item) => (item.id === id ? { ...item, quantity } : item))
+        current.map((item) => (item.id === id ? { ...item, quantity } : item)),
       );
     }
   };

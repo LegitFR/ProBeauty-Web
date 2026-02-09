@@ -21,7 +21,12 @@ import {
   registerDeviceToken,
   getUnreadCount,
 } from "@/lib/api/notification";
-import { isAuthenticated, getToken } from "@/lib/auth";
+import {
+  getAccessToken,
+  getRefreshToken,
+  refreshAccessToken,
+  getUser,
+} from "@/lib/api/auth";
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -69,14 +74,45 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   // Check authentication status
   useEffect(() => {
-    setIsAuth(isAuthenticated());
+    const checkAuth = async () => {
+      let token = getAccessToken();
+      const user = getUser();
+      const refreshToken = getRefreshToken();
+
+      if (!token && user && refreshToken) {
+        console.log(
+          "[NotificationContext] Token missing, attempting refresh...",
+        );
+        try {
+          const result = await refreshAccessToken(refreshToken);
+          if (result.accessToken) {
+            token = result.accessToken;
+            console.log(
+              "[NotificationContext] ✅ Token refreshed successfully",
+            );
+          }
+        } catch (error: any) {
+          console.log(
+            "[NotificationContext] Token refresh failed:",
+            error.message,
+          );
+          // Don't throw - just set auth to false gracefully
+          setIsAuth(false);
+          return;
+        }
+      }
+
+      setIsAuth(!!token);
+    };
+
+    checkAuth();
   }, []);
 
   // Fetch unread count
   const refreshUnreadCount = useCallback(async () => {
     if (!isAuth) return;
 
-    const token = getToken();
+    let token = getAccessToken();
     if (!token) return;
 
     try {
@@ -92,7 +128,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     async (params?: GetNotificationsParams) => {
       if (!isAuth) return;
 
-      const token = getToken();
+      const token = getAccessToken();
       if (!token) return;
 
       setIsLoading(true);
@@ -129,7 +165,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   // Mark notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
-    const token = getToken();
+    const token = getAccessToken();
     if (!token) return;
 
     try {
@@ -150,7 +186,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
-    const token = getToken();
+    const token = getAccessToken();
     if (!token) return;
 
     try {
@@ -170,7 +206,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   // Delete notification
   const deleteNotif = useCallback(
     async (notificationId: string) => {
-      const token = getToken();
+      const token = getAccessToken();
       if (!token) return;
 
       try {
@@ -195,7 +231,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   // Clear all notifications
   const clearAll = useCallback(async () => {
-    const token = getToken();
+    const token = getAccessToken();
     if (!token) return;
 
     try {
@@ -214,7 +250,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     async (token: string, platform: Platform) => {
       if (!isAuth) return;
 
-      const authToken = getToken();
+      const authToken = getAccessToken();
       if (!authToken) return;
 
       try {

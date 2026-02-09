@@ -128,41 +128,46 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
           transition={{ duration: 0.6 }}
           className="bg-[#ECE3DC] backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 mb-12 sm:mb-16"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-4">
-            <div className="relative group w-full">
-              <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#000000] group-focus-within:text-[#FF7A00] transition-colors" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 items-stretch">
+            <div className="relative group flex">
+              <MapPin className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-[#000000] group-focus-within:text-[#FF7A00] transition-colors z-10" />
               <Input
                 type="text"
                 placeholder="Search location or salon..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-12 sm:h-14 rounded-xl sm:rounded-2xl border-[#616161] border-2 focus:border-[#FF7A00] focus:ring-[#FF7A00] transition-all bg-transparent text-sm sm:text-base placeholder:text-[#1e1e1e]"
+                className="w-full pl-10 sm:pl-12 h-12 sm:h-14 rounded-xl sm:rounded-2xl border-[#616161] border-2 focus:border-[#FF7A00] focus:ring-[#FF7A00] transition-all bg-transparent text-sm sm:text-base placeholder:text-[#1e1e1e]"
               />
             </div>
 
-            <Select value={selectedService} onValueChange={setSelectedService}>
-              <SelectTrigger className="h-12 sm:h-14 rounded-xl sm:rounded-2xl border-[#616161] border-2 bg-transparent text-sm sm:text-base w-full">
-                <Filter className="h-4 w-4 mr-2 text-[#1e1e1e]" />
-                <SelectValue
-                  placeholder="Select service"
-                  className="placeholder:text[#1e1e1e]"
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {services.map((service) => (
-                  <SelectItem key={service.id} value={service.id}>
-                    <span className="mr-2">{service.icon}</span>
-                    {service.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex">
+              <Select
+                value={selectedService}
+                onValueChange={setSelectedService}
+              >
+                <SelectTrigger className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl border-[#616161] border-2 bg-transparent text-sm sm:text-base">
+                  <Filter className="h-4 w-4 mr-2 text-[#1e1e1e]" />
+                  <SelectValue
+                    placeholder="Select service"
+                    className="placeholder:text[#1e1e1e]"
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((service) => (
+                    <SelectItem key={service.id} value={service.id}>
+                      <span className="mr-2">{service.icon}</span>
+                      {service.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <Button
               onClick={() =>
                 toast.success("AI is finding the perfect salons for you...")
               }
-              className="h-12 sm:h-14 bg-linear-to-r from-[#FF7A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group w-full text-sm sm:text-base"
+              className="h-12 sm:h-14 bg-gradient-to-r from-[#FF7A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group w-full text-sm sm:text-base"
             >
               <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-2 group-hover:scale-110 transition-transform" />
               AI Search

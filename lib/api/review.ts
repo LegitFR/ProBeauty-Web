@@ -10,6 +10,7 @@ import {
   ReviewsResponse,
   SingleReviewResponse,
 } from "@/lib/types/review";
+import { fetchWithAuth, fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
 
 const API_BASE_URL = "/api/reviews";
 
@@ -21,7 +22,7 @@ const API_BASE_URL = "/api/reviews";
  */
 export async function createReview(
   token: string,
-  data: CreateReviewData
+  data: CreateReviewData,
 ): Promise<SingleReviewResponse> {
   const response = await fetch(API_BASE_URL, {
     method: "POST",
@@ -75,7 +76,7 @@ export async function getReviewById(id: string): Promise<SingleReviewResponse> {
 export async function getReviewsBySalon(
   salonId: string,
   page = 1,
-  limit = 10
+  limit = 10,
 ): Promise<ReviewsResponse> {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -109,7 +110,7 @@ export async function getReviewsBySalon(
 export async function getMyReviews(
   token: string,
   page = 1,
-  limit = 10
+  limit = 10,
 ): Promise<ReviewsResponse> {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -144,7 +145,7 @@ export async function getMyReviews(
 export async function updateReview(
   token: string,
   id: string,
-  data: UpdateReviewData
+  data: UpdateReviewData,
 ): Promise<SingleReviewResponse> {
   const response = await fetch(`${API_BASE_URL}/${id}`, {
     method: "PATCH",
@@ -173,7 +174,7 @@ export async function updateReview(
  */
 export async function deleteReview(
   token: string,
-  id: string
+  id: string,
 ): Promise<{ message: string }> {
   const response = await fetch(`${API_BASE_URL}/${id}`, {
     method: "DELETE",

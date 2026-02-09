@@ -14,6 +14,12 @@ import {
 } from "@/lib/api/favourite";
 import type { Favourite } from "@/lib/types/favourite";
 import { toast } from "sonner";
+import {
+  getAccessToken,
+  getRefreshToken,
+  refreshAccessToken,
+  getUser,
+} from "@/lib/api/auth";
 
 interface WishlistItem {
   id: string;
@@ -41,7 +47,7 @@ interface WishlistContextType {
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
@@ -64,8 +70,31 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   // Load wishlist from API
   const loadWishlist = async () => {
-    const token = localStorage.getItem("accessToken");
+    let token = getAccessToken();
+    const user = getUser();
+    const refreshToken = getRefreshToken();
+
+    if (!token && user && refreshToken) {
+      console.log("[WishlistContext] Token missing, attempting refresh...");
+      try {
+        const result = await refreshAccessToken(refreshToken);
+        if (result.accessToken) {
+          token = result.accessToken;
+          console.log("[WishlistContext] ✅ Token refreshed successfully");
+        }
+      } catch (error: any) {
+        console.log(
+          "[WishlistContext] Token refresh failed, clearing wishlist:",
+          error.message,
+        );
+        // Don't throw - just clear wishlist gracefully
+        setItems([]);
+        return;
+      }
+    }
+
     if (!token) {
+      console.log("[WishlistContext] No valid token, clearing wishlist");
       setItems([]);
       return;
     }
@@ -75,8 +104,9 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       const response = await getFavourites(token, 1, 100); // Load all favourites
       const wishlistItems = response.data.map(convertToWishlistItem);
       setItems(wishlistItems);
+      console.log("[WishlistContext] ✅ Loaded", wishlistItems.length, "items");
     } catch (error) {
-      console.error("Failed to load wishlist:", error);
+      console.error("[WishlistContext] Failed to load wishlist:", error);
       // Don't show error toast on initial load
     } finally {
       setIsLoading(false);

@@ -25,7 +25,7 @@ import { CartDrawer } from "./CartDrawer";
 import { WishlistDrawer } from "./WishlistDrawer";
 import { getUser, logout } from "@/lib/api/auth";
 import Link from "next/link";
-import logoImage from "@/public/probeauty-header.png";
+import logoImage from "@/public/probeauty-header.svg";
 
 export function Header() {
   const pathname = usePathname();
@@ -45,6 +45,7 @@ export function Header() {
   useEffect(() => {
     // Check if user is logged in
     const userData = getUser();
+    console.log("[Header] Initial user check:", userData);
     setUser(userData);
 
     // Listen for auth expiration event
@@ -54,8 +55,22 @@ export function Header() {
       setShowAuthModal(true);
     };
 
+    // Listen for storage changes (in case user logs in from another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "user" || e.key === "accessToken") {
+        console.log("[Header] Storage changed, refreshing user data");
+        const updatedUser = getUser();
+        setUser(updatedUser);
+      }
+    };
+
     window.addEventListener("auth-expired", handleAuthExpired);
-    return () => window.removeEventListener("auth-expired", handleAuthExpired);
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("auth-expired", handleAuthExpired);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   useEffect(() => {

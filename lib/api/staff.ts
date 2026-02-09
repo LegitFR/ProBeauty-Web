@@ -1,9 +1,12 @@
 /**
  * Staff API Client Functions
- * Handles salon staff members
+ * Handles salon staff members and staff reviews
  */
 
+import { fetchWithAuth, fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
+
 const API_BASE_URL = "/api/staff";
+const REVIEWS_BASE_URL = "/api/staff-reviews";
 
 export interface StaffAvailability {
   monday?: {
@@ -57,6 +60,14 @@ export interface Staff {
     profilePicture?: string | null; // User profile picture as fallback
     image?: string | null; // Alternative image field
   };
+  salon?: {
+    id: string;
+    name: string;
+    address?: string;
+  };
+  // Rating fields (populated from staff reviews)
+  averageRating?: number;
+  totalRatings?: number;
 }
 
 export interface StaffResponse {
@@ -75,7 +86,7 @@ export interface SingleStaffResponse {
  */
 export async function getStaffBySalon(
   salonId: string,
-  serviceId?: string
+  serviceId?: string,
 ): Promise<StaffResponse> {
   try {
     // Build URL with optional serviceId parameter
@@ -95,11 +106,12 @@ export async function getStaffBySalon(
       } catch (parseError) {
         console.error("Failed to parse error response:", responseText);
         throw new Error(
-          `Failed to fetch staff members: ${response.status} - Backend returned invalid response`
+          `Failed to fetch staff members: ${response.status} - Backend returned invalid response`,
         );
       }
       throw new Error(
-        errorData.message || `Failed to fetch staff members: ${response.status}`
+        errorData.message ||
+          `Failed to fetch staff members: ${response.status}`,
       );
     }
 
@@ -110,7 +122,7 @@ export async function getStaffBySalon(
       console.error("Failed to parse staff response:", responseText);
       // Return empty staff list if backend returns invalid JSON
       console.warn(
-        "Returning empty staff list due to invalid backend response"
+        "Returning empty staff list due to invalid backend response",
       );
       return { message: "Staff data unavailable", data: [] };
     }
@@ -134,4 +146,265 @@ export async function getStaffById(id: string): Promise<SingleStaffResponse> {
     throw new Error("Failed to fetch staff member");
   }
   return await response.json();
+}
+
+// ===== NEW ENDPOINTS =====
+
+/**
+ * Get available staff for a specific date
+ */
+export interface AvailableStaffResponse {
+  success: boolean;
+  message: string;
+  data: {
+    date: string;
+    dayOfWeek: string;
+    staff: Array<{
+      id: string;
+      name: string;
+      image?: string | null;
+      user?: {
+        id: string;
+        name: string;
+        email: string;
+      };
+      services: Array<{
+        id: string;
+        title: string;
+        price: number;
+        durationMinutes: number;
+      }>;
+      availability: {
+        isAvailable: boolean;
+        slots: Array<{ start: string; end: string }>;
+      };
+    }>;
+  };
+}
+
+export async function getAvailableStaffByDate(
+  salonId: string,
+  date: string,
+  serviceId?: string,
+): Promise<AvailableStaffResponse> {
+  const params = new URLSearchParams({ salonId, date });
+  if (serviceId) params.append("serviceId", serviceId);
+
+  const response = await fetch(`${API_BASE_URL}/available-on-date?${params}`);
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to fetch available staff" }));
+    throw new Error(error.message || "Failed to fetch available staff");
+  }
+  return await response.json();
+}
+
+/**
+ * Get staff availability for a specific date
+ */
+export interface StaffAvailabilityForDateResponse {
+  success: boolean;
+  message: string;
+  data: {
+    staff: {
+      id: string;
+      name: string;
+      image?: string | null;
+      user?: {
+        id: string;
+        name: string;
+        email: string;
+      };
+      services: Array<{
+        id: string;
+        title: string;
+        price: number;
+        durationMinutes: number;
+      }>;
+    };
+    date: string;
+    dayOfWeek: string;
+    availability: {
+      isAvailable: boolean;
+      slots: Array<{ start: string; end: string }>;
+    };
+    bookings: Array<{
+      id: string;
+      start: string;
+      end: string;
+      status: string;
+    }>;
+  };
+}
+
+export async function getStaffAvailabilityForDate(
+  staffId: string,
+  date: string,
+): Promise<StaffAvailabilityForDateResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/${staffId}/availability-for-date?date=${date}`,
+  );
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to fetch staff availability" }));
+    throw new Error(error.message || "Failed to fetch staff availability");
+  }
+  return await response.json();
+}
+
+// ===== STAFF REVIEWS =====
+
+export interface StaffReview {
+  id: string;
+  staffId: string;
+  userId: string;
+  bookingId: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    image?: string | null;
+  };
+  staff?: {
+    id: string;
+    name: string;
+    image?: string;
+    user?: {
+      id: string;
+      name: string;
+      email: string;
+    };
+    salon?: {
+      id: string;
+      name: string;
+      address: string;
+    };
+  };
+  booking?: {
+    id: string;
+    startTime: string;
+    endTime: string;
+    service?: {
+      id: string;
+      title: string;
+    };
+  };
+}
+
+export interface StaffReviewsResponse {
+  message: string;
+  data: StaffReview[];
+  averageRating?: number;
+  totalRatings?: number;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface SingleStaffReviewResponse {
+  message: string;
+  data: StaffReview;
+}
+
+export interface CreateStaffReviewData {
+  staffId: string;
+  bookingId: string;
+  rating: number;
+  comment?: string;
+}
+
+/**
+ * Create a staff review
+ */
+export async function createStaffReview(
+  token: string,
+  data: CreateStaffReviewData,
+): Promise<SingleStaffReviewResponse> {
+  return await fetchJsonWithAuth<SingleStaffReviewResponse>(REVIEWS_BASE_URL, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Get staff review by ID
+ */
+export async function getStaffReviewById(
+  reviewId: string,
+): Promise<SingleStaffReviewResponse> {
+  const response = await fetch(`${REVIEWS_BASE_URL}/${reviewId}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch staff review");
+  }
+  return await response.json();
+}
+
+/**
+ * Get reviews for a specific staff member
+ */
+export async function getStaffReviews(
+  staffId: string,
+  page = 1,
+  limit = 10,
+): Promise<StaffReviewsResponse> {
+  const response = await fetch(
+    `${REVIEWS_BASE_URL}/staff/${staffId}?page=${page}&limit=${limit}`,
+  );
+  if (!response.ok) {
+    throw new Error("Failed to fetch staff reviews");
+  }
+  return await response.json();
+}
+
+/**
+ * Get current user's staff reviews
+ */
+export async function getMyStaffReviews(
+  token: string,
+  page = 1,
+  limit = 10,
+): Promise<StaffReviewsResponse> {
+  return await fetchJsonWithAuth<StaffReviewsResponse>(
+    `${REVIEWS_BASE_URL}/user/me?page=${page}&limit=${limit}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Update a staff review
+ */
+export async function updateStaffReview(
+  token: string,
+  reviewId: string,
+  data: { rating?: number; comment?: string },
+): Promise<SingleStaffReviewResponse> {
+  return await fetchJsonWithAuth<SingleStaffReviewResponse>(
+    `${REVIEWS_BASE_URL}/${reviewId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    },
+  );
+}
+
+/**
+ * Delete a staff review
+ */
+export async function deleteStaffReview(
+  token: string,
+  reviewId: string,
+): Promise<{ message: string }> {
+  return await fetchJsonWithAuth<{ message: string }>(
+    `${REVIEWS_BASE_URL}/${reviewId}`,
+    { method: "DELETE" },
+  );
 }

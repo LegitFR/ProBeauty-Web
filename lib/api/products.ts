@@ -303,6 +303,7 @@ export function transformProducts(apiProducts: ApiProduct[]): DisplayProduct[] {
       badge: `${discount}% off`,
       description: product.title,
       inStock: product.quantity > 0,
+      salonId: product.salonId,
     };
   });
 }

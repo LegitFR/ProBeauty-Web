@@ -1,23 +1,23 @@
 // Global state for modal management
 let authModalState = {
   isOpen: false,
-  defaultTab: 'login' as 'login' | 'signup',
-  onOpen: (tab: 'login' | 'signup' = 'login') => {},
-  onClose: () => {}
+  defaultTab: "login" as "login" | "signup",
+  onOpen: (tab: "login" | "signup" = "login") => {},
+  onClose: () => {},
 };
 
 let cartDrawerState = {
   isOpen: false,
   onOpen: () => {},
-  onClose: () => {}
+  onClose: () => {},
 };
 
 export const scrollToSection = (sectionId: string) => {
   const element = document.getElementById(sectionId);
   if (element) {
-    element.scrollIntoView({ 
-      behavior: 'smooth',
-      block: 'start'
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
     });
   }
 };
@@ -32,18 +32,28 @@ export const setCartDrawerHandlers = (handlers: typeof cartDrawerState) => {
 };
 
 export const navigationActions = {
-  shop: () => scrollToSection('shop'),
-  bookSalon: () => scrollToSection('book'),
-  listBusiness: () => scrollToSection('list-business'),
-  downloadApp: () => scrollToSection('app'),
-  home: () => scrollToSection('home'),
+  shop: () => {
+    // Navigate to ecommerce homepage
+    if (typeof window !== "undefined") {
+      window.location.href = "/ecommerce-home";
+    }
+  },
+  bookSalon: () => {
+    // Navigate to booking homepage
+    if (typeof window !== "undefined") {
+      window.location.href = "/booking-home";
+    }
+  },
+  listBusiness: () => scrollToSection("list-business"),
+  downloadApp: () => scrollToSection("app"),
+  home: () => scrollToSection("home"),
   getStarted: () => {
-    authModalState.onOpen('signup');
+    authModalState.onOpen("signup");
   },
   login: () => {
-    authModalState.onOpen('login');
+    authModalState.onOpen("login");
   },
   openCart: () => {
     cartDrawerState.onOpen();
-  }
+  },
 };

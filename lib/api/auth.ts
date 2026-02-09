@@ -76,7 +76,7 @@ export async function signup(data: SignupData): Promise<AuthResponse> {
       // Provide user-friendly error messages
       if (response.status === 409) {
         throw new Error(
-          "This email or phone number is already registered. Please use a different one or try logging in."
+          "This email or phone number is already registered. Please use a different one or try logging in.",
         );
       }
       throw new Error(result.message || "Signup failed");
@@ -90,7 +90,7 @@ export async function signup(data: SignupData): Promise<AuthResponse> {
 
 export async function confirmRegistration(
   email: string,
-  otp: string
+  otp: string,
 ): Promise<AuthResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/confirm-registration`, {
@@ -129,12 +129,12 @@ export async function login(data: LoginData): Promise<LoginResponse> {
       // Provide user-friendly error messages
       if (response.status === 401) {
         throw new Error(
-          "Invalid email/phone or password. Please check your credentials and try again."
+          "Invalid email/phone or password. Please check your credentials and try again.",
         );
       }
       if (response.status === 403) {
         throw new Error(
-          "Your account is not verified. Please check your email for the verification code."
+          "Your account is not verified. Please check your email for the verification code.",
         );
       }
       throw new Error(result.message || "Login failed");
@@ -143,12 +143,19 @@ export async function login(data: LoginData): Promise<LoginResponse> {
     // Store tokens in localStorage
     if (result.accessToken) {
       localStorage.setItem("accessToken", result.accessToken);
+      console.log("[Auth] Access token stored successfully");
     }
     if (result.refreshToken) {
       localStorage.setItem("refreshToken", result.refreshToken);
+      console.log("[Auth] Refresh token stored successfully");
     }
     if (result.user) {
       localStorage.setItem("user", JSON.stringify(result.user));
+      console.log(
+        "[Auth] User data stored:",
+        result.user.name,
+        result.user.email,
+      );
     }
 
     return result;
@@ -173,12 +180,12 @@ export async function googleAuth(idToken: string): Promise<LoginResponse> {
       // Handle specific error cases
       if (response.status === 401) {
         throw new Error(
-          "Google authentication failed. Please try again or use email/password."
+          "Google authentication failed. Please try again or use email/password.",
         );
       }
       if (response.status === 503 || response.status === 504) {
         throw new Error(
-          "Server is starting up. Please wait 30 seconds and try again."
+          "Server is starting up. Please wait 30 seconds and try again.",
         );
       }
       throw new Error(result.message || "Google authentication failed");
@@ -187,18 +194,25 @@ export async function googleAuth(idToken: string): Promise<LoginResponse> {
     // Store tokens and user info
     if (result.accessToken) {
       localStorage.setItem("accessToken", result.accessToken);
+      console.log("[Auth] Google - Access token stored successfully");
     }
     if (result.refreshToken) {
       localStorage.setItem("refreshToken", result.refreshToken);
+      console.log("[Auth] Google - Refresh token stored successfully");
     }
     if (result.user) {
       localStorage.setItem("user", JSON.stringify(result.user));
+      console.log(
+        "[Auth] Google - User data stored:",
+        result.user.name,
+        result.user.email,
+      );
     }
 
     return result;
   } catch (error: any) {
     throw new Error(
-      error.message || "An error occurred during Google authentication"
+      error.message || "An error occurred during Google authentication",
     );
   }
 }
@@ -222,7 +236,7 @@ export async function forgotPassword(email: string): Promise<AuthResponse> {
       }
       if (response.status === 503 || response.status === 504) {
         throw new Error(
-          "Server is starting up. Please wait 30 seconds and try again."
+          "Server is starting up. Please wait 30 seconds and try again.",
         );
       }
       throw new Error(result.message || "Failed to send reset email");
@@ -236,7 +250,7 @@ export async function forgotPassword(email: string): Promise<AuthResponse> {
 
 export async function verifyResetOTP(
   email: string,
-  otp: string
+  otp: string,
 ): Promise<AuthResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/verify-forgot-password-otp`, {
@@ -262,7 +276,7 @@ export async function verifyResetOTP(
 export async function resetPassword(
   email: string,
   otp: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<AuthResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/reset-password`, {
@@ -286,7 +300,7 @@ export async function resetPassword(
 }
 
 export async function refreshAccessToken(
-  refreshToken: string
+  refreshToken: string,
 ): Promise<{ accessToken: string }> {
   try {
     const response = await fetch(`${API_BASE_URL}/refresh-token`, {
@@ -300,17 +314,29 @@ export async function refreshAccessToken(
     const result = await response.json();
 
     if (!response.ok) {
+      // If refresh token is revoked or expired, clear all auth data
+      if (
+        result.message?.toLowerCase().includes("revoked") ||
+        result.message?.toLowerCase().includes("expired") ||
+        result.message?.toLowerCase().includes("invalid")
+      ) {
+        console.log("[Auth] Refresh token invalid/revoked, clearing auth data");
+        logout();
+      }
       throw new Error(result.message || "Token refresh failed");
     }
 
     // Update stored access token
     if (result.accessToken) {
       localStorage.setItem("accessToken", result.accessToken);
+      console.log("[Auth] Access token refreshed and stored");
     }
 
     return result;
   } catch (error: any) {
-    throw new Error(error.message || "An error occurred");
+    // Don't propagate the error further - just log it
+    console.error("[Auth] Token refresh error:", error.message);
+    throw error;
   }
 }
 
@@ -342,7 +368,12 @@ export async function resendResetOTP(email: string): Promise<AuthResponse> {
 
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("accessToken");
+  const token = localStorage.getItem("accessToken");
+  console.log(
+    "[Auth] getAccessToken called:",
+    token ? "Token exists" : "No token",
+  );
+  return token;
 }
 
 export function getRefreshToken(): string | null {
@@ -353,18 +384,36 @@ export function getRefreshToken(): string | null {
 export function getUser(): any | null {
   if (typeof window === "undefined") return null;
   const userStr = localStorage.getItem("user");
-  return userStr ? JSON.parse(userStr) : null;
+  if (!userStr) {
+    console.log("[Auth] getUser: No user data in localStorage");
+    return null;
+  }
+  try {
+    const user = JSON.parse(userStr);
+    console.log("[Auth] getUser: User found -", user.name, user.email);
+    return user;
+  } catch (e) {
+    console.error("[Auth] getUser: Error parsing user data", e);
+    return null;
+  }
 }
 
 export function isAuthenticated(): boolean {
-  return !!getAccessToken();
+  const token = getAccessToken();
+  const authenticated = !!token;
+  console.log("[Auth] isAuthenticated:", authenticated);
+  return authenticated;
 }
 
 export function logout(): void {
   if (typeof window === "undefined") return;
+  console.log("[Auth] Logging out and clearing all auth data");
   localStorage.removeItem("accessToken");
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("user");
+
+  // Dispatch storage event for other tabs/components
+  window.dispatchEvent(new Event("storage"));
 }
 
 /**
@@ -372,7 +421,7 @@ export function logout(): void {
  */
 export async function fetchWithAuth(
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<Response> {
   const accessToken = getAccessToken();
 
@@ -393,9 +442,8 @@ export async function fetchWithAuth(
     const refreshToken = getRefreshToken();
     if (refreshToken) {
       try {
-        const { accessToken: newAccessToken } = await refreshAccessToken(
-          refreshToken
-        );
+        const { accessToken: newAccessToken } =
+          await refreshAccessToken(refreshToken);
         // Retry the original request with new token
         return fetch(url, {
           ...options,

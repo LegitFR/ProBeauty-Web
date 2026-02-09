@@ -3,7 +3,7 @@
  * Handles product orders
  */
 
-import { isAuthExpired, handleAuthError } from "@/lib/utils/authErrorHandler";
+import { fetchWithAuth, fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
 
 const API_BASE_URL = "/api/orders";
 
@@ -90,24 +90,12 @@ export async function getOrders(
     });
   }
 
-  const response = await fetch(`${API_BASE_URL}?${queryParams}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  return await fetchJsonWithAuth<OrdersResponse>(
+    `${API_BASE_URL}?${queryParams}`,
+    {
+      method: "GET",
     },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    // Check for token expiration
-    if (response.status === 401 && isAuthExpired(errorData)) {
-      handleAuthError(errorData);
-    }
-
-    throw new Error(errorData.message || "Failed to fetch orders");
-  }
-
-  return await response.json();
+  );
 }
 
 /**
@@ -117,24 +105,12 @@ export async function getOrderById(
   token: string,
   orderId: string,
 ): Promise<SingleOrderResponse> {
-  const response = await fetch(`${API_BASE_URL}/${orderId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  return await fetchJsonWithAuth<SingleOrderResponse>(
+    `${API_BASE_URL}/${orderId}`,
+    {
+      method: "GET",
     },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    // Check for token expiration
-    if (response.status === 401 && isAuthExpired(errorData)) {
-      handleAuthError(errorData);
-    }
-
-    throw new Error(errorData.message || "Failed to fetch order");
-  }
-
-  return await response.json();
+  );
 }
 
 /**
@@ -145,27 +121,10 @@ export async function createOrder(
   data: CreateOrderRequest,
 ): Promise<SingleOrderResponse> {
   try {
-    const response = await fetch(API_BASE_URL, {
+    return await fetchJsonWithAuth<SingleOrderResponse>(API_BASE_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
       body: JSON.stringify(data),
     });
-
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      // Check for token expiration
-      if (response.status === 401 && isAuthExpired(responseData)) {
-        handleAuthError(responseData);
-      }
-
-      throw new Error(responseData.message || "Failed to create order");
-    }
-
-    return responseData;
   } catch (error: any) {
     console.error("Create order error:", error);
     throw error;
@@ -180,29 +139,13 @@ export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,
 ): Promise<SingleOrderResponse> {
-  const response = await fetch(`${API_BASE_URL}/${orderId}/status`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+  return await fetchJsonWithAuth<SingleOrderResponse>(
+    `${API_BASE_URL}/${orderId}/status`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
     },
-    body: JSON.stringify({ status }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response
-      .json()
-      .catch(() => ({ message: "Failed to update order status" }));
-
-    // Check for token expiration
-    if (response.status === 401 && isAuthExpired(errorData)) {
-      handleAuthError(errorData);
-    }
-
-    throw new Error(errorData.message || "Failed to update order status");
-  }
-
-  return await response.json();
+  );
 }
 
 /**
@@ -212,27 +155,12 @@ export async function cancelOrder(
   token: string,
   orderId: string,
 ): Promise<SingleOrderResponse> {
-  const response = await fetch(`${API_BASE_URL}/${orderId}/cancel`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
+  return await fetchJsonWithAuth<SingleOrderResponse>(
+    `${API_BASE_URL}/${orderId}/cancel`,
+    {
+      method: "POST",
     },
-  });
-
-  if (!response.ok) {
-    const errorData = await response
-      .json()
-      .catch(() => ({ message: "Failed to cancel order" }));
-
-    // Check for token expiration
-    if (response.status === 401 && isAuthExpired(errorData)) {
-      handleAuthError(errorData);
-    }
-
-    throw new Error(errorData.message || "Failed to cancel order");
-  }
-
-  return await response.json();
+  );
 }
 
 /**
@@ -254,22 +182,10 @@ export async function getAllOrdersAdmin(
     });
   }
 
-  const response = await fetch(`${API_BASE_URL}/admin?${queryParams}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  return await fetchJsonWithAuth<OrdersResponse>(
+    `${API_BASE_URL}/admin?${queryParams}`,
+    {
+      method: "GET",
     },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    // Check for token expiration
-    if (response.status === 401 && isAuthExpired(errorData)) {
-      handleAuthError(errorData);
-    }
-
-    throw new Error(errorData.message || "Failed to fetch admin orders");
-  }
-
-  return await response.json();
+  );
 }

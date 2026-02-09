@@ -3,7 +3,7 @@
  * Handles appointment bookings
  */
 
-import { isAuthExpired, handleAuthError } from "@/lib/utils/authErrorHandler";
+import { fetchWithAuth, fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
 
 const API_BASE_URL = "/api/bookings";
 
@@ -103,33 +103,15 @@ export async function createBooking(
 ): Promise<SingleBookingResponse> {
   console.log("Creating booking with data:", data);
 
-  const response = await fetch(`${API_BASE_URL}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-
-  console.log("Booking response status:", response.status);
-
-  if (!response.ok) {
-    const responseText = await response.text();
-    console.error("Booking error response:", responseText);
-
-    let error;
-    try {
-      error = JSON.parse(responseText);
-    } catch (e) {
-      throw new Error(
-        `Failed to create booking: ${response.status} - ${responseText}`,
-      );
-    }
-
-    throw new Error(error.message || error.error || "Failed to create booking");
+  try {
+    return await fetchJsonWithAuth<SingleBookingResponse>(`${API_BASE_URL}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  } catch (error: any) {
+    console.error("Booking error:", error);
+    throw error;
   }
-  return await response.json();
 }
 
 /**
@@ -201,22 +183,12 @@ export async function getBookings(
       if (value) queryParams.append(key, value);
     });
   }
-  const response = await fetch(`${API_BASE_URL}?${queryParams}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  return await fetchJsonWithAuth<BookingsResponse>(
+    `${API_BASE_URL}?${queryParams}`,
+    {
+      method: "GET",
     },
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    // Check for token expiration
-    if (response.status === 401 && isAuthExpired(errorData)) {
-      handleAuthError(errorData);
-    }
-
-    throw new Error(errorData.message || "Failed to fetch bookings");
-  }
-  return await response.json();
+  );
 }
 
 /**
@@ -226,22 +198,12 @@ export async function getBookingById(
   token: string,
   id: string,
 ): Promise<SingleBookingResponse> {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  return await fetchJsonWithAuth<SingleBookingResponse>(
+    `${API_BASE_URL}/${id}`,
+    {
+      method: "GET",
     },
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    // Check for token expiration
-    if (response.status === 401 && isAuthExpired(errorData)) {
-      handleAuthError(errorData);
-    }
-
-    throw new Error(errorData.message || "Failed to fetch booking");
-  }
-  return await response.json();
+  );
 }
 
 /**
@@ -256,25 +218,13 @@ export async function updateBooking(
     status: BookingStatus;
   }>,
 ): Promise<SingleBookingResponse> {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+  return await fetchJsonWithAuth<SingleBookingResponse>(
+    `${API_BASE_URL}/${id}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(data),
     },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-
-    // Check for token expiration
-    if (response.status === 401 && isAuthExpired(error)) {
-      handleAuthError(error);
-    }
-
-    throw new Error(error.message || "Failed to update booking");
-  }
-  return await response.json();
+  );
 }
 
 /**
@@ -284,23 +234,12 @@ export async function cancelBooking(
   token: string,
   id: string,
 ): Promise<SingleBookingResponse> {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
+  return await fetchJsonWithAuth<SingleBookingResponse>(
+    `${API_BASE_URL}/${id}`,
+    {
+      method: "DELETE",
     },
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    // Check for token expiration
-    if (response.status === 401 && isAuthExpired(errorData)) {
-      handleAuthError(errorData);
-    }
-
-    throw new Error(errorData.message || "Failed to cancel booking");
-  }
-  return await response.json();
+  );
 }
 
 /**
@@ -310,23 +249,12 @@ export async function confirmBooking(
   token: string,
   id: string,
 ): Promise<SingleBookingResponse> {
-  const response = await fetch(`${API_BASE_URL}/${id}/confirm`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
+  return await fetchJsonWithAuth<SingleBookingResponse>(
+    `${API_BASE_URL}/${id}/confirm`,
+    {
+      method: "POST",
     },
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    // Check for token expiration
-    if (response.status === 401 && isAuthExpired(errorData)) {
-      handleAuthError(errorData);
-    }
-
-    throw new Error(errorData.message || "Failed to confirm booking");
-  }
-  return await response.json();
+  );
 }
 
 /**
@@ -336,14 +264,10 @@ export async function completeBooking(
   token: string,
   id: string,
 ): Promise<SingleBookingResponse> {
-  const response = await fetch(`${API_BASE_URL}/${id}/complete`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
+  return await fetchJsonWithAuth<SingleBookingResponse>(
+    `${API_BASE_URL}/${id}/complete`,
+    {
+      method: "POST",
     },
-  });
-  if (!response.ok) {
-    throw new Error("Failed to complete booking");
-  }
-  return await response.json();
+  );
 }

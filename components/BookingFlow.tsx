@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
-import { ArrowLeft, Star, Check, User, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Star, Check, User, X, Loader2, Award } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { getServicesBySalon, Service } from "@/lib/api/service";
@@ -1129,12 +1129,12 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         <div className="space-y-4">
                           {/* Any Staff Option */}
                           <Card
-                            className="p-5 cursor-pointer hover:border-gray-300 transition-all duration-200 bg-gradient-to-r from-orange-50 to-purple-50 border-2 border-[#FF7A00]"
+                            className="p-5 cursor-pointer hover:border-gray-300 transition-all duration-200 bg-linear-to-r from-orange-50 to-purple-50 border-2 border-[#FF7A00]"
                             onClick={handleAnyStaffSelect}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-4">
-                                <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-[#FF7A00] to-[#F65000] shrink-0 flex items-center justify-center">
+                                <div className="w-14 h-14 rounded-full overflow-hidden bg-linear-to-br from-[#FF7A00] to-[#F65000] shrink-0 flex items-center justify-center">
                                   <User className="h-7 w-7 text-white" />
                                 </div>
                                 <div>
@@ -1212,7 +1212,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-4">
-                                    <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-orange-100 to-purple-100 shrink-0 flex items-center justify-center relative">
+                                    <div className="w-14 h-14 rounded-full overflow-hidden bg-linear-to-br from-orange-100 to-purple-100 shrink-0 flex items-center justify-center relative">
                                       {staffImage ? (
                                         <Image
                                           src={staffImage}
@@ -1224,13 +1224,80 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                         <User className="h-7 w-7 text-[#FF7A00]" />
                                       )}
                                     </div>
-                                    <div>
+                                    <div className="flex-1">
                                       <h3 className="font-semibold text-black">
                                         {staffName}
                                       </h3>
                                       <p className="text-sm text-gray-600">
                                         {staffRole}
                                       </p>
+
+                                      {/* Staff Rating Display */}
+                                      {(staffMember.averageRating ||
+                                        (staffMember as any).rating) &&
+                                        (staffMember.totalRatings ||
+                                          (staffMember as any).reviewCount) && (
+                                          <div className="flex items-center gap-2 mt-2">
+                                            <div
+                                              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                                                (staffMember.averageRating ||
+                                                  (staffMember as any).rating ||
+                                                  0) >= 4.5
+                                                  ? "bg-linear-to-br from-amber-400 to-yellow-500 shadow-amber-500/30"
+                                                  : (staffMember.averageRating ||
+                                                        (staffMember as any)
+                                                          .rating ||
+                                                        0) >= 4.0
+                                                    ? "bg-linear-to-br from-orange-400 to-amber-400 shadow-orange-500/30"
+                                                    : "bg-linear-to-br from-gray-200 to-gray-300"
+                                              } shadow-lg`}
+                                            >
+                                              <Star
+                                                className={`h-3.5 w-3.5 ${
+                                                  (staffMember.averageRating ||
+                                                    (staffMember as any)
+                                                      .rating ||
+                                                    0) >= 4.0
+                                                    ? "fill-white text-white"
+                                                    : "fill-amber-400 text-amber-400"
+                                                }`}
+                                              />
+                                              <span
+                                                className={`text-sm font-bold ${
+                                                  (staffMember.averageRating ||
+                                                    (staffMember as any)
+                                                      .rating ||
+                                                    0) >= 4.0
+                                                    ? "text-white"
+                                                    : "text-gray-700"
+                                                }`}
+                                              >
+                                                {(
+                                                  staffMember.averageRating ||
+                                                  (staffMember as any).rating ||
+                                                  0
+                                                ).toFixed(1)}
+                                              </span>
+                                            </div>
+                                            <span className="text-xs text-gray-500">
+                                              (
+                                              {staffMember.totalRatings ||
+                                                (staffMember as any)
+                                                  .reviewCount ||
+                                                0}{" "}
+                                              reviews)
+                                            </span>
+                                            {(staffMember.averageRating ||
+                                              (staffMember as any).rating ||
+                                              0) >= 4.8 && (
+                                              <div className="flex items-center gap-1 text-xs font-semibold text-amber-600 animate-pulse">
+                                                <Award className="h-3 w-3" />
+                                                Top Rated
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+
                                       {availableDays.length > 0 && (
                                         <p className="text-xs text-gray-500 mt-1">
                                           Available: {availableDays.join(", ")}

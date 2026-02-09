@@ -3,7 +3,7 @@
  * Uses Next.js API routes as a proxy to keep backend URL secure
  */
 
-import { isAuthExpired, handleAuthError } from "@/lib/utils/authErrorHandler";
+import { fetchWithAuth, fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/cart";
 
@@ -54,15 +54,14 @@ export async function getCart(token: string): Promise<CartResponse | null> {
   console.log("[Cart API] Fetching cart from:", API_BASE_URL);
   console.log(
     "[Cart API] Using token:",
-    token ? `${token.substring(0, 20)}...` : "none"
+    token ? `${token.substring(0, 20)}...` : "none",
   );
 
   try {
-    const response = await fetch(`${API_BASE_URL}`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       cache: "no-store",
     });
@@ -76,12 +75,6 @@ export async function getCart(token: string): Promise<CartResponse | null> {
       }
       const errorText = await response.text();
       console.error(`[Cart API] Error ${response.status}:`, errorText);
-
-      // Check for JWT expiration
-      if (response.status === 401 && isAuthExpired(errorText)) {
-        handleAuthError(errorText);
-      }
-
       return null;
     }
 
@@ -100,31 +93,13 @@ export async function getCart(token: string): Promise<CartResponse | null> {
 export async function addItemToCart(
   token: string,
   productId: string,
-  quantity: number = 1
+  quantity: number = 1,
 ): Promise<AddItemResponse | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/items`, {
+    return await fetchJsonWithAuth<AddItemResponse>(`${API_BASE_URL}/items`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
       body: JSON.stringify({ productId, quantity }),
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-
-      // Check for JWT expiration
-      if (response.status === 401 && isAuthExpired(error)) {
-        handleAuthError(error);
-        throw new Error("Session expired. Please log in again.");
-      }
-
-      throw new Error(error.message || "Failed to add item to cart");
-    }
-
-    return await response.json();
   } catch (error: any) {
     console.error("Error adding item to cart:", error);
     throw error;
@@ -137,31 +112,16 @@ export async function addItemToCart(
 export async function updateCartItem(
   token: string,
   productId: string,
-  quantity: number
+  quantity: number,
 ): Promise<AddItemResponse | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/items/${productId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    return await fetchJsonWithAuth<AddItemResponse>(
+      `${API_BASE_URL}/items/${productId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ quantity }),
       },
-      body: JSON.stringify({ quantity }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-
-      // Check for JWT expiration
-      if (response.status === 401 && isAuthExpired(error)) {
-        handleAuthError(error);
-        throw new Error("Session expired. Please log in again.");
-      }
-
-      throw new Error(error.message || "Failed to update cart item");
-    }
-
-    return await response.json();
+    );
   } catch (error: any) {
     console.error("Error updating cart item:", error);
     throw error;
@@ -173,30 +133,15 @@ export async function updateCartItem(
  */
 export async function removeItemFromCart(
   token: string,
-  productId: string
+  productId: string,
 ): Promise<{ message: string } | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/items/${productId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    return await fetchJsonWithAuth<{ message: string }>(
+      `${API_BASE_URL}/items/${productId}`,
+      {
+        method: "DELETE",
       },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-
-      // Check for JWT expiration
-      if (response.status === 401 && isAuthExpired(error)) {
-        handleAuthError(error);
-        throw new Error("Session expired. Please log in again.");
-      }
-
-      throw new Error(error.message || "Failed to remove item from cart");
-    }
-
-    return await response.json();
+    );
   } catch (error: any) {
     console.error("Error removing item from cart:", error);
     throw error;
@@ -207,30 +152,12 @@ export async function removeItemFromCart(
  * Clear entire cart
  */
 export async function clearCart(
-  token: string
+  token: string,
 ): Promise<{ message: string } | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}`, {
+    return await fetchJsonWithAuth<{ message: string }>(`${API_BASE_URL}`, {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-
-      // Check for JWT expiration
-      if (response.status === 401 && isAuthExpired(error)) {
-        handleAuthError(error);
-        throw new Error("Session expired. Please log in again.");
-      }
-
-      throw new Error(error.message || "Failed to clear cart");
-    }
-
-    return await response.json();
   } catch (error: any) {
     console.error("Error clearing cart:", error);
     throw error;

@@ -8,7 +8,7 @@ import {
   MapPin,
   Linkedin,
 } from "lucide-react";
-import footerLogo from "../public/probeauty-footer.png";
+import footerLogo from "../public/probeauty-footer.svg";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();

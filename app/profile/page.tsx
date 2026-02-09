@@ -54,6 +54,14 @@ import type { Review } from "@/lib/types/review";
 import { ReviewsList } from "@/components/ReviewsList";
 import { ReviewForm } from "@/components/ReviewForm";
 import {
+  getMyStaffReviews,
+  deleteStaffReview,
+  updateStaffReview,
+  type StaffReview,
+} from "@/lib/api/staff";
+import StaffReviewForm from "@/components/StaffReviewForm";
+import StaffReviewsList from "@/components/StaffReviewsList";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -82,6 +90,7 @@ export default function ProfilePage() {
     "upcoming" | "past" | "cancelled"
   >("upcoming");
   const [mounted, setMounted] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   // Settings tab state
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -106,6 +115,20 @@ export default function ProfilePage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletingReview, setDeletingReview] = useState<Review | null>(null);
 
+  // Staff Reviews state
+  const [staffReviews, setStaffReviews] = useState<StaffReview[]>([]);
+  const [loadingStaffReviews, setLoadingStaffReviews] = useState(false);
+  const [showStaffReviewDialog, setShowStaffReviewDialog] = useState(false);
+  const [staffReviewBooking, setStaffReviewBooking] = useState<Booking | null>(
+    null,
+  );
+  const [editingStaffReview, setEditingStaffReview] =
+    useState<StaffReview | null>(null);
+  const [showEditStaffDialog, setShowEditStaffDialog] = useState(false);
+  const [showDeleteStaffDialog, setShowDeleteStaffDialog] = useState(false);
+  const [deletingStaffReview, setDeletingStaffReview] =
+    useState<StaffReview | null>(null);
+
   // Order detail modal state
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDetailDialog, setShowOrderDetailDialog] = useState(false);
@@ -128,33 +151,65 @@ export default function ProfilePage() {
   useEffect(() => {
     setMounted(true);
 
-    try {
-      if (!isAuthenticated()) {
+    // Small delay to ensure localStorage is ready and DOM is hydrated
+    const checkAuth = () => {
+      try {
+        const accessToken =
+          typeof window !== "undefined"
+            ? localStorage.getItem("accessToken")
+            : null;
+        const refreshToken =
+          typeof window !== "undefined"
+            ? localStorage.getItem("refreshToken")
+            : null;
+        const userStr =
+          typeof window !== "undefined" ? localStorage.getItem("user") : null;
+
+        console.log("[Profile] Authentication check:");
+        console.log("- Access Token:", accessToken ? "Present" : "Missing");
+        console.log("- Refresh Token:", refreshToken ? "Present" : "Missing");
+        console.log("- User Data:", userStr ? "Present" : "Missing");
+
+        if (!isAuthenticated()) {
+          console.log("[Profile] Not authenticated, redirecting to home");
+          setAuthChecked(true);
+          router.replace("/");
+          return;
+        }
+
+        const userData = getUser();
+        console.log("[Profile] User data retrieved:", userData);
+
+        if (!userData) {
+          console.log("[Profile] No user data found, redirecting to home");
+          setAuthChecked(true);
+          router.replace("/");
+          return;
+        }
+
+        console.log("[Profile] Authentication successful, loading profile");
+        setAuthChecked(true);
+        setUser(userData);
+        setFormData({
+          name: userData.name || "",
+          phone: userData.phone || "",
+        });
+
+        // Load initial data
+        loadBookings();
+        loadOrders();
+      } catch (error) {
+        console.error("[Profile] Error loading user:", error);
+        setAuthChecked(true);
         router.replace("/");
-        return;
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const userData = getUser();
-      if (!userData) {
-        router.replace("/");
-        return;
-      }
-
-      setUser(userData);
-      setFormData({
-        name: userData.name || "",
-        phone: userData.phone || "",
-      });
-
-      // Load initial data
-      loadBookings();
-      loadOrders();
-    } catch (error) {
-      console.error("Error loading user:", error);
-      router.replace("/");
-    } finally {
-      setLoading(false);
-    }
+    // Add a small delay to ensure localStorage is accessible
+    const timer = setTimeout(checkAuth, 100);
+    return () => clearTimeout(timer);
   }, [router]);
 
   // Load addresses when settings tab is active
@@ -182,6 +237,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (activeTab === "reviews" && user) {
       loadReviews();
+      loadStaffReviews();
       loadBookings(); // Also load bookings for "Rate Your Recent Visits" section
     }
   }, [activeTab, user]);
@@ -246,6 +302,21 @@ export default function ProfilePage() {
     }
   };
 
+  const loadStaffReviews = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    setLoadingStaffReviews(true);
+    try {
+      const response = await getMyStaffReviews(token, 1, 10);
+      setStaffReviews(response.data || []);
+    } catch (error) {
+      console.error("Failed to load staff reviews:", error);
+    } finally {
+      setLoadingStaffReviews(false);
+    }
+  };
+
   const handleDeleteReview = async () => {
     if (!deletingReview) return;
 
@@ -263,7 +334,7 @@ export default function ProfilePage() {
       loadReviews(); // Reload reviews
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete review"
+        error instanceof Error ? error.message : "Failed to delete review",
       );
     }
   };
@@ -273,6 +344,44 @@ export default function ProfilePage() {
     setEditingReview(null);
     loadReviews(); // Reload reviews
     toast.success("Review updated successfully");
+  };
+
+  const handleDeleteStaffReview = async () => {
+    if (!deletingStaffReview) return;
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      toast.error("Please login to delete review");
+      return;
+    }
+
+    try {
+      await deleteStaffReview(token, deletingStaffReview.id);
+      toast.success("Staff review deleted successfully");
+      setShowDeleteStaffDialog(false);
+      setDeletingStaffReview(null);
+      loadStaffReviews(); // Reload staff reviews
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete staff review",
+      );
+    }
+  };
+
+  const handleEditStaffSuccess = () => {
+    setShowEditStaffDialog(false);
+    setEditingStaffReview(null);
+    loadStaffReviews(); // Reload staff reviews
+    toast.success("Staff review updated successfully");
+  };
+
+  const handleStaffReviewSuccess = () => {
+    setShowStaffReviewDialog(false);
+    setStaffReviewBooking(null);
+    loadStaffReviews();
+    toast.success("Staff review submitted successfully!");
   };
 
   const handleCancelOrder = async (orderId: string) => {
@@ -361,7 +470,7 @@ export default function ProfilePage() {
     } catch (error: any) {
       console.error("Failed to set default address:", error);
       alert(
-        error?.message || "Failed to set default address. Please try again."
+        error?.message || "Failed to set default address. Please try again.",
       );
     }
   };
@@ -623,14 +732,14 @@ export default function ProfilePage() {
                                     <Clock className="h-3.5 w-3.5 text-[#FF6A00]" />
                                     <span className="font-medium">
                                       {new Date(
-                                        booking.startTime
+                                        booking.startTime,
                                       ).toLocaleDateString("en", {
                                         month: "short",
                                         day: "numeric",
                                       })}
                                       {" at "}
                                       {new Date(
-                                        booking.startTime
+                                        booking.startTime,
                                       ).toLocaleTimeString("en", {
                                         hour: "numeric",
                                         minute: "2-digit",
@@ -759,7 +868,7 @@ export default function ProfilePage() {
                               count: bookings.filter(
                                 (b) =>
                                   b.status === "CANCELLED" ||
-                                  b.status === "NO_SHOW"
+                                  b.status === "NO_SHOW",
                               ).length,
                             },
                           ].map((filter) => (
@@ -874,10 +983,10 @@ export default function ProfilePage() {
                                             booking.status === "CONFIRMED"
                                               ? "bg-green-100 text-green-700 hover:bg-green-100"
                                               : booking.status === "PENDING"
-                                              ? "bg-blue-100 text-blue-700 hover:bg-blue-100"
-                                              : booking.status === "COMPLETED"
-                                              ? "bg-gray-100 text-gray-700 hover:bg-gray-100"
-                                              : "bg-red-100 text-red-700 hover:bg-red-100"
+                                                ? "bg-blue-100 text-blue-700 hover:bg-blue-100"
+                                                : booking.status === "COMPLETED"
+                                                  ? "bg-gray-100 text-gray-700 hover:bg-gray-100"
+                                                  : "bg-red-100 text-red-700 hover:bg-red-100"
                                           }`}
                                         >
                                           {booking.status.charAt(0) +
@@ -892,7 +1001,7 @@ export default function ProfilePage() {
                                           <Calendar className="h-3.5 w-3.5 text-orange-500 shrink-0" />
                                           <span className="font-medium">
                                             {new Date(
-                                              booking.startTime
+                                              booking.startTime,
                                             ).toLocaleDateString("en", {
                                               weekday: "short",
                                               month: "short",
@@ -905,14 +1014,14 @@ export default function ProfilePage() {
                                           <Clock className="h-3.5 w-3.5 shrink-0" />
                                           <span>
                                             {new Date(
-                                              booking.startTime
+                                              booking.startTime,
                                             ).toLocaleTimeString("en", {
                                               hour: "numeric",
                                               minute: "2-digit",
                                             })}{" "}
                                             -{" "}
                                             {new Date(
-                                              booking.endTime
+                                              booking.endTime,
                                             ).toLocaleTimeString("en", {
                                               hour: "numeric",
                                               minute: "2-digit",
@@ -947,7 +1056,7 @@ export default function ProfilePage() {
                                                 review.salonId ===
                                                   booking.salonId &&
                                                 review.serviceId ===
-                                                  booking.serviceId
+                                                  booking.serviceId,
                                             ) && (
                                               <Button
                                                 size="sm"
@@ -966,7 +1075,7 @@ export default function ProfilePage() {
                                             variant="outline"
                                             onClick={() =>
                                               router.push(
-                                                `/salons/${booking.salonId}/book`
+                                                `/salons/${booking.salonId}/book`,
                                               )
                                             }
                                             className="border-gray-300 flex-1"
@@ -1036,7 +1145,7 @@ export default function ProfilePage() {
                                     </p>
                                     <p className="text-xs text-gray-500">
                                       {new Date(
-                                        order.createdAt
+                                        order.createdAt,
                                       ).toLocaleDateString("en", {
                                         month: "short",
                                         day: "numeric",
@@ -1049,16 +1158,17 @@ export default function ProfilePage() {
                                       order.status === "DELIVERED"
                                         ? "bg-green-100 text-green-700 hover:bg-green-100"
                                         : order.status === "SHIPPED"
-                                        ? "bg-blue-100 text-blue-700 hover:bg-blue-100"
-                                        : order.status === "CONFIRMED"
-                                        ? "bg-purple-100 text-purple-700 hover:bg-purple-100"
-                                        : order.status === "PAYMENT_PENDING"
-                                        ? "bg-orange-100 text-orange-700 hover:bg-orange-100"
-                                        : order.status === "PAYMENT_FAILED"
-                                        ? "bg-rose-100 text-rose-700 hover:bg-rose-100"
-                                        : order.status === "CANCELLED"
-                                        ? "bg-red-100 text-red-700 hover:bg-red-100"
-                                        : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
+                                          ? "bg-blue-100 text-blue-700 hover:bg-blue-100"
+                                          : order.status === "CONFIRMED"
+                                            ? "bg-purple-100 text-purple-700 hover:bg-purple-100"
+                                            : order.status === "PAYMENT_PENDING"
+                                              ? "bg-orange-100 text-orange-700 hover:bg-orange-100"
+                                              : order.status ===
+                                                  "PAYMENT_FAILED"
+                                                ? "bg-rose-100 text-rose-700 hover:bg-rose-100"
+                                                : order.status === "CANCELLED"
+                                                  ? "bg-red-100 text-red-700 hover:bg-red-100"
+                                                  : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
                                     }`}
                                   >
                                     {order.status.replace(/_/g, " ")}
@@ -1250,7 +1360,7 @@ export default function ProfilePage() {
                                       <div className="flex items-center gap-2">
                                         <p className="text-sm text-gray-500">
                                           {new Date(
-                                            review.createdAt
+                                            review.createdAt,
                                           ).toLocaleDateString()}
                                         </p>
                                         <Button
@@ -1304,8 +1414,8 @@ export default function ProfilePage() {
                               !reviews.some(
                                 (review) =>
                                   review.salonId === booking.salonId &&
-                                  review.serviceId === booking.serviceId
-                              )
+                                  review.serviceId === booking.serviceId,
+                              ),
                           );
 
                           if (completedBookings.length === 0) {
@@ -1334,7 +1444,7 @@ export default function ProfilePage() {
                                         </p>
                                         <p className="text-xs text-gray-500 mt-1">
                                           {new Date(
-                                            booking.startTime
+                                            booking.startTime,
                                           ).toLocaleDateString()}
                                         </p>
                                       </div>
@@ -1402,6 +1512,344 @@ export default function ProfilePage() {
                           </AlertDialogCancel>
                           <AlertDialogAction
                             onClick={handleDeleteReview}
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+
+                    {/* STAFF REVIEWS SECTION */}
+                    <Card>
+                      <CardContent className="p-6 bg-[#ECE3DC]">
+                        <div className="flex items-center justify-between mb-6">
+                          <div>
+                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                              <Award className="h-5 w-5 text-orange-500" />
+                              My Staff Reviews
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Your reviews help staff members improve their
+                              service
+                            </p>
+                          </div>
+                        </div>
+
+                        {loadingStaffReviews ? (
+                          <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500 mx-auto"></div>
+                          </div>
+                        ) : staffReviews.length === 0 ? (
+                          <div className="text-center py-12 text-gray-500">
+                            <Star className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                            <p className="font-medium">No staff reviews yet</p>
+                            <p className="text-sm mt-1">
+                              After completing a booking, you can review the
+                              staff member
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {staffReviews.map((review) => (
+                              <Card
+                                key={review.id}
+                                className="hover:shadow-lg transition-shadow bg-[#ECE3DC]"
+                              >
+                                <CardContent className="p-5">
+                                  <div className="space-y-3">
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between">
+                                      <div className="space-y-1">
+                                        <h4 className="font-semibold text-gray-900">
+                                          {review.staff?.name ||
+                                            review.staff?.user?.name}
+                                        </h4>
+                                        {review.staff?.salon && (
+                                          <p className="text-sm text-gray-600">
+                                            {review.staff.salon.name}
+                                          </p>
+                                        )}
+                                        {review.booking?.service && (
+                                          <p className="text-xs text-gray-500">
+                                            {review.booking.service.title}
+                                          </p>
+                                        )}
+                                        <div className="flex gap-0.5 mt-2">
+                                          {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star
+                                              key={star}
+                                              className={`w-4 h-4 ${
+                                                star <= review.rating
+                                                  ? "fill-yellow-400 text-yellow-400"
+                                                  : "text-gray-300"
+                                              }`}
+                                            />
+                                          ))}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-sm text-gray-500">
+                                          {new Date(
+                                            review.createdAt,
+                                          ).toLocaleDateString()}
+                                        </p>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => {
+                                            setEditingStaffReview(review);
+                                            setShowEditStaffDialog(true);
+                                          }}
+                                        >
+                                          <Pencil className="w-4 h-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => {
+                                            setDeletingStaffReview(review);
+                                            setShowDeleteStaffDialog(true);
+                                          }}
+                                        >
+                                          <Trash2 className="w-4 h-4 text-red-500" />
+                                        </Button>
+                                      </div>
+                                    </div>
+
+                                    {/* Comment */}
+                                    {review.comment && (
+                                      <p className="text-sm leading-relaxed text-gray-700">
+                                        {review.comment}
+                                      </p>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Completed bookings where staff can be reviewed */}
+                    <Card className="bg-[#ECE3DC]">
+                      <CardContent className="p-6 bg-[#ECE3DC]">
+                        <h3 className="text-lg font-semibold mb-6">
+                          Rate Your Service Providers
+                        </h3>
+                        {(() => {
+                          const completedBookings = bookings.filter(
+                            (booking) =>
+                              booking.status === "COMPLETED" &&
+                              booking.staffId &&
+                              !staffReviews.some(
+                                (review) =>
+                                  review.staffId === booking.staffId &&
+                                  review.bookingId === booking.id,
+                              ),
+                          );
+
+                          if (completedBookings.length === 0) {
+                            return (
+                              <div className="text-center py-8 text-gray-500">
+                                <p>No staff members to review at the moment</p>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="space-y-4">
+                              {completedBookings.slice(0, 5).map((booking) => (
+                                <Card
+                                  key={booking.id}
+                                  className="hover:shadow-lg transition-shadow bg-[#ECE3DC]"
+                                >
+                                  <CardContent className="p-5">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex-1">
+                                        <h4 className="font-semibold text-gray-900">
+                                          {booking.staff?.user?.name ||
+                                            "Staff Member"}
+                                        </h4>
+                                        <p className="text-sm text-gray-600">
+                                          {booking.service?.title} at{" "}
+                                          {booking.salon?.name}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          {new Date(
+                                            booking.startTime,
+                                          ).toLocaleDateString()}
+                                        </p>
+                                      </div>
+                                      <Button
+                                        onClick={() => {
+                                          setStaffReviewBooking(booking);
+                                          setShowStaffReviewDialog(true);
+                                        }}
+                                        className="bg-orange-500 hover:bg-orange-600"
+                                      >
+                                        Write Review
+                                      </Button>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+
+                    {/* Staff Review Dialog */}
+                    <Dialog
+                      open={showStaffReviewDialog}
+                      onOpenChange={setShowStaffReviewDialog}
+                    >
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Rate Your Service Provider</DialogTitle>
+                        </DialogHeader>
+                        {staffReviewBooking && (
+                          <StaffReviewForm
+                            staffId={staffReviewBooking.staffId}
+                            bookingId={staffReviewBooking.id}
+                            staffName={
+                              staffReviewBooking.staff?.user?.name ||
+                              "Staff Member"
+                            }
+                            onSuccess={handleStaffReviewSuccess}
+                            onCancel={() => {
+                              setShowStaffReviewDialog(false);
+                              setStaffReviewBooking(null);
+                            }}
+                          />
+                        )}
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Edit Staff Review Dialog */}
+                    <Dialog
+                      open={showEditStaffDialog}
+                      onOpenChange={setShowEditStaffDialog}
+                    >
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Edit Staff Review</DialogTitle>
+                        </DialogHeader>
+                        {editingStaffReview && (
+                          <Card className="border-[#D4C5B9] bg-[#ECE3DC]">
+                            <CardContent className="pt-6">
+                              <form
+                                onSubmit={async (e) => {
+                                  e.preventDefault();
+                                  const token =
+                                    localStorage.getItem("accessToken");
+                                  if (!token || !editingStaffReview) return;
+
+                                  try {
+                                    const formData = new FormData(
+                                      e.currentTarget,
+                                    );
+                                    await updateStaffReview(
+                                      token,
+                                      editingStaffReview.id,
+                                      {
+                                        rating: parseInt(
+                                          formData.get("rating") as string,
+                                        ),
+                                        comment:
+                                          (formData.get("comment") as string) ||
+                                          undefined,
+                                      },
+                                    );
+                                    handleEditStaffSuccess();
+                                  } catch (error) {
+                                    toast.error("Failed to update review");
+                                  }
+                                }}
+                                className="space-y-4"
+                              >
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">
+                                    Rating
+                                  </label>
+                                  <select
+                                    name="rating"
+                                    defaultValue={editingStaffReview.rating}
+                                    className="w-full px-4 py-2 border rounded-lg"
+                                    required
+                                  >
+                                    <option value="5">5 - Excellent</option>
+                                    <option value="4">4 - Very Good</option>
+                                    <option value="3">3 - Good</option>
+                                    <option value="2">2 - Fair</option>
+                                    <option value="1">1 - Poor</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">
+                                    Comment
+                                  </label>
+                                  <textarea
+                                    name="comment"
+                                    defaultValue={
+                                      editingStaffReview.comment || ""
+                                    }
+                                    className="w-full px-4 py-2 border rounded-lg"
+                                    rows={4}
+                                    maxLength={1000}
+                                  />
+                                </div>
+                                <div className="flex gap-3">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setShowEditStaffDialog(false);
+                                      setEditingStaffReview(null);
+                                    }}
+                                    className="flex-1"
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    type="submit"
+                                    className="flex-1 bg-orange-500 hover:bg-orange-600"
+                                  >
+                                    Update Review
+                                  </Button>
+                                </div>
+                              </form>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Delete Staff Review Confirmation Dialog */}
+                    <AlertDialog
+                      open={showDeleteStaffDialog}
+                      onOpenChange={setShowDeleteStaffDialog}
+                    >
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Delete Staff Review
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this staff review?
+                            This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel
+                            onClick={() => setDeletingStaffReview(null)}
+                          >
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDeleteStaffReview}
                             className="bg-red-500 hover:bg-red-600"
                           >
                             Delete
@@ -1972,11 +2420,11 @@ export default function ProfilePage() {
                                               onClick={() => {
                                                 console.log(
                                                   "Deleting address with ID:",
-                                                  address.id
+                                                  address.id,
                                                 );
                                                 console.log(
                                                   "Full address object:",
-                                                  address
+                                                  address,
                                                 );
                                                 handleDeleteAddress(address.id);
                                               }}
@@ -1993,7 +2441,7 @@ export default function ProfilePage() {
                                               size="sm"
                                               onClick={() =>
                                                 handleSetDefaultAddress(
-                                                  address.id
+                                                  address.id,
                                                 )
                                               }
                                               className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
@@ -2074,16 +2522,16 @@ export default function ProfilePage() {
                           selectedOrder.status === "DELIVERED"
                             ? "bg-green-100 text-green-800"
                             : selectedOrder.status === "SHIPPED"
-                            ? "bg-blue-100 text-blue-800"
-                            : selectedOrder.status === "CONFIRMED"
-                            ? "bg-purple-100 text-purple-800"
-                            : selectedOrder.status === "PAYMENT_PENDING"
-                            ? "bg-orange-100 text-orange-800"
-                            : selectedOrder.status === "PAYMENT_FAILED"
-                            ? "bg-rose-100 text-rose-800"
-                            : selectedOrder.status === "CANCELLED"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
+                              ? "bg-blue-100 text-blue-800"
+                              : selectedOrder.status === "CONFIRMED"
+                                ? "bg-purple-100 text-purple-800"
+                                : selectedOrder.status === "PAYMENT_PENDING"
+                                  ? "bg-orange-100 text-orange-800"
+                                  : selectedOrder.status === "PAYMENT_FAILED"
+                                    ? "bg-rose-100 text-rose-800"
+                                    : selectedOrder.status === "CANCELLED"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-yellow-100 text-yellow-800"
                         }
                       >
                         {selectedOrder.status.replace(/_/g, " ")}

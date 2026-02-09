@@ -14,6 +14,7 @@ import {
   ClearAllNotificationsResponse,
   ApiErrorResponse,
 } from "@/lib/types/notification";
+import { fetchWithAuth, fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
 
 const API_BASE_URL = "/api/notifications";
 
