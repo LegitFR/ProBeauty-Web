@@ -4,7 +4,18 @@ import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
-import { ArrowLeft, Star, Check, User, X, Loader2, Award } from "lucide-react";
+import {
+  ArrowLeft,
+  Star,
+  Check,
+  User,
+  X,
+  Loader2,
+  Award,
+  Scissors,
+  CheckCircle2,
+  ArrowRight,
+} from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { getServicesBySalon, Service } from "@/lib/api/service";
@@ -40,9 +51,11 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
 
   // Selection states
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
-  const [isAnyStaff, setIsAnyStaff] = useState<boolean>(false);
+  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+  // New state: Map each service to a staff member
+  const [serviceStaffMap, setServiceStaffMap] = useState<Map<string, Staff>>(
+    new Map(),
+  );
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"stripe" | "onspot">(
@@ -79,19 +92,23 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     loadReviewStats();
   }, [salon.id]);
 
-  // Load staff when service is selected
+  // Load staff when services are selected
   useEffect(() => {
-    if (selectedService && currentStep === "professional") {
+    if (selectedServices.length > 0 && currentStep === "professional") {
       loadStaff();
     }
-  }, [selectedService, currentStep]);
+  }, [selectedServices, currentStep]);
 
-  // Load available slots when staff and date are selected
+  // Load available slots when all services have staff assigned and date is selected
   useEffect(() => {
-    if (selectedService && (selectedStaff || isAnyStaff) && selectedDate) {
+    const allServicesHaveStaff = selectedServices.every((service) =>
+      serviceStaffMap.has(service.id),
+    );
+
+    if (selectedServices.length > 0 && allServicesHaveStaff && selectedDate) {
       loadAvailableSlots();
     }
-  }, [selectedService, selectedStaff, isAnyStaff, selectedDate]);
+  }, [selectedServices, serviceStaffMap, selectedDate]);
 
   // Filter categories and their keyword mappings
   const filterCategories = [
@@ -211,115 +228,47 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   const loadStaff = async () => {
     setStaffLoading(true);
     try {
-      // First, check if salon already has staff data
-      const salonStaff = Array.isArray(salon.staff) ? salon.staff : [];
-      if (salonStaff.length > 0) {
-        console.log(`Using ${salonStaff.length} staff members from salon data`);
-        console.log(
-          "Staff data from salon:",
-          JSON.stringify(salonStaff, null, 2),
-        );
+      // Always fetch from Staff API to get proper service relationships
+      console.log("=== FETCHING STAFF FROM STAFF API ===");
+      console.log(`Salon ID: ${salon.id}`);
 
-        // Debug: Log image field information
-        salonStaff.forEach((staff: any, index: number) => {
-          console.log(`Staff ${index} image fields:`, {
-            id: staff.id,
-            name: staff.name || staff.user?.name,
-            image: staff.image,
-            profilePicture: staff.profilePicture,
-            userImage: staff.user?.image,
-            userProfilePicture: staff.user?.profilePicture,
-          });
-        });
-
-        // Filter staff by selected service if service data is available
-        let filteredStaff = salonStaff as Staff[];
-        if (selectedService) {
-          filteredStaff = salonStaff.filter((staff: any) => {
-            // Check if staff has services field and can perform the selected service
-            if (staff.services && Array.isArray(staff.services)) {
-              return staff.services.some(
-                (s: any) => s.id === selectedService.id,
-              );
-            }
-            // Check if staff has serviceIds field
-            if (staff.serviceIds && Array.isArray(staff.serviceIds)) {
-              return staff.serviceIds.includes(selectedService.id);
-            }
-            // If no service data, include the staff (backward compatibility)
-            return true;
-          }) as Staff[];
-          console.log(
-            `Filtered to ${filteredStaff.length} staff members who can perform service: ${selectedService.title}`,
-          );
-        }
-
-        setStaff(filteredStaff);
-        setStaffLoading(false);
-        return;
-      }
-
-      // If not, fetch from API (fallback) - pass serviceId to get filtered staff
-      console.log(
-        `Fetching staff from API${
-          selectedService ? ` for service: ${selectedService.title}` : ""
-        }...`,
-      );
-      const response = await getStaffBySalon(salon.id, selectedService?.id);
-      // Ensure response.data is an array
+      const response = await getStaffBySalon(salon.id);
       const staffData = Array.isArray(response.data) ? response.data : [];
 
-      // Debug: Log image field information from API response
       console.log(`Received ${staffData.length} staff members from API`);
+
+      // Debug: Log each staff member's services from API
       staffData.forEach((staff: any, index: number) => {
-        console.log(`API Staff ${index} image fields:`, {
-          id: staff.id,
-          name: staff.name || staff.user?.name,
-          image: staff.image,
-          profilePicture: staff.profilePicture,
-          userImage: staff.user?.image,
-          userProfilePicture: staff.user?.profilePicture,
-        });
+        const staffName = staff.name || staff.user?.name || "Unknown";
+        console.log(`\n👤 Staff ${index + 1}: ${staffName}`);
+        console.log(`   ID: ${staff.id}`);
+
+        if (staff.services && Array.isArray(staff.services)) {
+          console.log(`   Services array (${staff.services.length} items):`);
+          staff.services.forEach((s: any, i: number) => {
+            const serviceId = s.service?.id || s.id;
+            const serviceTitle =
+              s.service?.title || s.title || "Unknown Service";
+            const servicePrice = s.service?.price || s.price;
+            console.log(`     ${i + 1}. Service ID: ${serviceId}`);
+            console.log(`        Title: ${serviceTitle}`);
+            console.log(`        Price: €${servicePrice}`);
+          });
+        } else if (staff.serviceIds && Array.isArray(staff.serviceIds)) {
+          console.log(`   Service IDs: ${staff.serviceIds.join(", ")}`);
+        } else {
+          console.log(`   ⚠️ No service data found`);
+        }
       });
 
-      // Additional client-side filtering if backend doesn't support serviceId filtering
-      let filteredStaffData = staffData;
-      if (selectedService && staffData.length > 0) {
-        filteredStaffData = staffData.filter((staff) => {
-          // Check if staff has services field and can perform the selected service
-          if (staff.services && Array.isArray(staff.services)) {
-            return staff.services.some((s) => s.id === selectedService.id);
-          }
-          // Check if staff has serviceIds field
-          if (staff.serviceIds && Array.isArray(staff.serviceIds)) {
-            return staff.serviceIds.includes(selectedService.id);
-          }
-          // If no service data, include the staff (backward compatibility)
-          return true;
+      // Load ALL staff - filtering will happen per-service in the UI
+      setStaff(staffData);
+
+      if (staffData.length === 0) {
+        console.warn("No staff members available for this salon");
+        toast.info("No staff members are currently available at this salon.", {
+          duration: 4000,
         });
-
-        if (filteredStaffData.length < staffData.length) {
-          console.log(
-            `Client-side filtered from ${staffData.length} to ${filteredStaffData.length} staff members`,
-          );
-        }
-      }
-
-      setStaff(filteredStaffData);
-
-      // If no staff available, show a helpful message
-      if (filteredStaffData.length === 0) {
-        console.warn(
-          selectedService
-            ? `No staff members can perform service: ${selectedService.title}`
-            : "No staff members available for this salon",
-        );
-        toast.info(
-          selectedService
-            ? `No staff members are available to perform "${selectedService.title}". Please select a different service or choose "Any Available Staff".`
-            : "No staff members are currently available at this salon. Please try again later or contact the salon directly.",
-          { duration: 6000 },
-        );
       }
     } catch (error: any) {
       console.error("Error loading staff:", error);
@@ -344,9 +293,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
   // Filter slots to ensure proper spacing based on service duration
   const filterSlotsByServiceDuration = (slots: TimeSlot[]): TimeSlot[] => {
-    if (!selectedService || slots.length === 0) return slots;
+    if (selectedServices.length === 0 || slots.length === 0) return slots;
 
-    const serviceDurationMs = selectedService.durationMinutes * 60 * 1000;
+    const totalDurationMs = getTotalDuration() * 60 * 1000;
     const filtered: TimeSlot[] = [];
     let lastSelectedSlotTime: number | null = null;
 
@@ -362,7 +311,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       // If this is the first slot or enough time has passed since the last selected slot
       if (
         lastSelectedSlotTime === null ||
-        slotStartTime >= lastSelectedSlotTime + serviceDurationMs
+        slotStartTime >= lastSelectedSlotTime + totalDurationMs
       ) {
         filtered.push(slot);
         if (slot.available) {
@@ -372,14 +321,18 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     }
 
     console.log(
-      `Filtered slots based on ${selectedService.durationMinutes} min service duration: ${sortedSlots.length} -> ${filtered.length} slots`,
+      `Filtered slots based on ${getTotalDuration()} min total duration: ${sortedSlots.length} -> ${filtered.length} slots`,
     );
 
     return filtered;
   };
 
   const loadAvailableSlots = async () => {
-    if (!selectedService || (!selectedStaff && !isAnyStaff) || !selectedDate)
+    const allServicesHaveStaff = selectedServices.every((service) =>
+      serviceStaffMap.has(service.id),
+    );
+
+    if (selectedServices.length === 0 || !allServicesHaveStaff || !selectedDate)
       return;
 
     setSlotsLoading(true);
@@ -387,73 +340,132 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       console.log("=== FETCHING AVAILABILITY FROM BACKEND API ===");
       console.log(`Selected Date: ${selectedDate}`);
       console.log(`Salon ID: ${salon.id}`);
-      console.log(`Service ID: ${selectedService.id}`);
-      console.log(`Staff ID: ${isAnyStaff ? "ANY STAFF" : selectedStaff?.id}`);
       console.log(
-        `Service Duration: ${selectedService.durationMinutes} minutes`,
+        `Service IDs: ${selectedServices.map((s) => s.id).join(", ")}`,
       );
+      console.log(`Total Duration: ${getTotalDuration()} minutes`);
 
-      // Call the backend availability API which properly validates staff availability and existing bookings
-      const response = await getAvailableSlots({
-        salonId: salon.id,
-        serviceId: selectedService.id,
-        staffId: isAnyStaff ? undefined : selectedStaff!.id,
-        date: selectedDate,
+      // Log staff assignments
+      selectedServices.forEach((service) => {
+        const staff = serviceStaffMap.get(service.id);
+        console.log(
+          `Service "${service.title}" → Staff: ${staff?.user?.name || staff?.name} (ID: ${staff?.id})`,
+        );
       });
 
-      console.log("Backend availability response:", response);
-
-      if (response.data && response.data.slots) {
-        console.log("=== TIME SLOT ANALYSIS ===");
-        console.log("Sample raw slots from backend:");
-        response.data.slots.slice(0, 3).forEach((slot, idx) => {
-          console.log(`Slot ${idx}:`, {
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-            available: slot.available,
-            parsedStart: new Date(slot.startTime).toString(),
-            localHours: new Date(slot.startTime).getHours(),
-            utcHours: new Date(slot.startTime).getUTCHours(),
-          });
+      // Fetch availability for each staff member separately
+      const staffAvailabilityPromises = selectedServices.map((service) => {
+        const staff = serviceStaffMap.get(service.id);
+        return getAvailableSlots({
+          salonId: salon.id,
+          serviceIds: [service.id],
+          staffId: staff!.id,
+          date: selectedDate,
         });
+      });
 
-        // Filter slots based on service duration to prevent overlapping bookings
-        const durationFilteredSlots = filterSlotsByServiceDuration(
-          response.data.slots,
-        );
+      console.log(
+        `\n=== FETCHING AVAILABILITY FOR ${selectedServices.length} STAFF MEMBERS ===`,
+      );
+      const staffAvailabilityResponses = await Promise.all(
+        staffAvailabilityPromises,
+      );
 
-        // Filter to only show available slots
-        const availableSlots = durationFilteredSlots.filter(
-          (slot) => slot.available,
-        );
+      // Extract slots from each staff member's response
+      const allStaffSlots = staffAvailabilityResponses.map(
+        (response, index) => {
+          const service = selectedServices[index];
+          const staff = serviceStaffMap.get(service.id);
+          const slots = response.data?.slots || [];
 
-        console.log(
-          `Received ${response.data.slots.length} total slots, ${durationFilteredSlots.length} after duration filter, ${availableSlots.length} available`,
-        );
-        console.log("Sample available slots after filtering:");
-        availableSlots.slice(0, 3).forEach((slot, idx) => {
-          console.log(`Available Slot ${idx}:`, {
-            startTime: slot.startTime,
-            formatted: formatTime(slot.startTime),
-          });
-        });
-
-        if (availableSlots.length === 0) {
-          const [year, month, day] = selectedDate.split("-").map(Number);
-          const date = new Date(year, month - 1, day);
-          const dayOfWeek = date.toLocaleDateString("en-US", {
-            weekday: "long",
-          });
-          toast.info(
-            `No available time slots for ${dayOfWeek}. Please select a different date or staff member.`,
+          console.log(`\nStaff: ${staff?.user?.name || staff?.name}`);
+          console.log(`  Service: ${service.title}`);
+          console.log(
+            `  Available slots: ${slots.filter((s) => s.available).length}`,
           );
-        }
 
-        setAvailableSlots(durationFilteredSlots);
-      } else {
-        console.warn("No slots data in response");
+          return {
+            staffId: staff!.id,
+            staffName: staff?.user?.name || staff?.name,
+            serviceName: service.title,
+            slots: slots,
+          };
+        },
+      );
+
+      // Find common time slots across all staff members
+      // A slot is common if the startTime exists and is available for ALL staff
+      console.log("\n=== FINDING COMMON TIME SLOTS ===");
+
+      if (
+        allStaffSlots.length === 0 ||
+        allStaffSlots.some((s) => s.slots.length === 0)
+      ) {
+        console.log("No slots available for one or more staff members");
         setAvailableSlots([]);
+        toast.info(
+          "No common available time slots found. Please try a different date.",
+        );
+        setSlotsLoading(false);
+        return;
       }
+
+      // Get the first staff's slots as the base
+      const baseSlots = allStaffSlots[0].slots;
+
+      // Find slots that exist and are available in ALL staff schedules
+      const commonSlots = baseSlots.filter((baseSlot) => {
+        // Check if this slot's startTime is available for all other staff
+        const isCommonSlot = allStaffSlots.every((staffData) => {
+          // Find a matching slot by startTime (string comparison)
+          const matchingSlot = staffData.slots.find(
+            (slot) => slot.startTime === baseSlot.startTime,
+          );
+
+          // Slot must exist and be available for this staff
+          return matchingSlot && matchingSlot.available;
+        });
+
+        return isCommonSlot && baseSlot.available;
+      });
+
+      console.log(`Total staff members: ${allStaffSlots.length}`);
+      allStaffSlots.forEach((staffData) => {
+        console.log(
+          `  ${staffData.staffName}: ${staffData.slots.filter((s) => s.available).length} available slots`,
+        );
+      });
+      console.log(`Common available slots: ${commonSlots.length}`);
+
+      // Log sample common slots
+      if (commonSlots.length > 0) {
+        console.log("\nSample common slots:");
+        commonSlots.slice(0, 3).forEach((slot, idx) => {
+          console.log(
+            `  ${idx + 1}. ${formatTime(slot.startTime)} (${slot.startTime})`,
+          );
+        });
+      }
+
+      // Filter slots based on service duration to prevent overlapping bookings
+      const durationFilteredSlots = filterSlotsByServiceDuration(commonSlots);
+
+      console.log(
+        `After duration filter: ${durationFilteredSlots.length} slots`,
+      );
+
+      if (durationFilteredSlots.length === 0) {
+        const [year, month, day] = selectedDate.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        const dayOfWeek = date.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
+        toast.info(
+          `No common available time slots for all staff on ${dayOfWeek}. Please try a different date.`,
+        );
+      }
+
+      setAvailableSlots(durationFilteredSlots);
     } catch (error: any) {
       console.error("Error fetching available slots:", error);
       toast.error(
@@ -466,44 +478,14 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     }
   };
 
-  // Check if a staff member is available on a specific day
+  // Check if any assigned staff is available on a specific day
   const isStaffAvailableOnDay = (dateString: string): boolean => {
-    if (!selectedStaff || !selectedStaff.availability) {
-      console.log(
-        `No staff or availability data for ${dateString}, returning true`,
-      );
-      return true; // If no staff selected or no availability info, assume available
-    }
-
-    // Parse date string as local date to avoid timezone issues
-    // dateString is in format "YYYY-MM-DD"
-    const [year, month, day] = dateString.split("-").map(Number);
-    const date = new Date(year, month - 1, day); // month is 0-indexed
-    const dayOfWeek = date
-      .toLocaleDateString("en-US", { weekday: "long" })
-      .toLowerCase();
-
-    console.log(`Checking availability for ${dateString} (${dayOfWeek})`);
-    console.log("Staff availability:", selectedStaff.availability);
-    console.log("Available keys:", Object.keys(selectedStaff.availability));
-    console.log("Looking for key:", dayOfWeek);
-
-    const dayAvailability =
-      selectedStaff.availability[
-        dayOfWeek as keyof typeof selectedStaff.availability
-      ];
-
-    console.log(`${dayOfWeek} availability object:`, dayAvailability);
-    console.log(`dayAvailability exists:`, !!dayAvailability);
-    console.log(`dayAvailability.isAvailable:`, dayAvailability?.isAvailable);
-
-    const result = !!(dayAvailability && dayAvailability.isAvailable);
-    console.log(`Final result for ${dateString}:`, result);
-
-    return result;
+    // With multi-service bookings, we'll let the availability API handle filtering
+    // Always return true here and let the time slots endpoint determine actual availability
+    return true;
   };
 
-  // Generate calendar dates - recalculate when staff changes
+  // Generate calendar dates - recalculate when staff assignments change
   const calendarDates = useMemo(() => {
     const dates = [];
     const today = new Date();
@@ -530,9 +512,67 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         isAvailable,
       });
     }
-    console.log("Generated calendar dates:", dates);
     return dates;
-  }, [selectedStaff]);
+  }, [serviceStaffMap]);
+
+  // Helper functions for calculating totals
+  const getTotalDuration = () => {
+    return selectedServices.reduce(
+      (sum, service) => sum + service.durationMinutes,
+      0,
+    );
+  };
+
+  const getTotalPrice = () => {
+    return selectedServices.reduce(
+      (sum, service) => sum + parseFloat(service.price),
+      0,
+    );
+  };
+
+  const getFinalPrice = () => {
+    return getTotalPrice() - offerDiscount;
+  };
+
+  // Validate if selected staff can perform all selected services
+  const validateStaffServices = (staff: Staff): boolean => {
+    if (!staff || selectedServices.length === 0) return true;
+
+    // Check if staff has services field
+    if (staff.services && Array.isArray(staff.services)) {
+      const staffServiceIds = staff.services.map(
+        (s: any) => s.service?.id || s.id,
+      );
+      const canPerformAll = selectedServices.every((service) =>
+        staffServiceIds.includes(service.id),
+      );
+      console.log("Staff validation (services field):", {
+        staffName: staff.user?.name || staff.name,
+        staffServiceIds,
+        selectedServiceIds: selectedServices.map((s) => s.id),
+        canPerformAll,
+      });
+      return canPerformAll;
+    }
+
+    // Check if staff has serviceIds field
+    if (staff.serviceIds && Array.isArray(staff.serviceIds)) {
+      const canPerformAll = selectedServices.every((service) =>
+        (staff.serviceIds || []).includes(service.id),
+      );
+      console.log("Staff validation (serviceIds field):", {
+        staffName: staff.user?.name || staff.name,
+        staffServiceIds: staff.serviceIds,
+        selectedServiceIds: selectedServices.map((s) => s.id),
+        canPerformAll,
+      });
+      return canPerformAll;
+    }
+
+    // If no service data, cannot validate - return false for safety
+    console.warn("Staff has no service assignment data - validation failed");
+    return false;
+  };
 
   // Step management
   const steps = [
@@ -540,13 +580,15 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       key: "services",
       label: "Services",
       active: currentStep === "services",
-      completed: selectedService !== null,
+      completed: selectedServices.length > 0,
     },
     {
       key: "professional",
       label: "Professional",
       active: currentStep === "professional",
-      completed: selectedStaff !== null || isAnyStaff,
+      completed:
+        selectedServices.length > 0 &&
+        selectedServices.every((service) => serviceStaffMap.has(service.id)),
     },
     {
       key: "time",
@@ -563,23 +605,66 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   ];
 
   const handleServiceSelect = (service: Service) => {
-    setSelectedService(service);
+    // Toggle service selection
+    const isSelected = selectedServices.some((s) => s.id === service.id);
+    if (isSelected) {
+      setSelectedServices(selectedServices.filter((s) => s.id !== service.id));
+      // Clean up staff assignment for deselected service
+      setServiceStaffMap((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(service.id);
+        return newMap;
+      });
+    } else {
+      setSelectedServices([...selectedServices, service]);
+    }
+  };
+
+  const handleContinueToStaff = () => {
+    if (selectedServices.length === 0) {
+      toast.error("Please select at least one service");
+      return;
+    }
     setCurrentStep("professional");
   };
 
-  const handleStaffSelect = (staffMember: Staff) => {
-    console.log("=== STAFF SELECTED ===");
-    console.log("Selected staff:", JSON.stringify(staffMember, null, 2));
-    console.log("Staff availability:", staffMember.availability);
-    setSelectedStaff(staffMember);
-    setIsAnyStaff(false);
-    setCurrentStep("time");
+  const handleServiceStaffSelect = (
+    serviceId: string,
+    staffMember: Staff | null,
+  ) => {
+    if (staffMember === null) {
+      // Remove staff assignment
+      setServiceStaffMap((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(serviceId);
+        return newMap;
+      });
+      console.log("=== STAFF ASSIGNMENT REMOVED ===");
+      console.log("Service ID:", serviceId);
+      return;
+    }
+
+    console.log("=== STAFF ASSIGNED TO SERVICE ===");
+    console.log("Service ID:", serviceId);
+    console.log("Staff:", staffMember.user?.name || staffMember.name);
+
+    setServiceStaffMap((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(serviceId, staffMember);
+      return newMap;
+    });
   };
 
-  const handleAnyStaffSelect = () => {
-    console.log("=== ANY STAFF SELECTED ===");
-    setSelectedStaff(null);
-    setIsAnyStaff(true);
+  const handleContinueToTime = () => {
+    // Check if all currently selected services have staff assigned
+    const allServicesHaveStaff = selectedServices.every((service) =>
+      serviceStaffMap.has(service.id),
+    );
+
+    if (!allServicesHaveStaff) {
+      toast.error("Please assign staff to all selected services");
+      return;
+    }
     setCurrentStep("time");
   };
 
@@ -624,7 +709,15 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   };
 
   const handleStripeCheckout = async () => {
-    if (!selectedService || (!selectedStaff && !isAnyStaff) || !selectedTime) {
+    const allServicesHaveStaff = selectedServices.every((service) =>
+      serviceStaffMap.has(service.id),
+    );
+
+    if (
+      selectedServices.length === 0 ||
+      !allServicesHaveStaff ||
+      !selectedTime
+    ) {
       toast.error("Please complete all booking details");
       return;
     }
@@ -638,16 +731,37 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
     setBookingLoading(true);
     try {
-      // Prepare booking data for Stripe checkout
+      // Prepare booking data with parallel arrays for Stripe checkout
+      const serviceIds = selectedServices.map((s) => s.id);
+      const staffIds = selectedServices.map((service) => {
+        const staff = serviceStaffMap.get(service.id);
+        return staff!.id;
+      });
+
       const bookingData: any = {
         salonId: salon.id,
-        serviceId: selectedService.id,
+        serviceIds,
+        staffIds,
         startTime: selectedTime,
       };
 
-      if (!isAnyStaff && selectedStaff) {
-        bookingData.staffId = selectedStaff.id;
-      }
+      // Log service-staff mappings for debugging
+      console.log(
+        "🔍 Stripe Checkout booking data:",
+        JSON.stringify(bookingData, null, 2),
+      );
+      console.log(
+        "Service-Staff Mappings:",
+        selectedServices.map((service, index) => ({
+          serviceId: service.id,
+          serviceTitle: service.title,
+          staffId: staffIds[index],
+          staffName:
+            serviceStaffMap.get(service.id)?.user?.name ||
+            serviceStaffMap.get(service.id)?.name ||
+            "Unknown",
+        })),
+      );
 
       // Call booking checkout endpoint
       const response = await fetch("/api/bookings/checkout", {
@@ -675,9 +789,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
           bookingId: booking.id,
           clientSecret,
           salonName: salon.name,
-          serviceName: selectedService.title,
+          serviceName: selectedServices.map((s) => s.title).join(", "),
           startTime: selectedTime,
-          price: selectedService.price,
+          price: getTotalPrice().toFixed(2),
         }),
       );
 
@@ -692,7 +806,16 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   };
 
   const handleBookingConfirm = async () => {
-    if (!selectedService || (!selectedStaff && !isAnyStaff) || !selectedTime) {
+    // Validate all required fields
+    const allServicesHaveStaff = selectedServices.every((service) =>
+      serviceStaffMap.has(service.id),
+    );
+
+    if (
+      selectedServices.length === 0 ||
+      !allServicesHaveStaff ||
+      !selectedTime
+    ) {
       toast.error("Please complete all booking details");
       return;
     }
@@ -719,19 +842,30 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       console.log("Selected time hours (UTC):", selectedTimeObj.getUTCHours());
       console.log("Is selected time in future?", selectedTimeObj > new Date());
 
-      console.log("\nStaff availability for the day:");
-      console.log(JSON.stringify(selectedStaff?.availability, null, 2));
+      // Prepare booking data with parallel arrays
+      // serviceIds[0] is performed by staffIds[0], serviceIds[1] by staffIds[1], etc.
+      const serviceIds = selectedServices.map((s) => s.id);
+      const staffIds = selectedServices.map((service) => {
+        const staff = serviceStaffMap.get(service.id);
+        return staff!.id;
+      });
 
-      // Prepare booking data - exclude staffId if any staff is selected
+      console.log("\n=== SERVICE-STAFF MAPPING ===");
+      selectedServices.forEach((service, index) => {
+        const staff = serviceStaffMap.get(service.id);
+        console.log(
+          `${index + 1}. ${service.title} → ${staff?.user?.name || staff?.name}`,
+        );
+      });
+
       const bookingData: any = {
         salonId: salon.id,
-        serviceId: selectedService.id,
+        serviceIds,
+        staffIds,
         startTime: selectedTime,
       };
 
-      if (!isAnyStaff && selectedStaff) {
-        bookingData.staffId = selectedStaff.id;
-      }
+      console.log("\nBooking data:", JSON.stringify(bookingData, null, 2));
 
       const response = await createBooking(token, bookingData);
 
@@ -753,7 +887,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       // Provide specific error messages based on the error
       if (error.message?.includes("Staff cannot perform this service")) {
         toast.error(
-          `The selected staff member cannot perform "${selectedService?.title}". Please select a different staff member or choose "Any Available Staff".`,
+          `The selected staff member cannot perform one or more of the selected services. Please select a different staff member or choose "Any Available Staff".`,
           { duration: 6000 },
         );
       } else if (error.message?.includes("not available")) {
@@ -805,7 +939,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       <CardContent className="p-6">
         {/* Salon Info */}
         <div className="flex items-start space-x-3 mb-6 pb-6 border-b">
-          <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+          <div className="w-16 h-16 rounded-xl overflow-hidden bg-[#CBCBCB] shrink-0">
             {salon.thumbnail ||
             (salon.images && salon.images.length > 0 && salon.images[0]) ? (
               <img
@@ -814,7 +948,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-200">
+              <div className="w-full h-full flex items-center justify-center bg-[#CBCBCB]">
                 <span className="text-gray-400 text-xs">No Image</span>
               </div>
             )}
@@ -839,49 +973,100 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         </div>
 
         {/* Selected Service */}
-        {selectedService && (
+        {selectedServices.length > 0 && (
           <div className="mb-6 pb-6 border-b">
-            <h4 className="font-medium text-black mb-3 text-sm">Service</h4>
-            <div>
-              <p className="font-medium text-black mb-1">
-                {selectedService.title}
-              </p>
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-xs text-gray-600">
-                  {selectedService.durationMinutes} mins
-                </span>
-                <span className="font-semibold text-black">
-                  ${selectedService.price}
-                </span>
-              </div>
+            <h4 className="font-medium text-black mb-3 text-sm">
+              {selectedServices.length > 1 ? "Services" : "Service"}
+            </h4>
+            <div className="space-y-3">
+              {selectedServices.map((service) => (
+                <div key={service.id}>
+                  <p className="font-medium text-black mb-1">{service.title}</p>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-xs text-gray-600">
+                      {service.durationMinutes} mins
+                    </span>
+                    <span className="font-semibold text-black">
+                      €{service.price}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {selectedServices.length > 1 && (
+                <div className="pt-2 border-t border-[#1e1e1e]">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">
+                      Total Duration
+                    </span>
+                    <span className="text-sm font-semibold text-black">
+                      {getTotalDuration()} mins
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Selected Staff */}
-        {(selectedStaff || isAnyStaff) && (
+        {/* Service-Staff Assignments */}
+        {serviceStaffMap.size > 0 && (
           <div className="mb-6 pb-6 border-b">
             <h4 className="font-medium text-black mb-3 text-sm">
-              Professional
+              Professionals Assigned
             </h4>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                <User className="h-5 w-5 text-purple-600" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-black text-sm">
-                  {isAnyStaff
-                    ? "Any Available Staff"
-                    : selectedStaff?.user?.name ||
-                      selectedStaff?.name ||
-                      "Staff Member"}
-                </p>
-                <p className="text-xs text-gray-600">
-                  {isAnyStaff
-                    ? "First available professional"
-                    : selectedStaff?.role}
-                </p>
-              </div>
+            <div className="space-y-3">
+              {Array.from(serviceStaffMap.entries()).map(
+                ([serviceId, staff]) => {
+                  const service = selectedServices.find(
+                    (s) => s.id === serviceId,
+                  );
+                  if (!service) return null;
+
+                  return (
+                    <div
+                      key={serviceId}
+                      className="flex items-start gap-3 p-3 bg-[#ECE3DC] rounded-xl"
+                    >
+                      <div className="w-9 h-9 bg-linear-to-br from-orange-100 to-purple-100 rounded-full flex items-center justify-center shrink-0">
+                        {staff.image ? (
+                          <div className="w-9 h-9 rounded-full overflow-hidden relative">
+                            <Image
+                              src={staff.image}
+                              alt={
+                                staff.user?.name || staff.name || "Professional"
+                              }
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <User className="h-4 w-4 text-[#FF7A00]" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-black text-sm truncate">
+                          {staff.user?.name || staff.name || "Professional"}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {service.title}
+                        </p>
+                        {(staff.averageRating || (staff as any).rating) && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                            <span className="text-xs font-medium text-gray-600">
+                              {(
+                                staff.averageRating ||
+                                (staff as any).rating ||
+                                0
+                              ).toFixed(1)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                },
+              )}
             </div>
           </div>
         )}
@@ -907,13 +1092,15 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         )}
 
         {/* Total */}
-        {selectedService && (
+        {selectedServices.length > 0 && (
           <div className="bg-[#ECE3DC] -mx-6 -mb-6 px-6 py-4">
             <div className="space-y-2">
               <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-700">Service Price</span>
+                <span className="text-gray-700">
+                  Service{selectedServices.length > 1 ? "s" : ""} Price
+                </span>
                 <span className="font-semibold text-black">
-                  ${selectedService.price}
+                  €{getTotalPrice().toFixed(2)}
                 </span>
               </div>
               {offerDiscount > 0 && (
@@ -922,17 +1109,14 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                     Offer Discount
                   </span>
                   <span className="font-semibold text-green-600">
-                    -${offerDiscount.toFixed(2)}
+                    -€{offerDiscount.toFixed(2)}
                   </span>
                 </div>
               )}
               <div className="flex justify-between items-center pt-2 border-t">
                 <span className="font-semibold text-black">Total</span>
                 <span className="font-bold text-xl text-[#FF7A00]">
-                  $
-                  {(parseFloat(selectedService.price) - offerDiscount).toFixed(
-                    2,
-                  )}
+                  €{getFinalPrice().toFixed(2)}
                 </span>
               </div>
             </div>
@@ -952,7 +1136,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
               <Button
                 variant="ghost"
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 hover:text-[#1e1e1e] rounded-full"
+                className="p-2 hover:bg-[#CBCBCB] hover:text-[#1e1e1e] rounded-full"
               >
                 <X className="h-6 w-6" />
               </Button>
@@ -1016,7 +1200,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                             className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                               selectedFilter === filter.label
                                 ? "bg-[#1E1E1E] text-[#ECE3DC]"
-                                : "bg-transparent text-[#1E1E1E] hover:bg-gray-200"
+                                : "bg-transparent text-[#1E1E1E] hover:bg-[#CBCBCB]"
                             }`}
                           >
                             {filter.label}
@@ -1039,58 +1223,72 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                           </p>
                         </div>
                       ) : (
-                        <div className="space-y-4">
-                          {getFilteredServices().map((service) => (
-                            <Card
-                              key={service.id}
-                              className={`p-5 cursor-pointer transition-all duration-200 border-2 ${
-                                selectedService?.id === service.id
-                                  ? "border-[#FF7A00] bg-orange-50"
-                                  : "border-[#CBCBCB] hover:border-gray-300 bg-transparent"
-                              }`}
-                              onClick={() => handleServiceSelect(service)}
-                            >
-                              <div className="flex justify-between items-start">
-                                <div className="flex-1">
-                                  <h3 className="font-semibold text-black mb-1">
-                                    {service.title}
-                                  </h3>
-                                  <div className="text-sm text-gray-500">
-                                    {service.durationMinutes} minutes
+                        <>
+                          <div className="space-y-4 mb-6">
+                            {getFilteredServices().map((service) => {
+                              const isSelected = selectedServices.some(
+                                (s) => s.id === service.id,
+                              );
+                              return (
+                                <Card
+                                  key={service.id}
+                                  className={`p-5 cursor-pointer transition-all duration-200 border-2 ${
+                                    isSelected
+                                      ? "border-[#FF7A00] bg-orange-50"
+                                      : "border-[#CBCBCB] hover:border-[#1e1e1e] bg-[#ECE3DC]"
+                                  }`}
+                                  onClick={() => handleServiceSelect(service)}
+                                >
+                                  <div className="flex justify-between items-start">
+                                    <div className="flex items-start space-x-3 flex-1">
+                                      <div
+                                        className={`w-5 h-5 rounded border-2 flex items-center justify-center mt-1 ${
+                                          isSelected
+                                            ? "bg-[#FF7A00] border-[#FF7A00]"
+                                            : "border-[#1e1e1e]"
+                                        }`}
+                                      >
+                                        {isSelected && (
+                                          <Check className="h-3 w-3 text-white" />
+                                        )}
+                                      </div>
+                                      <div className="flex-1">
+                                        <h3 className="font-semibold text-black mb-1">
+                                          {service.title}
+                                        </h3>
+                                        <div className="text-sm text-gray-500">
+                                          {service.durationMinutes} minutes
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="text-right ml-4">
+                                      <div className="font-semibold text-black">
+                                        €{service.price}
+                                      </div>
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="text-right flex flex-col items-end ml-4">
-                                  <div className="font-semibold text-black mb-3">
-                                    ${service.price}
-                                  </div>
-                                  <Button
-                                    variant={
-                                      selectedService?.id === service.id
-                                        ? "default"
-                                        : "outline"
-                                    }
-                                    size="sm"
-                                    className={
-                                      selectedService?.id === service.id
-                                        ? "bg-linear-to-r from-[#FD7501] to-[#F65000] rounded-xl px-6 py-2"
-                                        : "bg-transparent border-[#1e1e1e] text-[#1e1e1e] rounded-xl px-6 py-2"
-                                    }
-                                  >
-                                    {selectedService?.id === service.id
-                                      ? "Selected"
-                                      : "Book"}
-                                  </Button>
-                                </div>
-                              </div>
-                            </Card>
-                          ))}
-                        </div>
+                                </Card>
+                              );
+                            })}
+                          </div>
+                          {selectedServices.length > 0 && (
+                            <div className="flex justify-end">
+                              <Button
+                                onClick={handleContinueToStaff}
+                                className="bg-linear-to-r from-[#FD7501] to-[#F65000] text-white rounded-xl px-8 py-3 hover:opacity-90"
+                              >
+                                Continue with {selectedServices.length} Service
+                                {selectedServices.length > 1 ? "s" : ""}
+                              </Button>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </motion.div>
                 )}
 
-                {/* Step 2: Select Staff */}
+                {/* Step 2: Select Staff for Each Service */}
                 {currentStep === "professional" && (
                   <motion.div
                     key="professional"
@@ -1108,10 +1306,24 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         >
                           <ArrowLeft className="h-5 w-5" />
                         </Button>
-                        <div>
+                        <div className="flex-1">
                           <h2 className="text-2xl font-medium text-black">
-                            Select Professional
+                            Assign Professionals
                           </h2>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Select a professional for each service
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 px-4 py-2 bg-[#ECE3DC] rounded-full shadow-sm border border-[#1e1e1e]">
+                          <CheckCircle2 className="h-4 w-4 text-[#FF7A00]" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {
+                              selectedServices.filter((s) =>
+                                serviceStaffMap.has(s.id),
+                              ).length
+                            }{" "}
+                            / {selectedServices.length}
+                          </span>
                         </div>
                       </div>
 
@@ -1126,196 +1338,322 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                           </p>
                         </div>
                       ) : (
-                        <div className="space-y-4">
-                          {/* Any Staff Option */}
-                          <Card
-                            className="p-5 cursor-pointer hover:border-gray-300 transition-all duration-200 bg-linear-to-r from-orange-50 to-purple-50 border-2 border-[#FF7A00]"
-                            onClick={handleAnyStaffSelect}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
-                                <div className="w-14 h-14 rounded-full overflow-hidden bg-linear-to-br from-[#FF7A00] to-[#F65000] shrink-0 flex items-center justify-center">
-                                  <User className="h-7 w-7 text-white" />
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold text-black">
-                                    Any Available Staff
-                                  </h3>
-                                  <p className="text-sm text-gray-600">
-                                    First available professional
-                                  </p>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    We'll assign the best available staff member
-                                  </p>
-                                </div>
-                              </div>
-                              <Button
-                                variant="outline"
-                                className="bg-[#FF7A00] text-white border-[#FF7A00] hover:bg-[#F65000] hover:border-[#F65000] px-6 py-4 rounded-2xl"
-                              >
-                                Select
-                              </Button>
-                            </div>
-                          </Card>
+                        <div className="space-y-6">
+                          {/* Service-by-Service Staff Selection */}
+                          {selectedServices.map((service, index) => {
+                            const assignedStaff = serviceStaffMap.get(
+                              service.id,
+                            );
+                            const isAssigned = !!assignedStaff;
 
-                          {/* Individual Staff Members */}
-                          {staff.map((staffMember) => {
-                            // Get staff name - check multiple possible locations
-                            const staffName =
-                              staffMember.name || // Direct name field (primary)
-                              staffMember.user?.name || // User object name (fallback)
-                              "Professional"; // Default fallback
+                            // Filter staff who can perform this specific service
+                            console.log(
+                              `\n=== FILTERING STAFF FOR SERVICE: ${service.title} ===`,
+                            );
+                            console.log(`Service ID: ${service.id}`);
+                            console.log(
+                              `Total staff available: ${staff.length}`,
+                            );
 
-                            // Get role with fallback
-                            const staffRole =
-                              staffMember.role || "Professional";
+                            const qualifiedStaff = staff.filter((s) => {
+                              const staffName =
+                                s.user?.name || s.name || "Unknown";
 
-                            // Get staff image - check multiple possible locations
-                            const staffImage =
-                              staffMember.image || // Direct image field (primary)
-                              (staffMember as any).profilePicture || // profilePicture field (alternative)
-                              (staffMember as any).user?.profilePicture || // User object profilePicture (fallback)
-                              (staffMember as any).user?.image || // User object image (fallback)
-                              null; // No image available
+                              // Check if this staff has the services array
+                              if (!s.services || !Array.isArray(s.services)) {
+                                console.log(
+                                  `❌ ${staffName}: No services array`,
+                                );
+                                return false;
+                              }
 
-                            // Check available days for this staff
-                            const availableDays: string[] = [];
-                            if (staffMember.availability) {
-                              const days = [
-                                "monday",
-                                "tuesday",
-                                "wednesday",
-                                "thursday",
-                                "friday",
-                                "saturday",
-                                "sunday",
-                              ];
-                              days.forEach((day) => {
-                                const dayAvail =
-                                  staffMember.availability[
-                                    day as keyof typeof staffMember.availability
-                                  ];
-                                if (dayAvail && dayAvail.isAvailable) {
-                                  availableDays.push(
-                                    day.charAt(0).toUpperCase() +
-                                      day.slice(1, 3),
-                                  );
-                                }
+                              // Extract all service IDs this staff can perform
+                              const staffServiceIds = s.services.map((ss) => {
+                                const serviceId = ss.service?.id || ss.id;
+                                return serviceId;
                               });
+
+                              console.log(
+                                `   ${staffName} can perform services: [${staffServiceIds.join(", ")}]`,
+                              );
+
+                              // Check if any of the staff's services match this service
+                              const canPerform = staffServiceIds.includes(
+                                service.id,
+                              );
+                              console.log(
+                                `   ${canPerform ? "✅" : "❌"} ${staffName} can${canPerform ? "" : "not"} perform "${service.title}"`,
+                              );
+
+                              return canPerform;
+                            });
+
+                            console.log(
+                              `\nResult: ${qualifiedStaff.length} qualified staff for "${service.title}"`,
+                            );
+                            if (qualifiedStaff.length > 0) {
+                              console.log(
+                                `Qualified: ${qualifiedStaff.map((s) => s.user?.name || s.name).join(", ")}`,
+                              );
                             }
 
                             return (
-                              <Card
-                                key={staffMember.id}
-                                className="p-5 cursor-pointer hover:border-gray-300 transition-all duration-200 bg-transparent border-2 border-[#CBCBCB]"
-                                onClick={() => handleStaffSelect(staffMember)}
+                              <motion.div
+                                key={service.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className={`bg-[#ECE3DC] rounded-2xl p-5 border-2 transition-all duration-300 ${
+                                  isAssigned
+                                    ? "border-[#FF7A00] shadow-lg shadow-orange-100"
+                                    : "border-[#CBCBCB] shadow-sm"
+                                }`}
                               >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-4">
-                                    <div className="w-14 h-14 rounded-full overflow-hidden bg-linear-to-br from-orange-100 to-purple-100 shrink-0 flex items-center justify-center relative">
-                                      {staffImage ? (
-                                        <Image
-                                          src={staffImage}
-                                          alt={staffName}
-                                          fill
-                                          className="object-cover"
-                                        />
+                                {/* Service Header */}
+                                <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#1e1e1e]">
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                        isAssigned
+                                          ? "bg-linear-to-br from-[#FF7A00] to-[#F65000]"
+                                          : "bg-[#CBCBCB]"
+                                      }`}
+                                    >
+                                      {isAssigned ? (
+                                        <CheckCircle2 className="h-5 w-5 text-white" />
                                       ) : (
-                                        <User className="h-7 w-7 text-[#FF7A00]" />
+                                        <Scissors className="h-5 w-5 text-gray-400" />
                                       )}
                                     </div>
-                                    <div className="flex-1">
+                                    <div>
                                       <h3 className="font-semibold text-black">
-                                        {staffName}
+                                        {service.title}
                                       </h3>
-                                      <p className="text-sm text-gray-600">
-                                        {staffRole}
+                                      <p className="text-sm text-gray-500">
+                                        €{service.price} •{" "}
+                                        {service.durationMinutes} min
                                       </p>
+                                    </div>
+                                  </div>
+                                  {isAssigned && (
+                                    <motion.div
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      className="flex items-center gap-2 px-3 py-1.5 bg-linear-to-r from-orange-50 to-purple-50 rounded-full"
+                                    >
+                                      <User className="h-3.5 w-3.5 text-[#FF7A00]" />
+                                      <span className="text-xs font-medium text-[#FF7A00]">
+                                        Assigned
+                                      </span>
+                                    </motion.div>
+                                  )}
+                                </div>
 
-                                      {/* Staff Rating Display */}
-                                      {(staffMember.averageRating ||
-                                        (staffMember as any).rating) &&
-                                        (staffMember.totalRatings ||
-                                          (staffMember as any).reviewCount) && (
-                                          <div className="flex items-center gap-2 mt-2">
-                                            <div
-                                              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
-                                                (staffMember.averageRating ||
-                                                  (staffMember as any).rating ||
-                                                  0) >= 4.5
-                                                  ? "bg-linear-to-br from-amber-400 to-yellow-500 shadow-amber-500/30"
-                                                  : (staffMember.averageRating ||
-                                                        (staffMember as any)
-                                                          .rating ||
-                                                        0) >= 4.0
-                                                    ? "bg-linear-to-br from-orange-400 to-amber-400 shadow-orange-500/30"
-                                                    : "bg-linear-to-br from-gray-200 to-gray-300"
-                                              } shadow-lg`}
-                                            >
-                                              <Star
-                                                className={`h-3.5 w-3.5 ${
-                                                  (staffMember.averageRating ||
-                                                    (staffMember as any)
-                                                      .rating ||
-                                                    0) >= 4.0
-                                                    ? "fill-white text-white"
-                                                    : "fill-amber-400 text-amber-400"
-                                                }`}
-                                              />
-                                              <span
-                                                className={`text-sm font-bold ${
-                                                  (staffMember.averageRating ||
-                                                    (staffMember as any)
-                                                      .rating ||
-                                                    0) >= 4.0
-                                                    ? "text-white"
-                                                    : "text-gray-700"
-                                                }`}
-                                              >
+                                {/* Currently Assigned Staff (if any) */}
+                                {isAssigned && (
+                                  <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    className="mb-4 p-4 bg-linear-to-r from-orange-50 to-purple-50 rounded-xl border border-orange-200"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full overflow-hidden bg-linear-to-br from-orange-100 to-purple-100 shrink-0 flex items-center justify-center relative">
+                                          {assignedStaff.image ? (
+                                            <Image
+                                              src={assignedStaff.image}
+                                              alt={
+                                                assignedStaff.user?.name ||
+                                                assignedStaff.name ||
+                                                "Professional"
+                                              }
+                                              fill
+                                              className="object-cover"
+                                            />
+                                          ) : (
+                                            <User className="h-6 w-6 text-[#FF7A00]" />
+                                          )}
+                                        </div>
+                                        <div>
+                                          <p className="font-semibold text-black">
+                                            {assignedStaff.user?.name ||
+                                              assignedStaff.name ||
+                                              "Professional"}
+                                          </p>
+                                          <p className="text-xs text-gray-600">
+                                            {assignedStaff.role ||
+                                              "Professional"}
+                                          </p>
+                                          {(assignedStaff.averageRating ||
+                                            (assignedStaff as any).rating) && (
+                                            <div className="flex items-center gap-1 mt-1">
+                                              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                                              <span className="text-xs font-medium text-gray-700">
                                                 {(
-                                                  staffMember.averageRating ||
-                                                  (staffMember as any).rating ||
+                                                  assignedStaff.averageRating ||
+                                                  (assignedStaff as any)
+                                                    .rating ||
                                                   0
                                                 ).toFixed(1)}
                                               </span>
                                             </div>
-                                            <span className="text-xs text-gray-500">
-                                              (
-                                              {staffMember.totalRatings ||
-                                                (staffMember as any)
-                                                  .reviewCount ||
-                                                0}{" "}
-                                              reviews)
-                                            </span>
-                                            {(staffMember.averageRating ||
-                                              (staffMember as any).rating ||
-                                              0) >= 4.8 && (
-                                              <div className="flex items-center gap-1 text-xs font-semibold text-amber-600 animate-pulse">
-                                                <Award className="h-3 w-3" />
-                                                Top Rated
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-
-                                      {availableDays.length > 0 && (
-                                        <p className="text-xs text-gray-500 mt-1">
-                                          Available: {availableDays.join(", ")}
-                                        </p>
-                                      )}
+                                          )}
+                                        </div>
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleServiceStaffSelect(
+                                            service.id,
+                                            null,
+                                          )
+                                        }
+                                        className="text-[#FF7A00] hover:text-[#F65000] hover:bg-orange-100"
+                                      >
+                                        Change
+                                      </Button>
                                     </div>
+                                  </motion.div>
+                                )}
+
+                                {/* Staff Selection (show if not assigned or if scrolled to view) */}
+                                {!isAssigned && (
+                                  <div className="space-y-3">
+                                    <p className="text-sm font-medium text-gray-700 mb-3">
+                                      Choose a professional:
+                                    </p>
+                                    {qualifiedStaff.length === 0 ? (
+                                      <div className="text-center py-6 bg-[#ECE3DC] rounded-xl border border-[#CBCBCB]">
+                                        <p className="text-sm text-gray-500">
+                                          No professionals available for this
+                                          service
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {qualifiedStaff.map((staffMember) => {
+                                          const staffName =
+                                            staffMember.name ||
+                                            staffMember.user?.name ||
+                                            "Professional";
+                                          const staffRole =
+                                            staffMember.role || "Professional";
+                                          const staffImage =
+                                            staffMember.image ||
+                                            (staffMember as any)
+                                              .profilePicture ||
+                                            (staffMember as any).user
+                                              ?.profilePicture ||
+                                            (staffMember as any).user?.image ||
+                                            null;
+
+                                          return (
+                                            <div
+                                              key={staffMember.id}
+                                              className="p-4 rounded-xl border-2 border-[#CBCBCB] hover:border-[#FF7A00] bg-[#ECE3DC] cursor-pointer transition-all duration-200 hover:shadow-md"
+                                              onClick={() =>
+                                                handleServiceStaffSelect(
+                                                  service.id,
+                                                  staffMember,
+                                                )
+                                              }
+                                            >
+                                              <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                  <div className="w-11 h-11 rounded-full overflow-hidden bg-linear-to-br from-orange-100 to-purple-100 shrink-0 flex items-center justify-center relative">
+                                                    {staffImage ? (
+                                                      <Image
+                                                        src={staffImage}
+                                                        alt={staffName}
+                                                        fill
+                                                        className="object-cover"
+                                                      />
+                                                    ) : (
+                                                      <User className="h-5 w-5 text-[#FF7A00]" />
+                                                    )}
+                                                  </div>
+                                                  <div className="flex-1">
+                                                    <h4 className="font-semibold text-black text-sm">
+                                                      {staffName}
+                                                    </h4>
+                                                    <p className="text-xs text-gray-600">
+                                                      {staffRole}
+                                                    </p>
+                                                    {(staffMember.averageRating ||
+                                                      (staffMember as any)
+                                                        .rating) && (
+                                                      <div className="flex items-center gap-1.5 mt-1">
+                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50">
+                                                          <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                                                          <span className="text-xs font-medium text-gray-700">
+                                                            {(
+                                                              staffMember.averageRating ||
+                                                              (
+                                                                staffMember as any
+                                                              ).rating ||
+                                                              0
+                                                            ).toFixed(1)}
+                                                          </span>
+                                                        </div>
+                                                        <span className="text-xs text-gray-400">
+                                                          (
+                                                          {staffMember.totalRatings ||
+                                                            (staffMember as any)
+                                                              .reviewCount ||
+                                                            0}
+                                                          )
+                                                        </span>
+                                                        {(staffMember.averageRating ||
+                                                          (staffMember as any)
+                                                            .rating ||
+                                                          0) >= 4.8 && (
+                                                          <div className="flex items-center gap-0.5 text-xs font-semibold text-amber-600">
+                                                            <Award className="h-2.5 w-2.5" />
+                                                            <span>Top</span>
+                                                          </div>
+                                                        )}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                                <Button
+                                                  size="sm"
+                                                  className="bg-[#FF7A00] text-white hover:bg-[#F65000] rounded-lg px-4"
+                                                >
+                                                  Select
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
                                   </div>
-                                  <Button
-                                    variant="outline"
-                                    className="hover:bg-[#FF7A00] hover:text-white hover:border-[#FF7A00] bg-transparent border-[#1E1E1E] px-6 py-4 rounded-2xl"
-                                  >
-                                    Select
-                                  </Button>
-                                </div>
-                              </Card>
+                                )}
+                              </motion.div>
                             );
                           })}
                         </div>
+                      )}
+
+                      {/* Continue Button */}
+                      {selectedServices.every((service) =>
+                        serviceStaffMap.has(service.id),
+                      ) && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-6 pt-6 border-t border-[#1e1e1e]"
+                        >
+                          <Button
+                            onClick={handleContinueToTime}
+                            className="w-full bg-linear-to-r from-[#FF7A00] to-[#F65000] text-white hover:from-[#F65000] hover:to-[#FF7A00] py-6 rounded-2xl text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                          >
+                            Continue to Time Selection
+                            <ArrowRight className="ml-2 h-5 w-5" />
+                          </Button>
+                        </motion.div>
                       )}
                     </div>
                   </motion.div>
@@ -1343,6 +1681,12 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                           <h2 className="text-2xl font-bold text-black">
                             Select Date & Time
                           </h2>
+                          {selectedServices.length > 1 && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              Showing times when all {selectedServices.length}{" "}
+                              staff members are available
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -1369,7 +1713,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                   disabled={isDisabled}
                                   className={`p-2 sm:p-3 md:p-4 rounded-xl text-center transition-all duration-200 ${
                                     isDisabled
-                                      ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
+                                      ? "bg-[#CBCBCB] text-gray-400 cursor-not-allowed opacity-50"
                                       : selectedDate === dateObj.fullDate
                                         ? "bg-[#FF7A00] text-white shadow-lg scale-105"
                                         : dateObj.isToday
@@ -1397,9 +1741,17 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         {/* Time Slots */}
                         {selectedDate && (
                           <div className="space-y-4">
-                            <h3 className="font-medium text-black">
-                              Available times
-                            </h3>
+                            <div>
+                              <h3 className="font-medium text-black">
+                                Available times
+                              </h3>
+                              {selectedServices.length > 1 &&
+                                availableSlots.length > 0 && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Times when all assigned staff are available
+                                  </p>
+                                )}
+                            </div>
                             {slotsLoading ? (
                               <div className="flex items-center justify-center py-12">
                                 <Loader2 className="h-8 w-8 animate-spin text-[#FF7A00]" />
@@ -1407,7 +1759,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                             ) : availableSlots.length === 0 ? (
                               <div className="text-center py-12">
                                 <p className="text-gray-600">
-                                  No available time slots for this date
+                                  {selectedServices.length > 1
+                                    ? "No common time slots available for all staff members on this date. Try a different date."
+                                    : "No available time slots for this date"}
                                 </p>
                               </div>
                             ) : (
@@ -1482,17 +1836,15 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                       </div>
 
                       {/* Offer Selection */}
-                      {selectedService && (
+                      {selectedServices.length > 0 && (
                         <div className="mb-6">
                           <OfferSelector
-                            cartItems={[
-                              {
-                                id: selectedService.id,
-                                salonId: salon.id,
-                                serviceId: selectedService.id,
-                              },
-                            ]}
-                            amount={parseFloat(selectedService.price)}
+                            cartItems={selectedServices.map((service) => ({
+                              id: service.id,
+                              salonId: salon.id,
+                              serviceId: service.id,
+                            }))}
+                            amount={getTotalPrice()}
                             onOffersApplied={(offers) => {
                               setSelectedOffers(offers);
                             }}
@@ -1513,7 +1865,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                             className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                               paymentMethod === "stripe"
                                 ? "border-[#FF7A00] bg-orange-50"
-                                : "border-[#CBCBCB] bg-white hover:border-[#1E1E1E]"
+                                : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
                             }`}
                           >
                             <div className="flex items-center justify-between">
@@ -1554,7 +1906,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                             className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                               paymentMethod === "onspot"
                                 ? "border-[#FF7A00] bg-orange-50"
-                                : "border-[#CBCBCB] bg-white hover:border-[#1E1E1E]"
+                                : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
                             }`}
                           >
                             <div className="flex items-center justify-between">
@@ -1652,7 +2004,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         <Button
                           onClick={handleGuestCheckout}
                           variant="outline"
-                          className="w-full py-6 rounded-xl font-semibold text-lg border-2 border-gray-300 hover:border-[#FF7A00] hover:text-[#FFFFFF] hover:bg-[#FF7A00] bg-transparent"
+                          className="w-full py-6 rounded-xl font-semibold text-lg border-2 border-[#1e1e1e] hover:border-[#FF7A00] hover:text-[#FFFFFF] hover:bg-[#FF7A00] bg-transparent"
                         >
                           Continue as Guest
                         </Button>

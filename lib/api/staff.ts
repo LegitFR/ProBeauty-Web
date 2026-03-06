@@ -48,8 +48,13 @@ export interface Staff {
   availability: StaffAvailability;
   services?: Array<{
     id: string;
-    title?: string;
-  }>; // Services this staff member can perform
+    service?: {
+      id: string;
+      title: string;
+      price: number;
+      durationMinutes?: number;
+    };
+  }>; // Services this staff member can perform with service details
   serviceIds?: string[]; // Alternative: just service IDs
   userId?: string;
   user?: {

@@ -122,7 +122,7 @@ export function AuthModal({
     const timer = setTimeout(() => {
       if (activeTab === "login") {
         const loginButton = document.getElementById(
-          "google-signin-button-login"
+          "google-signin-button-login",
         );
         if (loginButton) {
           // Clear existing content
@@ -138,7 +138,7 @@ export function AuthModal({
         }
       } else if (activeTab === "signup") {
         const signupButton = document.getElementById(
-          "google-signin-button-signup"
+          "google-signin-button-signup",
         );
         if (signupButton) {
           // Clear existing content
@@ -161,6 +161,10 @@ export function AuthModal({
   const handleGoogleSignIn = async (credential: string) => {
     setIsLoading(true);
     try {
+      console.log(
+        "[Google Auth] Attempting sign-in with client ID:",
+        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      );
       const response = await googleAuth(credential);
       toast.success(`Welcome, ${response.user.name}!`);
 
@@ -176,7 +180,17 @@ export function AuthModal({
       // Refresh the page to update UI with logged-in state
       window.location.reload();
     } catch (error: any) {
-      toast.error(error.message || "Google sign-in failed. Please try again.");
+      console.error("[Google Auth] Error details:", error);
+      // Provide user-friendly error message with troubleshooting hint
+      const errorMsg =
+        error.message || "Google sign-in failed. Please try again.";
+      if (errorMsg.includes("audience") || errorMsg.includes("recipient")) {
+        toast.error(
+          "Authentication configuration error. Please contact support or use email/password login.",
+        );
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -262,7 +276,7 @@ export function AuthModal({
       });
 
       toast.success(
-        "Account created! Please check your email for the verification code (OTP)."
+        "Account created! Please check your email for the verification code (OTP).",
       );
       setShowOtpVerification(true);
     } catch (error: any) {
@@ -314,7 +328,7 @@ export function AuthModal({
       if (loginTab) loginTab.click();
     } catch (error: any) {
       toast.error(
-        error.message || "OTP verification failed. Please try again."
+        error.message || "OTP verification failed. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -360,7 +374,7 @@ export function AuthModal({
       setForgotPasswordStep("otp");
     } catch (error: any) {
       toast.error(
-        error.message || "Failed to send reset code. Please try again."
+        error.message || "Failed to send reset code. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -381,7 +395,7 @@ export function AuthModal({
       setForgotPasswordStep("reset");
     } catch (error: any) {
       toast.error(
-        error.message || "Invalid or expired code. Please try again."
+        error.message || "Invalid or expired code. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -409,7 +423,7 @@ export function AuthModal({
     try {
       await resetPassword(forgotPasswordEmail, resetOtp, newPassword);
       toast.success(
-        "Password reset successfully! You can now login with your new password."
+        "Password reset successfully! You can now login with your new password.",
       );
 
       // Reset forgot password state and go back to login
@@ -421,7 +435,7 @@ export function AuthModal({
       setConfirmNewPassword("");
     } catch (error: any) {
       toast.error(
-        error.message || "Failed to reset password. Please try again."
+        error.message || "Failed to reset password. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -447,18 +461,18 @@ export function AuthModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden bg-[#ECE3DC] flex flex-col">
-        <DialogHeader className="space-y-3 pb-2 flex-shrink-0">
-          <DialogTitle className="font-display text-2xl text-center font-bold">
+      <DialogContent className="w-[95vw] max-w-[480px] sm:max-w-md max-h-[90vh] overflow-hidden bg-[#ECE3DC] flex flex-col p-4 sm:p-6">
+        <DialogHeader className="space-y-2 sm:space-y-3 pb-2 shrink-0">
+          <DialogTitle className="font-display text-xl sm:text-2xl text-center font-bold">
             Welcome to{" "}
             <span className="bg-clip-text text-orange-400">ProBeauty</span>
           </DialogTitle>
-          <DialogDescription className="text-center text-gray-600">
+          <DialogDescription className="text-center text-gray-600 text-sm sm:text-base">
             Join our beauty community and discover personalized solutions ✨
           </DialogDescription>
         </DialogHeader>
 
-        <div className="overflow-y-auto flex-1 -mx-6 px-6 scrollbar-auth">
+        <div className="overflow-y-auto flex-1 -mx-4 sm:-mx-6 px-4 sm:px-6 scrollbar-auth">
           <Tabs
             defaultValue={defaultTab}
             value={activeTab}
@@ -468,37 +482,44 @@ export function AuthModal({
             <TabsList className="grid w-full grid-cols-2 bg-[#ECE3DC] p-1 rounded-lg">
               <TabsTrigger
                 value="login"
-                className="rounded-md text-sm data-[state=active]:!bg-orange-500 data-[state=active]:!text-white data-[state=active]:shadow-md data-[state=inactive]:text-gray-600 transition-all font-medium"
+                className="rounded-md text-xs sm:text-sm data-[state=active]:bg-orange-500! data-[state=active]:text-white! data-[state=active]:shadow-md data-[state=inactive]:text-gray-600 transition-all font-medium"
               >
                 Login
               </TabsTrigger>
               <TabsTrigger
                 value="signup"
-                className="rounded-md text-sm data-[state=active]:!bg-orange-500 data-[state=active]:!text-white data-[state=active]:shadow-md data-[state=inactive]:text-gray-600 transition-all font-medium"
+                className="rounded-md text-xs sm:text-sm data-[state=active]:bg-orange-500! data-[state=active]:text-white! data-[state=active]:shadow-md data-[state=inactive]:text-gray-600 transition-all font-medium"
               >
                 Sign Up
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="login" className="bg-[#ECE3DC] overflow-hidden">
-              <Card className="bg-[#ECE3DC]">
-                <CardHeader>
-                  <CardTitle>Welcome Back</CardTitle>
-                  <CardDescription>
+              <Card className="bg-[#ECE3DC] border-0 shadow-none">
+                <CardHeader className="px-3 sm:px-6 pt-4 sm:pt-6">
+                  <CardTitle className="text-lg sm:text-xl">
+                    Welcome Back
+                  </CardTitle>
+                  <CardDescription className="text-sm">
                     Sign in to your ProBeauty account
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">Email or Phone</Label>
+                <CardContent className="px-3 sm:px-6">
+                  <form
+                    onSubmit={handleLogin}
+                    className="space-y-3 sm:space-y-4"
+                  >
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="login-email" className="text-sm">
+                        Email or Phone
+                      </Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-[#1e1e1e]" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1e1e1e]" />
                         <Input
                           id="login-email"
                           type="text"
                           placeholder="Enter your email or phone"
-                          className="pl-10 bg-transparent border-[#1e1e1e]"
+                          className="pl-10 bg-transparent border-[#1e1e1e] h-10 sm:h-11 text-sm sm:text-base"
                           value={loginForm.email}
                           onChange={(e) =>
                             setLoginForm({
@@ -511,15 +532,17 @@ export function AuthModal({
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">Password</Label>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="login-password" className="text-sm">
+                        Password
+                      </Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-[#1e1e1e]" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1e1e1e]" />
                         <Input
                           id="login-password"
                           type={showPassword ? "text" : "password"}
                           placeholder="Enter your password"
-                          className="pl-10 pr-10 bg-transparent border-[#1e1e1e]"
+                          className="pl-10 pr-10 bg-transparent border-[#1e1e1e] h-10 sm:h-11 text-sm sm:text-base"
                           value={loginForm.password}
                           onChange={(e) =>
                             setLoginForm({
@@ -532,7 +555,7 @@ export function AuthModal({
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                           disabled={isLoading}
                         >
                           {showPassword ? (
@@ -544,14 +567,14 @@ export function AuthModal({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end mb-4">
+                    <div className="flex items-center justify-end">
                       <button
                         type="button"
                         onClick={() => {
                           setShowForgotPassword(true);
                           setForgotPasswordStep("email");
                         }}
-                        className="text-sm text-[#FF7A00] hover:text-[#e66900] font-medium"
+                        className="text-xs sm:text-sm text-[#FF7A00] hover:text-[#e66900] font-medium"
                       >
                         Forgot Password?
                       </button>
@@ -559,7 +582,7 @@ export function AuthModal({
 
                     <Button
                       type="submit"
-                      className="w-full bg-[#FF7A00] hover:bg-[#e66900]"
+                      className="w-full bg-[#FF7A00] hover:bg-[#e66900] h-10 sm:h-11 text-sm sm:text-base"
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -573,11 +596,11 @@ export function AuthModal({
                     </Button>
 
                     {/* Divider */}
-                    <div className="relative my-4">
+                    <div className="relative my-3 sm:my-4">
                       <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-200"></div>
                       </div>
-                      <div className="relative flex justify-center text-sm">
+                      <div className="relative flex justify-center text-xs sm:text-sm">
                         <span className="px-2 bg-[#ECE3DC] text-[#1e1e1e]">
                           Or continue with
                         </span>
@@ -587,7 +610,7 @@ export function AuthModal({
                     {/* Google Sign-In Button */}
                     <div
                       id="google-signin-button-login"
-                      className="bg-[#ECE3DC]"
+                      className="bg-[#ECE3DC] w-full flex justify-center"
                     ></div>
                   </form>
                 </CardContent>
@@ -596,24 +619,27 @@ export function AuthModal({
 
             <TabsContent
               value="signup"
-              className="bg-[#ECE3DC] overflow-hidden"
+              className="bg-[#ECE3DC] overflow-hidden mt-3 sm:mt-4"
             >
-              <Card className="border-0 shadow-sm bg-[#ECE3DC]">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-xl font-bold bg-[#FF6A00] bg-clip-text text-transparent">
+              <Card className="border-0 shadow-none bg-[#ECE3DC]">
+                <CardHeader className="px-3 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
+                  <CardTitle className="text-lg sm:text-xl font-bold bg-[#FF6A00] bg-clip-text text-transparent">
                     {showOtpVerification
                       ? "Verify Your Email"
                       : "Create Account"}
                   </CardTitle>
-                  <CardDescription className="text-gray-600">
+                  <CardDescription className="text-gray-600 text-sm">
                     {showOtpVerification
                       ? `Enter the 6-digit code sent to ${signupForm.email}`
                       : "Join ProBeauty and start your beauty journey"}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-3 sm:px-6">
                   {!showOtpVerification ? (
-                    <form onSubmit={handleSignup} className="space-y-3">
+                    <form
+                      onSubmit={handleSignup}
+                      className="space-y-3 sm:space-y-4"
+                    >
                       {/* Row 1: Name and Email */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
@@ -703,7 +729,7 @@ export function AuthModal({
                       </div>
 
                       {/* Row 3: Password and Confirm Password */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3">
                         <div className="space-y-1.5">
                           <Label
                             htmlFor="signup-password"
@@ -716,8 +742,8 @@ export function AuthModal({
                             <Input
                               id="signup-password"
                               type={showPassword ? "text" : "password"}
-                              placeholder="Min 8 chars"
-                              className="pl-10 pr-10 h-10 border-[#1e1e1e] bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all"
+                              placeholder="Minimum 8 characters"
+                              className="pl-10 pr-10 h-10 sm:h-11 border-[#1e1e1e] bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all text-sm sm:text-base"
                               value={signupForm.password}
                               onChange={(e) =>
                                 setSignupForm({
@@ -756,8 +782,8 @@ export function AuthModal({
                             <Input
                               id="signup-confirm-password"
                               type={showConfirmPassword ? "text" : "password"}
-                              placeholder="Confirm"
-                              className="pl-10 pr-10 h-10 border-[#1e1e1e] bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all"
+                              placeholder="Re-enter password"
+                              className="pl-10 pr-10 h-10 sm:h-11 border-[#1e1e1e] bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all text-sm sm:text-base"
                               value={signupForm.confirmPassword}
                               onChange={(e) =>
                                 setSignupForm({
@@ -788,7 +814,7 @@ export function AuthModal({
 
                       <Button
                         type="submit"
-                        className="w-full h-10 mt-4 bg-[#FF6A00] hover:bg-[#e66900] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                        className="w-full h-10 sm:h-11 mt-2 bg-[#FF6A00] hover:bg-[#e66900] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] text-sm sm:text-base"
                         disabled={isLoading}
                       >
                         {isLoading ? (
@@ -802,11 +828,11 @@ export function AuthModal({
                       </Button>
 
                       {/* Divider */}
-                      <div className="relative my-4">
+                      <div className="relative my-3 sm:my-4">
                         <div className="absolute inset-0 flex items-center">
                           <div className="w-full border-t border-gray-200"></div>
                         </div>
-                        <div className="relative flex justify-center text-sm">
+                        <div className="relative flex justify-center text-xs sm:text-sm">
                           <span className="px-2 bg-[#ECE3DC] text-[#1e1e1e]">
                             Or sign up with
                           </span>
@@ -814,7 +840,10 @@ export function AuthModal({
                       </div>
 
                       {/* Google Sign-Up Button */}
-                      <div id="google-signin-button-signup"></div>
+                      <div
+                        id="google-signin-button-signup"
+                        className="w-full flex justify-center"
+                      ></div>
                     </form>
                   ) : (
                     <form
@@ -831,7 +860,7 @@ export function AuthModal({
                           value={otp}
                           onChange={(e) =>
                             setOtp(
-                              e.target.value.replace(/\D/g, "").slice(0, 6)
+                              e.target.value.replace(/\D/g, "").slice(0, 6),
                             )
                           }
                           disabled={isLoading}
@@ -972,7 +1001,7 @@ export function AuthModal({
                         value={resetOtp}
                         onChange={(e) =>
                           setResetOtp(
-                            e.target.value.replace(/\D/g, "").slice(0, 6)
+                            e.target.value.replace(/\D/g, "").slice(0, 6),
                           )
                         }
                         disabled={isLoading}

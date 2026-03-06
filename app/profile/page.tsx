@@ -726,7 +726,12 @@ export default function ProfilePage() {
                                     {booking.salon?.name || "Salon"}
                                   </h4>
                                   <p className="text-xs text-[#FF6A00] font-medium truncate mb-2">
-                                    {booking.service?.title || "Service"}
+                                    {booking.services &&
+                                    booking.services.length > 0
+                                      ? booking.services.length > 1
+                                        ? `${booking.services.length} Services`
+                                        : booking.services[0]?.title
+                                      : booking.service?.title || "Service"}
                                   </p>
                                   <div className="flex items-center gap-2 text-xs text-gray-600">
                                     <Clock className="h-3.5 w-3.5 text-[#FF6A00]" />
@@ -743,6 +748,8 @@ export default function ProfilePage() {
                                       ).toLocaleTimeString("en", {
                                         hour: "numeric",
                                         minute: "2-digit",
+                                        hour12: true,
+                                        timeZone: "UTC",
                                       })}
                                     </span>
                                   </div>
@@ -1018,6 +1025,8 @@ export default function ProfilePage() {
                                             ).toLocaleTimeString("en", {
                                               hour: "numeric",
                                               minute: "2-digit",
+                                              hour12: true,
+                                              timeZone: "UTC",
                                             })}{" "}
                                             -{" "}
                                             {new Date(
@@ -1025,25 +1034,37 @@ export default function ProfilePage() {
                                             ).toLocaleTimeString("en", {
                                               hour: "numeric",
                                               minute: "2-digit",
+                                              hour12: true,
+                                              timeZone: "UTC",
                                             })}
                                           </span>
                                         </div>
                                       </div>
 
-                                      {booking.service && (
+                                      {(
+                                        booking.services ||
+                                        (booking.service
+                                          ? [booking.service]
+                                          : [])
+                                      ).length > 0 && (
                                         <div className="flex flex-wrap gap-1.5 mb-3">
-                                          <Badge
-                                            variant="outline"
-                                            className="text-xs"
-                                          >
-                                            {booking.service.title}
-                                          </Badge>
-                                          <Badge
-                                            variant="outline"
-                                            className="text-xs"
-                                          >
-                                            ${booking.service.price}
-                                          </Badge>
+                                          {(
+                                            booking.services || [
+                                              booking.service,
+                                            ]
+                                          ).map(
+                                            (service: any, idx: number) =>
+                                              service && (
+                                                <Badge
+                                                  key={idx}
+                                                  variant="outline"
+                                                  className="text-xs"
+                                                >
+                                                  {service.title} - $
+                                                  {service.price}
+                                                </Badge>
+                                              ),
+                                          )}
                                         </div>
                                       )}
 
@@ -1414,7 +1435,12 @@ export default function ProfilePage() {
                               !reviews.some(
                                 (review) =>
                                   review.salonId === booking.salonId &&
-                                  review.serviceId === booking.serviceId,
+                                  (
+                                    booking.serviceIds || [booking.serviceId]
+                                  ).some(
+                                    (serviceId: string) =>
+                                      review.serviceId === serviceId,
+                                  ),
                               ),
                           );
 
@@ -1440,7 +1466,13 @@ export default function ProfilePage() {
                                           {booking.salon?.name}
                                         </h4>
                                         <p className="text-sm text-gray-600">
-                                          {booking.service?.title}
+                                          {booking.services &&
+                                          booking.services.length > 0
+                                            ? booking.services
+                                                .map((s: any) => s.title)
+                                                .join(", ")
+                                            : booking.service?.title ||
+                                              "Service"}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-1">
                                           {new Date(
@@ -1570,9 +1602,16 @@ export default function ProfilePage() {
                                             {review.staff.salon.name}
                                           </p>
                                         )}
-                                        {review.booking?.service && (
+                                        {review.booking && (
                                           <p className="text-xs text-gray-500">
-                                            {review.booking.service.title}
+                                            {(review.booking as any).services &&
+                                            (review.booking as any).services
+                                              .length > 0
+                                              ? (review.booking as any).services
+                                                  .map((s: any) => s.title)
+                                                  .join(", ")
+                                              : review.booking.service?.title ||
+                                                "Service"}
                                           </p>
                                         )}
                                         <div className="flex gap-0.5 mt-2">
@@ -1673,8 +1712,14 @@ export default function ProfilePage() {
                                             "Staff Member"}
                                         </h4>
                                         <p className="text-sm text-gray-600">
-                                          {booking.service?.title} at{" "}
-                                          {booking.salon?.name}
+                                          {booking.services &&
+                                          booking.services.length > 0
+                                            ? booking.services
+                                                .map((s: any) => s.title)
+                                                .join(", ")
+                                            : booking.service?.title ||
+                                              "Service"}{" "}
+                                          at {booking.salon?.name}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-1">
                                           {new Date(
@@ -1712,7 +1757,11 @@ export default function ProfilePage() {
                         </DialogHeader>
                         {staffReviewBooking && (
                           <StaffReviewForm
-                            staffId={staffReviewBooking.staffId}
+                            staffId={
+                              staffReviewBooking.staffId ||
+                              staffReviewBooking.staffIds?.[0] ||
+                              ""
+                            }
                             bookingId={staffReviewBooking.id}
                             staffName={
                               staffReviewBooking.staff?.user?.name ||
@@ -2479,9 +2528,18 @@ export default function ProfilePage() {
               {reviewBooking && (
                 <ReviewForm
                   salonId={reviewBooking.salonId}
-                  serviceId={reviewBooking.serviceId}
+                  serviceId={
+                    reviewBooking.serviceIds &&
+                    reviewBooking.serviceIds.length > 0
+                      ? reviewBooking.serviceIds[0]
+                      : reviewBooking.serviceId
+                  }
                   salonName={reviewBooking.salon?.name}
-                  serviceName={reviewBooking.service?.title}
+                  serviceName={
+                    reviewBooking.services && reviewBooking.services.length > 0
+                      ? reviewBooking.services[0]?.title
+                      : reviewBooking.service?.title
+                  }
                   onSuccess={() => {
                     setShowReviewDialog(false);
                     setReviewBooking(null);

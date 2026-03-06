@@ -138,6 +138,16 @@ export async function fetchJsonWithAuth<T>(
 
     try {
       const errorData = JSON.parse(errorText);
+      console.error("❌ API Error Response:", errorData);
+
+      // If there are validation errors, log them in detail
+      if (errorData.errors && Array.isArray(errorData.errors)) {
+        console.error("Validation errors:");
+        errorData.errors.forEach((err: any) => {
+          console.error(`  - ${err.path || "field"}: ${err.message}`);
+        });
+      }
+
       errorMessage =
         errorData.message ||
         errorData.error ||

@@ -16,12 +16,21 @@ export type BookingStatus =
   | "CANCELLED"
   | "NO_SHOW";
 
+export interface ServiceAssignment {
+  serviceId: string;
+  staffId: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface Booking {
   id: string;
   userId: string;
   salonId: string;
-  serviceId: string;
-  staffId: string;
+  serviceId?: string; // deprecated - keeping for backward compatibility
+  staffId?: string; // deprecated - keeping for backward compatibility
+  serviceIds: string[];
+  staffIds: string[];
   startTime: string;
   endTime: string;
   status: BookingStatus;
@@ -37,11 +46,18 @@ export interface Booking {
     address: string;
   };
   service?: {
+    // deprecated - keeping for backward compatibility
     id: string;
     title: string;
     durationMinutes: number;
     price: string;
   };
+  services?: Array<{
+    id: string;
+    title: string;
+    durationMinutes: number;
+    price: string;
+  }>;
   staff?: {
     id: string;
     role: string;
@@ -50,6 +66,16 @@ export interface Booking {
       email: string;
     };
   };
+  staffMembers?: Array<{
+    id: string;
+    name?: string;
+    role?: string;
+    user?: {
+      name: string;
+      email: string;
+    };
+  }>;
+  serviceAssignments?: ServiceAssignment[];
 }
 
 export interface TimeSlot {
@@ -66,12 +92,18 @@ export interface AvailabilityResponse {
       id: string;
       name: string;
     };
-    service: {
+    service?: {
+      // deprecated - keeping for backward compatibility
       id: string;
       title: string;
       durationMinutes: number;
     };
-    staff: {
+    services?: Array<{
+      id: string;
+      title: string;
+      durationMinutes: number;
+    }>;
+    staff?: {
       id: string;
       role: string;
     };
@@ -91,45 +123,106 @@ export interface SingleBookingResponse {
 
 /**
  * Create a new booking
+ * Note: Backend expects 'serviceId' and 'staffId' (singular) even for multiple services/staff
+ *       Multiple values should be comma-separated strings
  */
 export async function createBooking(
   token: string,
   data: {
     salonId: string;
-    serviceId: string;
-    staffId?: string;
+    serviceId?: string; // deprecated - for backward compatibility
+    serviceIds?: string[]; // new field for multiple services (will be converted to comma-separated)
+    staffId?: string; // deprecated - for backward compatibility
+    staffIds?: string[]; // new field for multiple staff (will be converted to comma-separated)
     startTime: string;
   },
 ): Promise<SingleBookingResponse> {
-  console.log("Creating booking with data:", data);
+  console.log("=== Creating Booking ===");
+  console.log("Input data:", data);
+
+  // Build request body - backend expects arrays for serviceIds and staffIds
+  const requestData: any = {
+    salonId: data.salonId,
+    startTime: data.startTime,
+  };
+
+  // Backend expects 'serviceIds' as an array
+  if (data.serviceIds && data.serviceIds.length > 0) {
+    requestData.serviceIds = data.serviceIds;
+  } else if (data.serviceId) {
+    requestData.serviceIds = [data.serviceId];
+  }
+
+  // Backend expects 'staffIds' as an array
+  if (data.staffIds && data.staffIds.length > 0) {
+    requestData.staffIds = data.staffIds;
+  } else if (data.staffId) {
+    requestData.staffIds = [data.staffId];
+  }
+
+  console.log(
+    "🔍 Request body being sent:",
+    JSON.stringify(requestData, null, 2),
+  );
+  console.log("Sending to:", `${API_BASE_URL} (POST)`);
 
   try {
-    return await fetchJsonWithAuth<SingleBookingResponse>(`${API_BASE_URL}`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    const response = await fetchJsonWithAuth<SingleBookingResponse>(
+      `${API_BASE_URL}`,
+      {
+        method: "POST",
+        body: JSON.stringify(requestData),
+      },
+    );
+    console.log("✅ Booking created successfully");
+    return response;
   } catch (error: any) {
-    console.error("Booking error:", error);
+    console.error("❌ Booking creation failed");
+    console.error("Error message:", error.message);
     throw error;
   }
 }
 
 /**
  * Get available time slots
+ * Note: Backend expects 'serviceIds' (plural) as query param (comma-separated string or JSON array)
  */
 export async function getAvailableSlots(params: {
   salonId: string;
-  serviceId: string;
+  serviceId?: string; // deprecated - for backward compatibility
+  serviceIds?: string | string[]; // new field for multiple services (supports comma-separated string or array)
   staffId?: string;
   date: string;
 }): Promise<AvailabilityResponse> {
-  // Filter out undefined values from params
+  // Build query parameters
   const filteredParams: Record<string, string> = {};
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined) {
-      filteredParams[key] = value;
+
+  // Add salonId
+  if (params.salonId) {
+    filteredParams.salonId = params.salonId;
+  }
+
+  // Add serviceIds (support both array and single service for backward compatibility)
+  // Backend expects 'serviceIds' as the query parameter name
+  if (params.serviceIds) {
+    if (Array.isArray(params.serviceIds)) {
+      filteredParams.serviceIds = params.serviceIds.join(",");
+    } else {
+      filteredParams.serviceIds = params.serviceIds;
     }
-  });
+  } else if (params.serviceId) {
+    filteredParams.serviceIds = params.serviceId;
+  }
+
+  // Add staffId if provided
+  if (params.staffId) {
+    filteredParams.staffId = params.staffId;
+  }
+
+  // Add date
+  if (params.date) {
+    filteredParams.date = params.date;
+  }
 
   const queryParams = new URLSearchParams(filteredParams);
   const response = await fetch(`${API_BASE_URL}/availability?${queryParams}`);
