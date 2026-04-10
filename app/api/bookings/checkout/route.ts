@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL =
-  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com/api/v1";
+import { getCheckoutBackendApiUrl } from "@/lib/config/backend";
 
 /**
  * POST /api/bookings/checkout
@@ -18,32 +16,69 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const backendUrl = getCheckoutBackendApiUrl(body.paymentMethod);
 
-    const response = await fetch(`${BACKEND_URL}/bookings/checkout`, {
-      method: "POST",
-      headers: {
-        Authorization: token,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${backendUrl}/bookings/checkout`, {
+        method: "POST",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (error: unknown) {
+      const fetchError = error instanceof Error ? error.message : "Unknown error";
+      return NextResponse.json(
+        {
+          message:
+            body.paymentMethod === "MBWAY"
+              ? "Could not reach the MB WAY test backend URL. Verify TEST_NGROK_BASE_URL and ensure ngrok is running."
+              : "Could not reach backend service.",
+          error: fetchError,
+          backendUrl,
+        },
+        { status: 502 },
+      );
+    }
 
-    const data = await response.json();
+    const rawResponseBody = await response.text();
+    let data: { message?: string; error?: string; [key: string]: unknown };
+    try {
+      data = rawResponseBody ? JSON.parse(rawResponseBody) : {};
+    } catch {
+      return NextResponse.json(
+        {
+          message: "Backend returned a non-JSON response",
+          status: response.status,
+          backendUrl,
+        },
+        { status: 502 },
+      );
+    }
 
     if (!response.ok) {
       return NextResponse.json(
         {
           message: data.message || "Failed to create booking checkout session",
+          error: data.error,
+          details: data,
+          backendUrl,
         },
         { status: response.status }
       );
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to create booking checkout session";
     console.error("Error creating booking checkout session:", error);
     return NextResponse.json(
-      { message: error.message || "Failed to create booking checkout session" },
+      { message },
       { status: 500 }
     );
   }

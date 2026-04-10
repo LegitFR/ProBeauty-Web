@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL =
-  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com/api/v1";
+import { getCheckoutBackendApiUrl } from "@/lib/config/backend";
 
 /**
  * POST /api/orders/checkout
- * Creates an order with Stripe payment intent
+ * Creates an order with payment intent (Stripe or If-Then Pay)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -18,30 +16,80 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    
+    const backendUrl = getCheckoutBackendApiUrl(body.paymentMethod);
+    
+    console.log("=== CHECKOUT API PROXY ===");
+    console.log("Payment Method:", body.paymentMethod);
+    console.log("Using Backend URL:", backendUrl);
+    console.log("Request Body:", JSON.stringify(body, null, 2));
 
-    const response = await fetch(`${BACKEND_URL}/orders/checkout`, {
-      method: "POST",
-      headers: {
-        Authorization: token,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${backendUrl}/orders/checkout`, {
+        method: "POST",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (error: unknown) {
+      const fetchError = error instanceof Error ? error.message : "Unknown error";
+      console.error("❌ Failed to reach backend URL:", backendUrl, fetchError);
 
-    const data = await response.json();
+      return NextResponse.json(
+        {
+          message:
+            body.paymentMethod === "MBWAY"
+              ? "Could not reach the MB WAY test backend URL. Verify TEST_NGROK_BASE_URL and ensure ngrok is running."
+              : "Could not reach backend service.",
+          error: fetchError,
+          backendUrl,
+        },
+        { status: 502 },
+      );
+    }
+
+    const rawResponseBody = await response.text();
+    let data: { message?: string; [key: string]: unknown };
+    try {
+      data = JSON.parse(rawResponseBody);
+    } catch {
+      console.error("❌ Non-JSON backend response:", rawResponseBody);
+      return NextResponse.json(
+        {
+          message: "Backend returned a non-JSON response",
+          status: response.status,
+          backendUrl,
+        },
+        { status: 502 },
+      );
+    }
+    
+    console.log("=== BACKEND RESPONSE ===");
+    console.log("Status:", response.status);
+    console.log("Response Data:", JSON.stringify(data, null, 2));
 
     if (!response.ok) {
+      console.error("❌ Backend Error:", data.message);
       return NextResponse.json(
-        { message: data.message || "Failed to create checkout session" },
+        {
+          message: data.message || "Failed to create checkout session",
+          error: typeof data.error === "string" ? data.error : undefined,
+          details: data,
+          backendUrl,
+        },
         { status: response.status }
       );
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error: any) {
-    console.error("Error creating checkout session:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to create checkout session";
+    console.error("❌ Checkout API Error:", error);
     return NextResponse.json(
-      { message: error.message || "Failed to create checkout session" },
+      { message },
       { status: 500 }
     );
   }

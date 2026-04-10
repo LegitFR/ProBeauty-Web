@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
+  process.env.BACKEND_URL ||
   process.env.BACKEND_API_URL ||
   "https://probeauty-backend.onrender.com/api/v1";
 
@@ -33,12 +34,24 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const data = await response.json();
+    const rawBody = await response.text();
+    let data: { message?: string; [key: string]: unknown };
+    try {
+      data = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      data = { message: rawBody || "Invalid backend response" };
+    }
+
+    if (!response.ok) {
+      console.error("[Salons API] Backend error:", response.status, data);
+    }
+
     return NextResponse.json(data, { status: response.status });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[Salons API] GET Error:", error);
     return NextResponse.json(
-      { message: "Failed to fetch salons", error: error.message },
+      { message: "Failed to fetch salons", error: message },
       { status: 500 }
     );
   }

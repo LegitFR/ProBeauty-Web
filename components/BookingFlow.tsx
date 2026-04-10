@@ -27,6 +27,12 @@ import { SalonReviewsSection } from "./SalonReviewsSection";
 import { getReviewsBySalon } from "@/lib/api/review";
 import { OfferSelector } from "./OfferSelector";
 import type { Offer } from "@/lib/types/offer";
+import type { PaymentMethod } from "@/lib/types/ifthenpay";
+import { MBWayPaymentForm } from "./MBWayPaymentForm";
+import {
+  isMBWayPayment,
+  type MBWayPaymentResponse,
+} from "@/lib/types/ifthenpay";
 
 type BookingStep = "services" | "professional" | "time" | "confirm" | "login";
 
@@ -58,9 +64,12 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   );
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "onspot">(
-    "onspot",
-  );
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("STRIPE");
+  const [mobileNumber, setMobileNumber] = useState<string>("");
+  const [showMBWayPopup, setShowMBWayPopup] = useState(false);
+  const [mbwayPayment, setMbwayPayment] =
+    useState<MBWayPaymentResponse | null>(null);
+  const [mbwayBookingId, setMbwayBookingId] = useState<string | null>(null);
 
   // Offer state - support multiple offers
   const [selectedOffers, setSelectedOffers] = useState<
@@ -698,8 +707,12 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
   const handleConfirmClick = () => {
     if (userAuthenticated) {
-      if (paymentMethod === "stripe") {
-        handleStripeCheckout();
+      if (
+        paymentMethod === "STRIPE" ||
+        paymentMethod === "CCARD" ||
+        paymentMethod === "MBWAY"
+      ) {
+        handlePaymentCheckout();
       } else {
         handleBookingConfirm();
       }
@@ -708,7 +721,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     }
   };
 
-  const handleStripeCheckout = async () => {
+  const handlePaymentCheckout = async () => {
     const allServicesHaveStaff = selectedServices.every((service) =>
       serviceStaffMap.has(service.id),
     );
@@ -722,6 +735,23 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       return;
     }
 
+    // Validate mobile number for MBWAY
+    if (paymentMethod === "MBWAY" && !mobileNumber) {
+      toast.error("Please enter your mobile number for MB WAY payment");
+      return;
+    }
+
+    if (paymentMethod === "MBWAY") {
+      const mbwayFormatRegex = /^\d{1,4}#\d{6,15}$/;
+      if (!mbwayFormatRegex.test(mobileNumber)) {
+        toast.error(
+          "Invalid MB WAY number format. Please use: countryCode#phoneNumber (e.g., 351#912345678)",
+          { duration: 5000 },
+        );
+        return;
+      }
+    }
+
     const token = getAccessToken();
     if (!token) {
       toast.error("Please login to continue");
@@ -731,7 +761,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
     setBookingLoading(true);
     try {
-      // Prepare booking data with parallel arrays for Stripe checkout
+      // Prepare booking data
       const serviceIds = selectedServices.map((s) => s.id);
       const staffIds = selectedServices.map((service) => {
         const staff = serviceStaffMap.get(service.id);
@@ -743,11 +773,17 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         serviceIds,
         staffIds,
         startTime: selectedTime,
+        paymentMethod,
       };
 
-      // Log service-staff mappings for debugging
+      // Add mobile number for MBWAY
+      if (paymentMethod === "MBWAY" && mobileNumber) {
+        bookingData.mobileNumber = mobileNumber;
+      }
+
+      // Log booking data for debugging
       console.log(
-        "🔍 Stripe Checkout booking data:",
+        "🔍 Payment Checkout booking data:",
         JSON.stringify(bookingData, null, 2),
       );
       console.log(
@@ -775,30 +811,49 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
       const data = await response.json();
 
+      console.log("=== BOOKING CHECKOUT RESPONSE ===");
+      console.log("Response status:", response.status);
+      console.log("Response OK:", response.ok);
+      console.log("Response data:", JSON.stringify(data, null, 2));
+      console.log("Has clientSecret?", !!data?.data?.clientSecret);
+      console.log("Has payment object?", !!data?.data?.payment);
+      console.log("Selected payment method:", paymentMethod);
+
       if (!response.ok) {
         throw new Error(data.message || "Failed to create checkout session");
       }
 
-      // Redirect to payment page with client secret and booking ID
-      const { clientSecret, booking } = data.data;
-
       // Store booking details in sessionStorage for the payment page
-      sessionStorage.setItem(
-        "pendingBooking",
-        JSON.stringify({
-          bookingId: booking.id,
-          clientSecret,
-          salonName: salon.name,
-          serviceName: selectedServices.map((s) => s.title).join(", "),
-          startTime: selectedTime,
-          price: getTotalPrice().toFixed(2),
-        }),
-      );
+      const bookingInfo = {
+        bookingId: data.data.booking.id,
+        salonName: salon.name,
+        serviceName: selectedServices.map((s) => s.title).join(", "),
+        startTime: selectedTime,
+        price: getTotalPrice().toFixed(2),
+        paymentMethod,
+      };
+
+      // Add payment-specific data
+      if (data.data.payment && isMBWayPayment(data.data.payment)) {
+        setMbwayPayment(data.data.payment);
+        setMbwayBookingId(data.data.booking.id);
+        setShowMBWayPopup(true);
+        setBookingLoading(false);
+        return;
+      } else if (data.data.clientSecret) {
+        // Stripe payment
+        (bookingInfo as any).clientSecret = data.data.clientSecret;
+      } else if (data.data.payment) {
+        // If-Then Pay payment
+        (bookingInfo as any).payment = data.data.payment;
+      }
+
+      sessionStorage.setItem("pendingBooking", JSON.stringify(bookingInfo));
 
       // Navigate to payment page
-      window.location.href = `/bookings/${booking.id}/payment`;
+      window.location.href = `/bookings/${data.data.booking.id}/payment`;
     } catch (error: any) {
-      console.error("Error creating stripe checkout:", error);
+      console.error("Error creating payment checkout:", error);
       toast.error(error.message || "Failed to initiate payment");
     } finally {
       setBookingLoading(false);
@@ -1861,9 +1916,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         <div className="space-y-3">
                           {/* Pay with Stripe */}
                           <button
-                            onClick={() => setPaymentMethod("stripe")}
+                            onClick={() => setPaymentMethod("STRIPE")}
                             className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                              paymentMethod === "stripe"
+                              paymentMethod === "STRIPE"
                                 ? "border-[#FF7A00] bg-orange-50"
                                 : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
                             }`}
@@ -1872,7 +1927,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                               <div className="flex items-center gap-3">
                                 <div
                                   className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                                    paymentMethod === "stripe"
+                                    paymentMethod === "STRIPE"
                                       ? "bg-[#FF7A00]"
                                       : "bg-[#CBCBCB]"
                                   }`}
@@ -1887,24 +1942,24 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                 </div>
                                 <div>
                                   <p className="font-semibold text-black">
-                                    Pay with Stripe
+                                    Credit Card (Stripe)
                                   </p>
                                   <p className="text-sm text-gray-600">
-                                    Secure online payment
+                                    Secure payment with Stripe
                                   </p>
                                 </div>
                               </div>
-                              {paymentMethod === "stripe" && (
+                              {paymentMethod === "STRIPE" && (
                                 <Check className="h-5 w-5 text-[#FF7A00]" />
                               )}
                             </div>
                           </button>
 
-                          {/* Pay on Spot */}
+                          {/* Pay with If-Then Pay CCARD */}
                           <button
-                            onClick={() => setPaymentMethod("onspot")}
+                            onClick={() => setPaymentMethod("CCARD")}
                             className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                              paymentMethod === "onspot"
+                              paymentMethod === "CCARD"
                                 ? "border-[#FF7A00] bg-orange-50"
                                 : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
                             }`}
@@ -1913,7 +1968,95 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                               <div className="flex items-center gap-3">
                                 <div
                                   className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                                    paymentMethod === "onspot"
+                                    paymentMethod === "CCARD"
+                                      ? "bg-[#FF7A00]"
+                                      : "bg-[#CBCBCB]"
+                                  }`}
+                                >
+                                  <svg
+                                    className="w-6 h-6 text-white"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-black">
+                                    Credit Card (If-Then Pay)
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    Pay via If-Then Pay gateway
+                                  </p>
+                                </div>
+                              </div>
+                              {paymentMethod === "CCARD" && (
+                                <Check className="h-5 w-5 text-[#FF7A00]" />
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Pay with MB WAY */}
+                          <button
+                            onClick={() => setPaymentMethod("MBWAY")}
+                            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                              paymentMethod === "MBWAY"
+                                ? "border-[#FF7A00] bg-orange-50"
+                                : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                    paymentMethod === "MBWAY"
+                                      ? "bg-[#FF7A00]"
+                                      : "bg-[#CBCBCB]"
+                                  }`}
+                                >
+                                  <svg
+                                    className="w-6 h-6 text-white"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                    />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-black">
+                                    MB WAY
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    Instant payment via mobile app
+                                  </p>
+                                </div>
+                              </div>
+                              {paymentMethod === "MBWAY" && (
+                                <Check className="h-5 w-5 text-[#FF7A00]" />
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Pay on Spot */}
+                          <button
+                            onClick={() => setPaymentMethod("ONSPOT")}
+                            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                              paymentMethod === "ONSPOT"
+                                ? "border-[#FF7A00] bg-orange-50"
+                                : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                    paymentMethod === "ONSPOT"
                                       ? "bg-[#FF7A00]"
                                       : "bg-[#CBCBCB]"
                                   }`}
@@ -1941,12 +2084,31 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                   </p>
                                 </div>
                               </div>
-                              {paymentMethod === "onspot" && (
+                              {paymentMethod === "ONSPOT" && (
                                 <Check className="h-5 w-5 text-[#FF7A00]" />
                               )}
                             </div>
                           </button>
                         </div>
+
+                        {/* MB WAY Mobile Number Input */}
+                        {paymentMethod === "MBWAY" && (
+                          <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                            <label className="block text-sm font-medium text-black mb-2">
+                              MB WAY Mobile Number
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="351#912345678"
+                              value={mobileNumber}
+                              onChange={(e) => setMobileNumber(e.target.value)}
+                              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#FF7A00] focus:outline-none bg-white"
+                            />
+                            <p className="text-xs text-gray-600 mt-2">
+                              Format: countryCode#phoneNumber (e.g., 351#912345678)
+                            </p>
+                          </div>
+                        )}
                       </div>
 
                       <Button
@@ -1957,11 +2119,11 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         {bookingLoading ? (
                           <>
                             <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                            {paymentMethod === "stripe"
+                            {paymentMethod !== "ONSPOT"
                               ? "Redirecting to payment..."
                               : "Creating booking..."}
                           </>
-                        ) : paymentMethod === "stripe" ? (
+                        ) : paymentMethod !== "ONSPOT" ? (
                           "Proceed to Payment"
                         ) : (
                           "Confirm Appointment"
@@ -2038,6 +2200,57 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showMBWayPopup && mbwayPayment && mbwayBookingId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm p-4 sm:p-6 flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.98 }}
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border-2 border-[#1E1E1E] bg-[#ECE3DC] shadow-2xl"
+            >
+              <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#1E1E1E]/20">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-[#FF6A00] font-semibold">
+                    Secure Payment
+                  </p>
+                  <h3 className="text-lg sm:text-xl font-bold text-[#1E1E1E]">
+                    Complete MB WAY Payment
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowMBWayPopup(false)}
+                  className="h-9 w-9 rounded-full border border-[#1E1E1E]/20 flex items-center justify-center text-[#1E1E1E] hover:bg-[#CBCBCB] transition-colors"
+                  aria-label="Close payment popup"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="p-4 sm:p-5">
+                <MBWayPaymentForm
+                  payment={mbwayPayment}
+                  bookingId={mbwayBookingId}
+                  amount={(getTotalPrice() - offerDiscount).toFixed(2)}
+                  onSuccess={() => {
+                    setShowMBWayPopup(false);
+                    window.location.href = `/payment-success?bookingId=${mbwayBookingId}`;
+                  }}
+                  onError={(error) => {
+                    toast.error(error || "MB WAY payment failed");
+                  }}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

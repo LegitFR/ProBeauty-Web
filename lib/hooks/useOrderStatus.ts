@@ -74,11 +74,6 @@ export function useOrderStatus(
     const timeout = setTimeout(() => {
       clearInterval(interval);
       setLoading(false);
-      if (status === "PAYMENT_PENDING") {
-        setError(
-          "Payment confirmation timeout. Please check your order status."
-        );
-      }
     }, 60000);
 
     return () => {

@@ -115,7 +115,7 @@ function PaymentSuccessContent() {
               {isPaymentConfirmed && (
                 <>
                   <h1 className="text-3xl md:text-4xl font-bold text-[#1E1E1E] mb-4">
-                    Payment Confirmed! 🎉
+                    Payment Confirmed
                   </h1>
                   <p className="text-lg text-gray-600 mb-6">
                     {isOrder
@@ -180,7 +180,7 @@ function PaymentSuccessContent() {
                         size="lg"
                       >
                         <Calendar className="mr-2 h-5 w-5" />
-                        View Appointment
+                        View Booking Details
                       </Button>
                     </Link>
                   )}

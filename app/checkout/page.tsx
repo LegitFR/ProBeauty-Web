@@ -28,9 +28,10 @@ import {
   Trash2,
   Plus,
   Check,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { getAddresses, createAddress, type Address } from "@/lib/api/address";
 import {
   getCart,
@@ -46,8 +47,16 @@ import {
 } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe/config";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
+import { IfThenPayCCARDForm } from "@/components/IfThenPayCCARDForm";
+import { MBWayPaymentForm } from "@/components/MBWayPaymentForm";
 import { OfferSelector } from "@/components/OfferSelector";
 import type { Offer } from "@/lib/types/offer";
+import type { PaymentMethod, PaymentResponse } from "@/lib/types/ifthenpay";
+import {
+  isCCARDPayment,
+  isMBWayPayment,
+  isStripePayment,
+} from "@/lib/types/ifthenpay";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -59,7 +68,8 @@ function CheckoutContent() {
     updateQuantity,
   } = useCart();
   const [currentStep, setCurrentStep] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState("card");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethod>("STRIPE");
   const [isProcessing, setIsProcessing] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -76,6 +86,11 @@ function CheckoutContent() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [paymentResponse, setPaymentResponse] = useState<PaymentResponse | null>(
+    null
+  );
+  const [showMBWayPopup, setShowMBWayPopup] = useState(false);
+  const [mobileNumber, setMobileNumber] = useState("");
 
   // Offer state - support multiple offers
   const [selectedOffers, setSelectedOffers] = useState<
@@ -108,38 +123,8 @@ function CheckoutContent() {
     }
   }, [selectedOffers.length]);
 
-  // Placeholder products for demo
-  const placeholderProducts = [
-    {
-      id: "placeholder-1",
-      name: "Vitamin C Brightening Face Serum",
-      image:
-        "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400",
-      price: 679,
-      quantity: 1,
-      brand: "Glow Secrets",
-    },
-    {
-      id: "placeholder-2",
-      name: "Hydrating Hyaluronic Acid Moisturizer",
-      image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400",
-      price: 974,
-      quantity: 2,
-      brand: "AquaGlow",
-    },
-    {
-      id: "placeholder-3",
-      name: "De Fabulous Marula Oil Shampoo",
-      image:
-        "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400",
-      price: 1490,
-      quantity: 1,
-      brand: "De Fabulous",
-    },
-  ];
-
-  // Use API cart if available (authenticated user), otherwise use CartContext, fallback to placeholder
-  // This needs to be recalculated whenever apiCart or cartItems changes
+  // Use API cart if available (authenticated user), otherwise use CartContext
+  // No fallback to placeholder products - show empty cart state instead
   const items = React.useMemo(() => {
     console.log("=== Determining Cart Items Source ===");
     console.log("API Cart exists:", !!apiCart);
@@ -170,8 +155,8 @@ function CheckoutContent() {
       console.log("⚠️ Using CartContext items");
       return cartItems;
     } else {
-      console.log("⚠️ Using placeholder products");
-      return placeholderProducts;
+      console.log("⚠️ Cart is empty");
+      return [];
     }
   }, [apiCart, cartItems]);
 
@@ -404,6 +389,24 @@ function CheckoutContent() {
       return;
     }
 
+    // Validate mobile number for MBWAY
+    if (selectedPaymentMethod === "MBWAY") {
+      if (!mobileNumber) {
+        toast.error("Please enter your mobile number for MB WAY payment");
+        return;
+      }
+      
+      // Validate format: countryCode#phoneNumber (e.g., 351#912345678)
+      const mbwayFormatRegex = /^\d{1,3}#\d{9,15}$/;
+      if (!mbwayFormatRegex.test(mobileNumber)) {
+        toast.error(
+          "Invalid MB WAY number format. Please use: countryCode#phoneNumber (e.g., 351#912345678)",
+          { duration: 5000 }
+        );
+        return;
+      }
+    }
+
     // Validate cart doesn't contain items from multiple salons
     if (
       apiCart?.data?.cart?.cartItems &&
@@ -438,21 +441,30 @@ function CheckoutContent() {
       // Create checkout session and order with PAYMENT_PENDING status
       console.log("=== CREATING CHECKOUT SESSION ===");
       console.log("Address ID:", selectedAddressId);
+      console.log("Payment Method:", selectedPaymentMethod);
       console.log("Notes:", formData.notes || "(none)");
-      console.log(
-        "Creating checkout session with addressId:",
-        selectedAddressId,
-      );
+
+      const requestBody: any = {
+        addressId: selectedAddressId,
+        notes: formData.notes || undefined,
+        paymentMethod: selectedPaymentMethod,
+      };
+
+      // Add mobile number for MBWAY
+      if (selectedPaymentMethod === "MBWAY" && mobileNumber) {
+        console.log("📱 Adding mobile number for MBWAY:", mobileNumber);
+        requestBody.mobileNumber = mobileNumber;
+      }
+
+      console.log("📤 REQUEST BODY BEING SENT:", JSON.stringify(requestBody, null, 2));
+
       const response = await fetch("/api/orders/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          addressId: selectedAddressId,
-          notes: formData.notes || undefined,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -464,6 +476,13 @@ function CheckoutContent() {
 
       if (!response.ok) {
         console.error("❌ Backend/Proxy returned error:", data.message);
+        console.error("❌ Full error response:", data);
+        console.error("❌ Error details:", data.errors || data.details || data.error);
+        const detailedError =
+          data.error ||
+          data.details?.error ||
+          data.details?.message ||
+          data.message;
         // Handle specific error cases with helpful messages
         if (data.message?.includes("multiple salons")) {
           console.error(
@@ -487,18 +506,48 @@ function CheckoutContent() {
             },
           );
         } else {
-          throw new Error(data.message || "Failed to create checkout session");
+          throw new Error(
+            detailedError || "Failed to create checkout session",
+          );
         }
         setIsProcessing(false);
         return;
       }
 
       console.log("✅ Checkout session created:", data);
+      console.log("=== PAYMENT METHOD DETECTION ===");
+      console.log("Selected payment method:", selectedPaymentMethod);
+      console.log("Has clientSecret?", !!data.data.clientSecret);
+      console.log("Has payment object?", !!data.data.payment);
+      console.log("Payment object:", data.data.payment);
 
-      // Set clientSecret and orderId for Stripe payment
-      setClientSecret(data.data.clientSecret);
+      // Set order ID
       setOrderId(data.data.order.id);
-      setPaymentIntentId(data.data.paymentIntentId);
+
+      // Handle different payment methods
+      if (data.data.clientSecret) {
+        // Stripe payment
+        console.log("📝 Setting up STRIPE payment with clientSecret");
+        setClientSecret(data.data.clientSecret);
+        setPaymentIntentId(data.data.paymentIntentId);
+        setPaymentResponse(null);
+      } else if (data.data.payment) {
+        // If-Then Pay payment
+        console.log("📝 Setting up IF-THEN PAY payment");
+        console.log("Payment provider:", data.data.payment.provider);
+        console.log("Payment method:", data.data.payment.method);
+        console.log("Is CCARD?", isCCARDPayment(data.data.payment));
+        console.log("Is MBWAY?", isMBWayPayment(data.data.payment));
+        setPaymentResponse(data.data.payment);
+        if (isMBWayPayment(data.data.payment)) {
+          setShowMBWayPopup(true);
+        }
+        setClientSecret(null);
+        setPaymentIntentId(null);
+      } else {
+        console.error("❌ No payment data received from backend!");
+      }
+
       setIsProcessing(false);
 
       toast.success(
@@ -549,47 +598,96 @@ function CheckoutContent() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
       </div>
     );
   }
 
-  // Removed empty cart check to always show placeholder products
+  // Show empty cart state if no items
+  if (items.length === 0 && !isLoadingCart) {
+    return (
+      <div className="min-h-screen bg-[#ECE3DC]">
+        <Header />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 sm:pt-32 sm:pb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="border-2 border-[#1E1E1E] shadow-xl bg-[#ECE3DC]">
+              <CardContent className="p-8 sm:p-12 text-center">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <ShoppingBag className="h-10 w-10 sm:h-12 sm:w-12 text-[#FF6A00]" />
+                </div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1E1E1E] mb-3">
+                  Your Cart is Empty
+                </h1>
+                <p className="text-base sm:text-lg text-gray-600 mb-8 max-w-md mx-auto">
+                  Looks like you haven't added any items to your cart yet. Start
+                  shopping to find amazing beauty products!
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button
+                    onClick={() => router.push("/products")}
+                    className="bg-gradient-to-r from-[#FF6A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-xl hover:shadow-2xl transition-all"
+                  >
+                    <ShoppingBag className="h-5 w-5 mr-2" />
+                    Browse Products
+                  </Button>
+                  <Button
+                    onClick={() => router.push("/")}
+                    variant="outline"
+                    className="border-2 border-[#1E1E1E] text-[#1E1E1E] hover:bg-[#1E1E1E] hover:text-white px-6 sm:px-8 py-5 sm:py-6 text-base sm:text-lg font-semibold transition-all"
+                  >
+                    <ArrowLeft className="h-5 w-5 mr-2" />
+                    Back to Home
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#ECE3DC]">
       <Header />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 sm:pt-28 sm:pb-16">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-20 pb-10 sm:pt-24 sm:pb-12 md:pt-28 md:pb-16">
         {/* Back Button */}
         <Button
           variant="ghost"
           onClick={() =>
             currentStep === 1 ? router.back() : setCurrentStep(1)
           }
-          className="mb-6 hover:bg-orange-50 text-[#1e1e1e] hover:text-[#1e1e1e]"
+          className="mb-4 sm:mb-6 hover:bg-orange-50 text-[#1e1e1e] hover:text-[#1e1e1e] h-10 sm:h-11"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {currentStep === 1 ? "Back to Shopping" : "Back to Details"}
+          <span className="text-sm sm:text-base">
+            {currentStep === 1 ? "Back to Shopping" : "Back to Details"}
+          </span>
         </Button>
 
         {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center gap-4 mb-6">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-center gap-2 sm:gap-4 mb-4 sm:mb-6">
             {/* Step 1 */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div
-                className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold transition-all ${
+                className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full text-sm sm:text-base font-semibold transition-all ${
                   currentStep >= 1
                     ? "bg-[#FF6A00] text-white shadow-lg"
                     : "bg-gray-200 text-gray-500"
                 }`}
               >
-                {currentStep > 1 ? <CheckCircle2 className="h-5 w-5" /> : "1"}
+                {currentStep > 1 ? <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" /> : "1"}
               </div>
               <span
-                className={`hidden sm:block font-medium ${
+                className={`text-xs sm:text-base font-medium ${
                   currentStep >= 1 ? "text-[#FF6A00]" : "text-gray-500"
                 }`}
               >
@@ -599,15 +697,15 @@ function CheckoutContent() {
 
             {/* Connector */}
             <div
-              className={`h-1 w-12 sm:w-24 rounded transition-all ${
+              className={`h-1 w-8 sm:w-12 md:w-24 rounded transition-all ${
                 currentStep >= 2 ? "bg-[#FF6A00]" : "bg-gray-200"
               }`}
             />
 
             {/* Step 2 */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div
-                className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold transition-all ${
+                className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full text-sm sm:text-base font-semibold transition-all ${
                   currentStep >= 2
                     ? "bg-[#FF6A00] text-white shadow-lg"
                     : "bg-gray-200 text-gray-500"
@@ -616,7 +714,7 @@ function CheckoutContent() {
                 2
               </div>
               <span
-                className={`hidden sm:block font-medium ${
+                className={`text-xs sm:text-base font-medium ${
                   currentStep >= 2 ? "text-[#FF6A00]" : "text-gray-500"
                 }`}
               >
@@ -625,11 +723,11 @@ function CheckoutContent() {
             </div>
           </div>
 
-          <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1E1E1E] mb-2">
+          <div className="text-center px-4">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#1E1E1E] mb-2">
               {currentStep === 1 ? "Shipping Details" : "Payment & Review"}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-sm sm:text-base text-gray-600">
               {currentStep === 1
                 ? "Enter your contact and shipping information"
                 : "Review your order and complete payment"}
@@ -644,25 +742,25 @@ function CheckoutContent() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3 }}
-            className="max-w-3xl mx-auto"
+            className="max-w-4xl mx-auto"
           >
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Contact Information */}
               <Card className="border-2 border-[#1E1E1E] shadow-lg bg-[#ECE3DC] overflow-hidden">
-                <CardHeader className="bg-[#ECE3DC]">
-                  <CardTitle className="flex items-center gap-2 text-[#1E1E1E]">
+                <CardHeader className="bg-[#ECE3DC] p-4 sm:p-6">
+                  <CardTitle className="flex items-center gap-2 text-[#1E1E1E] text-base sm:text-lg">
                     <div className="p-2 bg-[#FF6A00] rounded-lg">
-                      <Mail className="h-5 w-5 text-white" />
+                      <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                     </div>
                     Contact Information
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-6 space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
+                <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6 space-y-3 sm:space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2">
                       <Label
                         htmlFor="email"
-                        className="text-[#1E1E1E] font-medium"
+                        className="text-[#1E1E1E] font-medium text-sm sm:text-base"
                       >
                         Email Address *
                       </Label>
@@ -673,14 +771,14 @@ function CheckoutContent() {
                         placeholder="you@example.com"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                        className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-transparent text-sm sm:text-base"
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label
                         htmlFor="phone"
-                        className="text-[#1E1E1E] font-medium"
+                        className="text-[#1E1E1E] font-medium text-sm sm:text-base"
                       >
                         Phone Number *
                       </Label>
@@ -688,10 +786,10 @@ function CheckoutContent() {
                         id="phone"
                         name="phone"
                         type="tel"
-                        placeholder="+91 98765 43210"
+                        placeholder="+44 7123 456789"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                        className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-transparent text-sm sm:text-base"
                         required
                       />
                     </div>
@@ -701,11 +799,11 @@ function CheckoutContent() {
 
               {/* Shipping Address */}
               <Card className="border-2 border-[#1E1E1E] shadow-lg bg-[#ECE3DC] overflow-hidden">
-                <CardHeader className="bg-[#ECE3DC]">
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-[#1E1E1E]">
+                <CardHeader className="bg-[#ECE3DC] p-4 sm:p-6">
+                  <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-2 text-[#1E1E1E] text-base sm:text-lg">
                       <div className="p-2 bg-[#FF6A00] rounded-lg">
-                        <MapPin className="h-5 w-5 text-white" />
+                        <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                       </div>
                       Shipping Address
                     </div>
@@ -716,25 +814,22 @@ function CheckoutContent() {
                           onClick={() => setShowNewAddressForm(true)}
                           variant="outline"
                           size="sm"
-                          className="border-[#FF6A00] text-[#FF6A00] hover:bg-[#FF6A00] hover:text-white"
+                          className="border-[#FF6A00] text-[#FF6A00] hover:bg-[#FF6A00] hover:text-white h-9 text-sm self-start sm:self-auto"
                         >
-                          <Plus className="h-4 w-4 mr-1" />
+                          <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           Add New
                         </Button>
                       )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-6 space-y-5">
+                <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6 space-y-4 sm:space-y-5">
                   {isLoadingAddresses ? (
-                    <div className="space-y-4">
-                      <div className="h-24 bg-gray-200 animate-pulse rounded-lg" />
-                      <div className="h-24 bg-gray-200 animate-pulse rounded-lg" />
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="h-20 sm:h-24 bg-gray-200 animate-pulse rounded-lg" />
+                      <div className="h-20 sm:h-24 bg-gray-200 animate-pulse rounded-lg" />
                     </div>
-                  ) : isAuthenticated &&
-                    savedAddresses.length > 0 &&
-                    !showNewAddressForm ? (
-                    // Saved Addresses Selection
-                    <div className="space-y-4">
+                  ) : isAuthenticated && savedAddresses.length > 0 && !showNewAddressForm ? (
+                    <div className="space-y-3 sm:space-y-4">
                       {savedAddresses.map((address) => (
                         <div
                           key={address.id}
@@ -742,57 +837,39 @@ function CheckoutContent() {
                             setSelectedAddressId(address.id);
                             populateFormWithAddress(address);
                           }}
-                          className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          className={`p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all active:scale-98 ${
                             selectedAddressId === address.id
                               ? "border-[#FF6A00] bg-orange-50"
-                              : "border-gray-300 hover:border-[#FF6A00]"
+                              : "border-gray-300 hover:border-[#FF6A00] bg-white"
                           }`}
                         >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                selectedAddressId === address.id
-                                  ? "border-[#FF6A00] bg-[#FF6A00]"
-                                  : "border-gray-300"
-                              }`}
-                            >
-                              {selectedAddressId === address.id && (
-                                <Check className="h-3 w-3 text-white" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <p className="font-semibold text-[#1E1E1E]">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <p className="font-semibold text-[#1E1E1E] text-sm sm:text-base">
                                   {address.fullName}
                                 </p>
                                 {address.isDefault && (
-                                  <span className="text-xs bg-[#FF6A00] text-white px-2 py-0.5 rounded">
+                                  <Badge className="bg-[#FF6A00] text-white text-xs px-2 py-0.5">
                                     Default
-                                  </span>
+                                  </Badge>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-600">
-                                {address.phone}
-                              </p>
-                              <p className="text-sm text-gray-600 mt-1">
+                              <p className="text-xs sm:text-sm text-gray-700 mb-1">
                                 {address.addressLine1}
-                                {address.addressLine2 &&
-                                  `, ${address.addressLine2}`}
                               </p>
-                              <p className="text-sm text-gray-600">
-                                {address.city}, {address.state}{" "}
-                                {address.postalCode}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {address.country}
+                              <p className="text-xs sm:text-sm text-gray-700">
+                                {address.city}, {address.state} {address.postalCode}
                               </p>
                             </div>
+                            {selectedAddressId === address.id && (
+                              <CheckCircle2 className="h-5 w-5 text-[#FF6A00] shrink-0 mt-0.5" />
+                            )}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    // New Address Form
                     <>
                       {showNewAddressForm && savedAddresses.length > 0 && (
                         <Button
@@ -800,24 +877,25 @@ function CheckoutContent() {
                             setShowNewAddressForm(false);
                             if (savedAddresses.length > 0) {
                               const defaultAddr =
-                                savedAddresses.find((a) => a.isDefault) ||
-                                savedAddresses[0];
+                                savedAddresses.find((a) => a.isDefault) || savedAddresses[0];
                               setSelectedAddressId(defaultAddr.id);
                               populateFormWithAddress(defaultAddr);
                             }
                           }}
                           variant="ghost"
                           size="sm"
-                          className="text-[#FF6A00] hover:text-orange-600 mb-2"
+                          className="text-[#FF6A00] hover:text-orange-600 mb-2 h-9 p-2"
                         >
-                          ← Back to saved addresses
+                          <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          <span className="text-sm">Back to saved addresses</span>
                         </Button>
                       )}
-                      <div className="grid sm:grid-cols-2 gap-4">
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div className="space-y-2">
                           <Label
                             htmlFor="firstName"
-                            className="text-[#1E1E1E] font-medium"
+                            className="text-[#1E1E1E] font-medium text-sm sm:text-base"
                           >
                             First Name *
                           </Label>
@@ -827,14 +905,14 @@ function CheckoutContent() {
                             placeholder="John"
                             value={formData.firstName}
                             onChange={handleInputChange}
-                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-transparent text-sm sm:text-base"
                             required
                           />
                         </div>
                         <div className="space-y-2">
                           <Label
                             htmlFor="lastName"
-                            className="text-[#1E1E1E] font-medium"
+                            className="text-[#1E1E1E] font-medium text-sm sm:text-base"
                           >
                             Last Name *
                           </Label>
@@ -844,18 +922,18 @@ function CheckoutContent() {
                             placeholder="Doe"
                             value={formData.lastName}
                             onChange={handleInputChange}
-                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-transparent text-sm sm:text-base"
                             required
                           />
                         </div>
                       </div>
 
-                      <Separator className="my-4" />
+                      <Separator className="my-3 sm:my-4" />
 
                       <div className="space-y-2">
                         <Label
                           htmlFor="address"
-                          className="text-[#1E1E1E] font-medium"
+                          className="text-[#1E1E1E] font-medium text-sm sm:text-base"
                         >
                           Street Address *
                         </Label>
@@ -865,18 +943,18 @@ function CheckoutContent() {
                           placeholder="123 Main Street, Apartment 4B"
                           value={formData.address}
                           onChange={handleInputChange}
-                          className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                          className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-transparent text-sm sm:text-base"
                           required
                         />
                       </div>
 
-                      <Separator className="my-4" />
+                      <Separator className="my-3 sm:my-4" />
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                         <div className="space-y-2">
                           <Label
                             htmlFor="city"
-                            className="text-[#1E1E1E] font-medium"
+                            className="text-[#1E1E1E] font-medium text-sm sm:text-base"
                           >
                             City *
                           </Label>
@@ -886,14 +964,14 @@ function CheckoutContent() {
                             placeholder="London"
                             value={formData.city}
                             onChange={handleInputChange}
-                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-transparent text-sm sm:text-base"
                             required
                           />
                         </div>
                         <div className="space-y-2">
                           <Label
                             htmlFor="state"
-                            className="text-[#1E1E1E] font-medium"
+                            className="text-[#1E1E1E] font-medium text-sm sm:text-base"
                           >
                             State *
                           </Label>
@@ -903,14 +981,14 @@ function CheckoutContent() {
                             placeholder="England"
                             value={formData.state}
                             onChange={handleInputChange}
-                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-transparent text-sm sm:text-base"
                             required
                           />
                         </div>
                         <div className="space-y-2">
                           <Label
                             htmlFor="pincode"
-                            className="text-[#1E1E1E] font-medium"
+                            className="text-[#1E1E1E] font-medium text-sm sm:text-base"
                           >
                             Postcode *
                           </Label>
@@ -920,17 +998,16 @@ function CheckoutContent() {
                             placeholder="SW1A 1AA"
                             value={formData.pincode}
                             onChange={handleInputChange}
-                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-12 bg-transparent"
+                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-transparent text-sm sm:text-base"
                             required
                           />
                         </div>
                       </div>
 
-                      {/* Order Notes/Special Instructions */}
-                      <div className="space-y-2 mt-4">
+                      <div className="space-y-2 mt-3 sm:mt-4">
                         <Label
                           htmlFor="notes"
-                          className="text-[#1E1E1E] font-medium"
+                          className="text-[#1E1E1E] font-medium text-sm sm:text-base"
                         >
                           Delivery Instructions (Optional)
                         </Label>
@@ -945,9 +1022,9 @@ function CheckoutContent() {
                               notes: e.target.value,
                             })
                           }
-                          maxLength={500}
                           rows={3}
-                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:border-[#FF6A00] focus:outline-none bg-transparent resize-none"
+                          maxLength={500}
+                          className="w-full px-3 py-3 border-2 border-gray-300 focus:border-[#FF6A00] rounded-md bg-transparent text-sm sm:text-base resize-none focus:outline-none"
                         />
                         <p className="text-xs text-gray-500 text-right">
                           {formData.notes.length}/500 characters
@@ -956,7 +1033,7 @@ function CheckoutContent() {
 
                       {isAuthenticated && (
                         <>
-                          <Separator className="my-4" />
+                          <Separator className="my-3 sm:my-4" />
                           <div className="flex items-center space-x-2">
                             <input
                               type="checkbox"
@@ -985,14 +1062,14 @@ function CheckoutContent() {
               </Card>
 
               {/* Continue Button */}
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-center pt-4 sm:pt-6">
                 <Button
                   onClick={handleContinueToPayment}
-                  className="bg-linear-to-r from-[#FF6A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all"
+                  className="bg-gradient-to-r from-[#FF6A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 sm:px-12 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-xl hover:shadow-2xl transition-all active:scale-98"
                   size="lg"
                 >
-                  Continue to Payment
-                  <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
+                  <span>Continue to Payment</span>
+                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 ml-2 rotate-180" />
                 </Button>
               </div>
             </div>
@@ -1007,16 +1084,16 @@ function CheckoutContent() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Left: Payment Method */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-2 space-y-4 sm:space-y-6 order-2 lg:order-1">
                 {/* Delivery Details Summary */}
                 <Card className="border-2 border-[#1E1E1E] shadow-lg bg-[#ECE3DC] overflow-hidden">
-                  <CardHeader className="bg-[#ECE3DC]">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2 text-[#1E1E1E]">
+                  <CardHeader className="bg-[#ECE3DC] p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <CardTitle className="flex items-center gap-2 text-[#1E1E1E] text-base sm:text-lg">
                         <div className="p-2 bg-green-500 rounded-lg">
-                          <CheckCircle2 className="h-5 w-5 text-white" />
+                          <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                         </div>
                         Delivery Details
                       </CardTitle>
@@ -1024,34 +1101,34 @@ function CheckoutContent() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setCurrentStep(1)}
-                        className="text-[#FF6A00] hover:text-orange-700 hover:bg-orange-50"
+                        className="text-[#FF6A00] hover:text-orange-700 hover:bg-orange-50 self-start sm:self-auto h-9"
                       >
                         Edit
                       </Button>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-6 bg-[#ECE3DC]">
-                    <div className="grid sm:grid-cols-2 gap-6">
+                  <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6 bg-[#ECE3DC]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Contact</p>
-                        <p className="font-semibold text-[#1E1E1E]">
+                        <p className="text-xs sm:text-sm text-gray-600 mb-1">Contact</p>
+                        <p className="font-semibold text-[#1E1E1E] text-sm sm:text-base">
                           {formData.firstName} {formData.lastName}
                         </p>
-                        <p className="text-sm text-gray-700">
+                        <p className="text-xs sm:text-sm text-gray-700 break-all">
                           {formData.email}
                         </p>
-                        <p className="text-sm text-gray-700">
+                        <p className="text-xs sm:text-sm text-gray-700">
                           {formData.phone}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">
+                        <p className="text-xs sm:text-sm text-gray-600 mb-1">
                           Shipping To
                         </p>
-                        <p className="font-semibold text-[#1E1E1E]">
+                        <p className="font-semibold text-[#1E1E1E] text-sm sm:text-base">
                           {formData.address}
                         </p>
-                        <p className="text-sm text-gray-700">
+                        <p className="text-xs sm:text-sm text-gray-700">
                           {formData.city}, {formData.state} {formData.pincode}
                         </p>
                       </div>
@@ -1061,26 +1138,155 @@ function CheckoutContent() {
 
                 {/* Payment Method */}
                 <Card className="border-2 border-[#1E1E1E] shadow-lg bg-[#ECE3DC] overflow-hidden">
-                  <CardHeader className="bg-[#ECE3DC]">
-                    <CardTitle className="flex items-center gap-2 text-[#1E1E1E]">
+                  <CardHeader className="bg-[#ECE3DC] p-4 sm:p-6">
+                    <CardTitle className="flex items-center gap-2 text-[#1E1E1E] text-base sm:text-lg">
                       <div className="p-2 bg-[#FF6A00] rounded-lg">
-                        <CreditCard className="h-5 w-5 text-white" />
+                        <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                       </div>
                       Payment Method
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-6 space-y-4 bg-[#ECE3DC]">
-                    {!clientSecret ? (
-                      <div className="text-center py-8">
-                        <p className="text-gray-600 mb-4">
-                          Click "Proceed to Payment" button below to initialize
-                          secure payment
-                        </p>
-                        <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                          <Lock className="h-4 w-4" />
-                          <span>Powered by Stripe</span>
+                  <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6 space-y-4 bg-[#ECE3DC]">
+                    {!clientSecret && !paymentResponse ? (
+                      <>
+                        {/* Payment Method Selection */}
+                        <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+                          <Label className="text-[#1E1E1E] font-semibold text-sm sm:text-base">
+                            Choose Payment Method
+                          </Label>
+                          <RadioGroup
+                            value={selectedPaymentMethod}
+                            onValueChange={(value) =>
+                              setSelectedPaymentMethod(value as PaymentMethod)
+                            }
+                          >
+                            {/* Stripe */}
+                            <div
+                              className={`flex items-start space-x-3 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all active:scale-98 ${
+                                selectedPaymentMethod === "STRIPE"
+                                  ? "border-[#FF6A00] bg-orange-50"
+                                  : "border-gray-300 hover:border-[#FF6A00]"
+                              }`}
+                              onClick={() => setSelectedPaymentMethod("STRIPE")}
+                            >
+                              <RadioGroupItem
+                                value="STRIPE"
+                                id="stripe"
+                                className="mt-0.5 sm:mt-1"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <Label
+                                  htmlFor="stripe"
+                                  className="font-semibold text-[#1E1E1E] cursor-pointer flex items-center gap-2 text-sm sm:text-base"
+                                >
+                                  <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-[#FF6A00] shrink-0" />
+                                  <span>Credit/Debit Card (Stripe)</span>
+                                </Label>
+                                <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                                  Pay securely with Visa, Mastercard, or American
+                                  Express
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* If-Then Pay CCARD */}
+                            <div
+                              className={`flex items-start space-x-3 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all active:scale-98 ${
+                                selectedPaymentMethod === "CCARD"
+                                  ? "border-[#FF6A00] bg-orange-50"
+                                  : "border-gray-300 hover:border-[#FF6A00]"
+                              }`}
+                              onClick={() => setSelectedPaymentMethod("CCARD")}
+                            >
+                              <RadioGroupItem
+                                value="CCARD"
+                                id="ccard"
+                                className="mt-0.5 sm:mt-1"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <Label
+                                  htmlFor="ccard"
+                                  className="font-semibold text-[#1E1E1E] cursor-pointer flex items-center gap-2 text-sm sm:text-base"
+                                >
+                                  <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-[#FF6A00] shrink-0" />
+                                  <span>Credit Card (If-Then Pay)</span>
+                                </Label>
+                                <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                                  Secure payment via If-Then Pay gateway
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* MB WAY */}
+                            <div
+                              className={`flex items-start space-x-3 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all active:scale-98 ${
+                                selectedPaymentMethod === "MBWAY"
+                                  ? "border-[#FF6A00] bg-orange-50"
+                                  : "border-gray-300 hover:border-[#FF6A00]"
+                              }`}
+                              onClick={() => setSelectedPaymentMethod("MBWAY")}
+                            >
+                              <RadioGroupItem
+                                value="MBWAY"
+                                id="mbway"
+                                className="mt-0.5 sm:mt-1"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <Label
+                                  htmlFor="mbway"
+                                  className="font-semibold text-[#1E1E1E] cursor-pointer flex items-center gap-2 text-sm sm:text-base"
+                                >
+                                  <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-[#FF6A00] shrink-0" />
+                                  <span>MB WAY</span>
+                                </Label>
+                                <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                                  Pay instantly via your MB WAY mobile app
+                                </p>
+                              </div>
+                            </div>
+                          </RadioGroup>
                         </div>
-                      </div>
+
+                        {/* MB WAY Mobile Number Input */}
+                        {selectedPaymentMethod === "MBWAY" && (
+                          <div className="space-y-2">
+                            <Label
+                              htmlFor="mbway-mobile"
+                              className="text-[#1E1E1E] font-medium text-sm sm:text-base"
+                            >
+                              MB WAY Mobile Number <span className="text-red-500">*</span>
+                            </Label>
+                            <Input
+                              id="mbway-mobile"
+                              type="text"
+                              placeholder="351#912345678"
+                              value={mobileNumber}
+                              onChange={(e) => setMobileNumber(e.target.value)}
+                              className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-white text-sm sm:text-base font-mono"
+                              required
+                            />
+                            <p className="text-xs text-gray-600">
+                              Format: <span className="font-mono font-medium">countryCode#phoneNumber</span> (e.g., 351#912345678 or 91#7676589397)
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="text-center py-6 sm:py-8">
+                          <p className="text-sm sm:text-base text-gray-600 mb-4">
+                            Click "Proceed to Payment" button below to initialize
+                            secure payment
+                          </p>
+                          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-gray-500">
+                            <Lock className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span>
+                              Powered by{" "}
+                              {selectedPaymentMethod === "STRIPE"
+                                ? "Stripe"
+                                : "If-Then Pay"}
+                            </span>
+                          </div>
+                        </div>
+                      </>
                     ) : (
                       <>
                         {/* Payment Pending Warning */}
@@ -1117,34 +1323,82 @@ function CheckoutContent() {
                           </div>
                         </div>
 
-                        <Elements
-                          stripe={stripePromise}
-                          options={{
-                            clientSecret,
-                            appearance: {
-                              theme: "stripe",
-                              variables: {
-                                colorPrimary: "#FF6A00",
-                              },
-                            },
-                          }}
-                        >
-                          <StripePaymentForm
-                            orderId={orderId || ""}
-                            onSuccess={() => {
-                              toast.success(
-                                "Payment processing... Redirecting to confirmation page.",
-                              );
-                            }}
-                            onError={(error) => {
-                              console.error("Payment error:", error);
-                            }}
-                          />
-                        </Elements>
+                        {/* Render appropriate payment form */}
+                        {(() => {
+                          console.log("=== PAYMENT FORM RENDERING ===");
+                          console.log("clientSecret exists?", !!clientSecret);
+                          console.log("paymentResponse exists?", !!paymentResponse);
+                          if (paymentResponse) {
+                            console.log("paymentResponse.provider:", paymentResponse.provider);
+                            console.log("paymentResponse.method:", (paymentResponse as any).method);
+                            console.log("Is CCARD?", isCCARDPayment(paymentResponse));
+                            console.log("Is MBWAY?", isMBWayPayment(paymentResponse));
+                          }
+                          return null;
+                        })()}
+                        
+                        {clientSecret && (
+                          <>
+                            {console.log("🔵 Rendering STRIPE payment form")}
+                            <Elements
+                              stripe={stripePromise}
+                              options={{
+                                clientSecret,
+                                appearance: {
+                                  theme: "stripe",
+                                  variables: {
+                                    colorPrimary: "#FF6A00",
+                                  },
+                                },
+                              }}
+                            >
+                              <StripePaymentForm
+                                orderId={orderId || ""}
+                                onSuccess={() => {
+                                  toast.success(
+                                    "Payment processing... Redirecting to confirmation page.",
+                                  );
+                                }}
+                                onError={(error) => {
+                                  console.error("Payment error:", error);
+                                }}
+                              />
+                            </Elements>
+                          </>
+                        )}
+
+                        {paymentResponse && isCCARDPayment(paymentResponse) && (
+                          <>
+                            {console.log("🟠 Rendering CCARD payment form")}
+                            <IfThenPayCCARDForm
+                              payment={paymentResponse}
+                              orderId={orderId || undefined}
+                              onSuccess={() => {
+                                toast.success(
+                                  "Redirecting to payment gateway...",
+                                );
+                              }}
+                            />
+                          </>
+                        )}
+
+                        {paymentResponse && isMBWayPayment(paymentResponse) && (
+                          <div className="rounded-xl border-2 border-[#1E1E1E] bg-[#ECE3DC] p-4 sm:p-5 text-center space-y-3">
+                            <p className="text-sm sm:text-base text-[#1E1E1E] font-medium">
+                              MB WAY payment is ready.
+                            </p>
+                            <Button
+                              onClick={() => setShowMBWayPopup(true)}
+                              className="bg-[#FF6A00] hover:bg-orange-600 text-white"
+                            >
+                              Resume MB WAY Payment
+                            </Button>
+                          </div>
+                        )}
                       </>
                     )}
 
-                    {/* Card Details Form - Now handled by Stripe Elements */}
+                    {/* Card Details Form - Now handled by payment forms */}
                   </CardContent>
                 </Card>
 
@@ -1158,37 +1412,37 @@ function CheckoutContent() {
               </div>
 
               {/* Right Column - Order Summary */}
-              <div className="lg:col-span-1">
-                <div className="sticky top-24">
+              <div className="lg:col-span-1 order-1 lg:order-2">
+                <div className="lg:sticky lg:top-24">
                   <Card className="border-2 border-[#1E1E1E] shadow-xl bg-[#ECE3DC] overflow-hidden">
-                    <CardHeader className="bg-[#ECE3DC]">
-                      <CardTitle className="flex items-center gap-2 text-[#1E1E1E]">
+                    <CardHeader className="bg-[#ECE3DC] p-4 sm:p-6">
+                      <CardTitle className="flex items-center gap-2 text-[#1E1E1E] text-base sm:text-lg">
                         <div className="p-2 bg-[#FF6A00] rounded-lg">
-                          <ShoppingBag className="h-5 w-5 text-white" />
+                          <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                         </div>
                         Order Summary
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-6 space-y-4">
+                    <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6 space-y-3 sm:space-y-4">
                       {/* Items List */}
-                      <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                      <div className="space-y-2 sm:space-y-3 max-h-60 sm:max-h-64 overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
                         {items.map((item: any) => (
                           <div
                             key={item.id}
-                            className="flex gap-3 p-3 border-2 border-[#1E1E1E] rounded-xl bg-[#ECE3DC] hover:shadow-md transition-all"
+                            className="flex gap-2 sm:gap-3 p-2 sm:p-3 border-2 border-[#1E1E1E] rounded-lg sm:rounded-xl bg-[#ECE3DC] hover:shadow-md transition-all"
                           >
                             <div className="relative shrink-0">
                               <img
                                 src={item.image}
                                 alt={item.name}
-                                className="w-16 h-16 rounded-lg object-cover"
+                                className="w-12 h-12 sm:w-16 sm:h-16 rounded-md sm:rounded-lg object-cover"
                               />
-                              <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-[#FF6A00] text-white text-xs">
+                              <Badge className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center p-0 bg-[#FF6A00] text-white text-xs">
                                 {item.quantity}
                               </Badge>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-xs font-bold text-[#1E1E1E] line-clamp-2 mb-1">
+                              <h4 className="text-xs sm:text-sm font-bold text-[#1E1E1E] line-clamp-2 mb-1">
                                 {item.name}
                               </h4>
                               {item.brand && (
@@ -1209,7 +1463,7 @@ function CheckoutContent() {
                         ))}
                       </div>
 
-                      <Separator className="my-4" />
+                      <Separator className="my-3 sm:my-4" />
 
                       {/* Offer Selector - Only show if there are items */}
                       {items.length > 0 && (
@@ -1223,10 +1477,10 @@ function CheckoutContent() {
                         />
                       )}
 
-                      <Separator className="my-4" />
+                      <Separator className="my-3 sm:my-4" />
 
                       {/* Price Breakdown */}
-                      <div className="space-y-3 bg-[#ECE3DC] p-4 rounded-xl">
+                      <div className="space-y-2 sm:space-y-3 bg-[#ECE3DC] p-3 sm:p-4 rounded-lg sm:rounded-xl">
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-700">
                             Subtotal ({totalItems}{" "}
@@ -1246,7 +1500,7 @@ function CheckoutContent() {
                                 className="flex justify-between text-sm"
                               >
                                 <span className="text-green-700 font-medium flex items-center gap-1">
-                                  <Badge className="bg-linear-to-r from-[#F44A01] to-[#FF6A00] text-white text-xs px-2 py-0.5">
+                                  <Badge className="bg-gradient-to-r from-[#F44A01] to-[#FF6A00] text-white text-xs px-2 py-0.5">
                                     {offer.title}
                                   </Badge>
                                 </span>
@@ -1278,19 +1532,19 @@ function CheckoutContent() {
                           </span>
                         </div>
 
-                        <Separator className="my-3" />
+                        <Separator className="my-2 sm:my-3" />
 
-                        <div className="flex justify-between items-center pt-2">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-2 gap-2">
                           <div>
                             <p className="text-xs text-gray-600 mb-0.5">
                               Total Amount
                             </p>
-                            <span className="text-2xl font-bold text-[#FF6A00]">
+                            <span className="text-xl sm:text-2xl font-bold text-[#FF6A00]">
                               £{(totalPrice - offerDiscount).toFixed(2)}
                             </span>
                           </div>
-                          <div className="text-right">
-                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                          <div className="sm:text-right">
+                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs sm:text-sm">
                               Save £
                               {(offerDiscount + totalPrice * 0.15).toFixed(2)}
                             </Badge>
@@ -1301,23 +1555,25 @@ function CheckoutContent() {
                       {/* Place Order Button */}
                       <Button
                         onClick={handleInitiateCheckout}
-                        disabled={isProcessing || !!clientSecret}
-                        className="w-full bg-linear-to-r from-[#FF6A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-6 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
+                        disabled={
+                          isProcessing || !!clientSecret || !!paymentResponse
+                        }
+                        className="w-full bg-gradient-to-r from-[#FF6A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-5 sm:py-6 text-base sm:text-lg font-bold shadow-xl hover:shadow-2xl transition-all active:scale-98"
                       >
                         {isProcessing ? (
                           <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            Processing...
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span className="text-sm sm:text-base">Processing...</span>
                           </div>
-                        ) : clientSecret ? (
+                        ) : clientSecret || paymentResponse ? (
                           <div className="flex items-center justify-center gap-2">
-                            <CheckCircle2 className="h-5 w-5" />
-                            <span>Proceed to Payment Below</span>
+                            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="text-sm sm:text-base">Proceed to Payment Below</span>
                           </div>
                         ) : (
                           <div className="flex items-center justify-center gap-2">
-                            <Lock className="h-5 w-5" />
-                            <span>Proceed to Payment</span>
+                            <Lock className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="text-sm sm:text-base">Proceed to Payment</span>
                           </div>
                         )}
                       </Button>
@@ -1329,21 +1585,21 @@ function CheckoutContent() {
                       </div>
 
                       {/* Trust Badges */}
-                      <div className="grid grid-cols-3 gap-2 pt-4 border-t">
+                      <div className="grid grid-cols-3 gap-2 pt-3 sm:pt-4 border-t">
                         <div className="text-center">
-                          <CheckCircle2 className="h-6 w-6 mx-auto text-green-600 mb-1" />
+                          <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 mx-auto text-green-600 mb-1" />
                           <p className="text-xs text-gray-700 font-medium">
                             Secure
                           </p>
                         </div>
                         <div className="text-center">
-                          <ShoppingBag className="h-6 w-6 mx-auto text-green-600 mb-1" />
+                          <ShoppingBag className="h-5 w-5 sm:h-6 sm:w-6 mx-auto text-green-600 mb-1" />
                           <p className="text-xs text-gray-700 font-medium">
                             Free Ship
                           </p>
                         </div>
                         <div className="text-center">
-                          <CheckCircle2 className="h-6 w-6 mx-auto text-green-600 mb-1" />
+                          <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 mx-auto text-green-600 mb-1" />
                           <p className="text-xs text-gray-700 font-medium">
                             Returns
                           </p>
@@ -1389,6 +1645,58 @@ function CheckoutContent() {
           router.push("/");
         }}
       />
+
+      <AnimatePresence>
+        {showMBWayPopup && paymentResponse && isMBWayPayment(paymentResponse) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm p-4 sm:p-6 flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.98 }}
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border-2 border-[#1E1E1E] bg-[#ECE3DC] shadow-2xl"
+            >
+              <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#1E1E1E]/20">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-[#FF6A00] font-semibold">
+                    Secure Payment
+                  </p>
+                  <h3 className="text-lg sm:text-xl font-bold text-[#1E1E1E]">
+                    Complete MB WAY Payment
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowMBWayPopup(false)}
+                  className="h-9 w-9 rounded-full border border-[#1E1E1E]/20 flex items-center justify-center text-[#1E1E1E] hover:bg-[#CBCBCB] transition-colors"
+                  aria-label="Close payment popup"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="p-4 sm:p-5">
+                <MBWayPaymentForm
+                  payment={paymentResponse}
+                  orderId={orderId || undefined}
+                  amount={finalTotal}
+                  onSuccess={() => {
+                    setShowMBWayPopup(false);
+                    const returnUrl = `${window.location.origin}/payment-success?orderId=${orderId}`;
+                    window.location.href = returnUrl;
+                  }}
+                  onError={(error) => {
+                    console.error("MB WAY payment error:", error);
+                  }}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

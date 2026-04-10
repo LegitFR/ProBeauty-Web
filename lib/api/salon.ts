@@ -79,8 +79,8 @@ export interface Salon {
     };
   };
   staff?: SalonStaff[];
-  services?: any[];
-  products?: any[];
+  services?: unknown[];
+  products?: unknown[];
   owner?: {
     id: string;
     name: string;
@@ -134,7 +134,14 @@ export async function getSalons(params?: {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch salons");
+      let errorBody: { message?: string } | null = null;
+      try {
+        errorBody = await response.json();
+      } catch {
+        errorBody = null;
+      }
+
+      throw new Error(errorBody?.message || "Failed to fetch salons");
     }
 
     return await response.json();
@@ -158,7 +165,14 @@ export async function getSalonById(id: string): Promise<SingleSalonResponse> {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch salon");
+      let errorBody: { message?: string } | null = null;
+      try {
+        errorBody = await response.json();
+      } catch {
+        errorBody = null;
+      }
+
+      throw new Error(errorBody?.message || "Failed to fetch salon");
     }
 
     return await response.json();

@@ -17,8 +17,16 @@ import {
 import { Elements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe/config";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
+import { IfThenPayCCARDForm } from "@/components/IfThenPayCCARDForm";
+import { MBWayPaymentForm } from "@/components/MBWayPaymentForm";
 import { motion } from "motion/react";
 import Link from "next/link";
+import type { PaymentResponse } from "@/lib/types/ifthenpay";
+import {
+  isCCARDPayment,
+  isMBWayPayment,
+  isStripePayment,
+} from "@/lib/types/ifthenpay";
 
 export default function BookingPaymentPage() {
   const router = useRouter();
@@ -28,6 +36,9 @@ export default function BookingPaymentPage() {
   const [mounted, setMounted] = useState(false);
   const [bookingDetails, setBookingDetails] = useState<any>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentResponse, setPaymentResponse] = useState<PaymentResponse | null>(
+    null
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -38,7 +49,21 @@ export default function BookingPaymentPage() {
       const details = JSON.parse(pendingBooking);
       if (details.bookingId === bookingId) {
         setBookingDetails(details);
-        setClientSecret(details.clientSecret);
+
+        // Check payment type and set appropriate state
+        if (details.clientSecret) {
+          // Stripe payment
+          setClientSecret(details.clientSecret);
+          setPaymentResponse(null);
+        } else if (details.payment) {
+          // If-Then Pay payment
+          setPaymentResponse(details.payment);
+          setClientSecret(null);
+        } else {
+          // Invalid payment data
+          console.error("No payment data found in booking details");
+          router.push("/");
+        }
       } else {
         // Booking ID mismatch, redirect back
         router.push("/");
@@ -58,7 +83,7 @@ export default function BookingPaymentPage() {
     console.error("Payment error:", error);
   };
 
-  if (!mounted || !bookingDetails || !clientSecret) {
+  if (!mounted || !bookingDetails || (!clientSecret && !paymentResponse)) {
     return (
       <div className="min-h-screen bg-[#ECE3DC] flex items-center justify-center">
         <Loader2 className="w-12 h-12 text-orange-600 animate-spin" />
@@ -181,25 +206,51 @@ export default function BookingPaymentPage() {
                     Complete Payment
                   </h2>
 
-                  <Elements
-                    stripe={stripePromise}
-                    options={{
-                      clientSecret,
-                      appearance: {
-                        theme: "stripe",
-                        variables: {
-                          colorPrimary: "#FF6A00",
-                          //   colorBackground: "#ECE3DC",
+                  {/* Render appropriate payment form based on payment type */}
+                  {clientSecret && stripePromise && (
+                    <Elements
+                      stripe={stripePromise}
+                      options={{
+                        clientSecret,
+                        appearance: {
+                          theme: "stripe",
+                          variables: {
+                            colorPrimary: "#FF6A00",
+                          },
                         },
-                      },
-                    }}
-                  >
-                    <StripePaymentForm
+                      }}
+                    >
+                      <StripePaymentForm
+                        bookingId={bookingId}
+                        onSuccess={handlePaymentSuccess}
+                        onError={handlePaymentError}
+                      />
+                    </Elements>
+                  )}
+
+                  {paymentResponse && isCCARDPayment(paymentResponse) && (
+                    <IfThenPayCCARDForm
+                      payment={paymentResponse}
                       bookingId={bookingId}
-                      onSuccess={handlePaymentSuccess}
+                      onSuccess={() => {
+                        handlePaymentSuccess();
+                      }}
+                    />
+                  )}
+
+                  {paymentResponse && isMBWayPayment(paymentResponse) && (
+                    <MBWayPaymentForm
+                      payment={paymentResponse}
+                      bookingId={bookingId}
+                      amount={bookingDetails.price}
+                      onSuccess={() => {
+                        handlePaymentSuccess();
+                        const returnUrl = `${window.location.origin}/payment-success?bookingId=${bookingId}`;
+                        window.location.href = returnUrl;
+                      }}
                       onError={handlePaymentError}
                     />
-                  </Elements>
+                  )}
                 </CardContent>
               </Card>
             </div>

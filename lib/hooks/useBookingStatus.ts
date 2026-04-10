@@ -76,7 +76,6 @@ export function useBookingStatus(
       clearInterval(pollInterval);
       if (isActive) {
         setLoading(false);
-        setError("Timeout: Unable to confirm payment status");
       }
     }, 60000);
 
