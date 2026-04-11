@@ -19,7 +19,12 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { getServicesBySalon, Service } from "@/lib/api/service";
-import { createBooking, TimeSlot, getAvailableSlots } from "@/lib/api/booking";
+import {
+  createBooking,
+  TimeSlot,
+  getAvailableSlots,
+  getAvailableStaffAtTime,
+} from "@/lib/api/booking";
 import { getStaffBySalon, Staff } from "@/lib/api/staff";
 import { getAccessToken, isAuthenticated } from "@/lib/api/auth";
 import { Salon } from "@/lib/api/salon";
@@ -64,7 +69,8 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   );
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("STRIPE");
+  const [slotValidationLoading, setSlotValidationLoading] = useState<string | null>(null);
+  const [paymentMethod] = useState<PaymentMethod>("MBWAY");
   const [mobileNumber, setMobileNumber] = useState<string>("");
   const [showMBWayPopup, setShowMBWayPopup] = useState(false);
   const [mbwayPayment, setMbwayPayment] =
@@ -682,8 +688,54 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     setSelectedTime(""); // Reset time when date changes
   };
 
-  const handleTimeSelect = (slot: TimeSlot) => {
+  const handleTimeSelect = async (slot: TimeSlot) => {
     if (slot.available) {
+      setSlotValidationLoading(slot.startTime);
+
+      try {
+        const availabilityChecks = await Promise.all(
+          selectedServices.map(async (service) => {
+            const assignedStaff = serviceStaffMap.get(service.id);
+            if (!assignedStaff) {
+              return {
+                serviceTitle: service.title,
+                staffName: "",
+                available: false,
+              };
+            }
+
+            const response = await getAvailableStaffAtTime({
+              salonId: salon.id,
+              serviceId: service.id,
+              startTime: slot.startTime,
+            });
+
+            const available = (response.data || []).some(
+              (staff) => staff.id === assignedStaff.id,
+            );
+
+            return {
+              serviceTitle: service.title,
+              staffName: assignedStaff.user?.name || assignedStaff.name || "",
+              available,
+            };
+          }),
+        );
+
+        const unavailableAssignment = availabilityChecks.find(
+          (check) => !check.available,
+        );
+
+        if (unavailableAssignment) {
+          toast.error(
+            `${unavailableAssignment.staffName || "Selected staff"} is no longer available for ${unavailableAssignment.serviceTitle} at this time. Please select another slot.`,
+            { duration: 5000 },
+          );
+          setSelectedTime("");
+          await loadAvailableSlots();
+          return;
+        }
+
       console.log("=== TIME SLOT SELECTED ===");
       console.log("Slot start time (ISO):", slot.startTime);
       console.log(
@@ -695,6 +747,11 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         new Date(slot.startTime).getHours(),
       );
       setSelectedTime(slot.startTime);
+      } catch (error) {
+        toast.error("Could not validate this slot. Please try another time.");
+      } finally {
+        setSlotValidationLoading(null);
+      }
     }
   };
 
@@ -707,15 +764,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
   const handleConfirmClick = () => {
     if (userAuthenticated) {
-      if (
-        paymentMethod === "STRIPE" ||
-        paymentMethod === "CCARD" ||
-        paymentMethod === "MBWAY"
-      ) {
-        handlePaymentCheckout();
-      } else {
-        handleBookingConfirm();
-      }
+      handlePaymentCheckout();
     } else {
       setCurrentStep("login");
     }
@@ -767,6 +816,55 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         const staff = serviceStaffMap.get(service.id);
         return staff!.id;
       });
+
+      // Re-validate exact staff availability at selected start time to avoid stale slot race conditions
+      const availabilityChecks = await Promise.all(
+        selectedServices.map(async (service) => {
+          const assignedStaff = serviceStaffMap.get(service.id);
+          if (!assignedStaff) {
+            return {
+              serviceId: service.id,
+              serviceTitle: service.title,
+              staffId: "",
+              available: false,
+            };
+          }
+
+          const response = await getAvailableStaffAtTime({
+            salonId: salon.id,
+            serviceId: service.id,
+            startTime: selectedTime,
+          });
+
+          const available = (response.data || []).some(
+            (staff) => staff.id === assignedStaff.id,
+          );
+
+          return {
+            serviceId: service.id,
+            serviceTitle: service.title,
+            staffId: assignedStaff.id,
+            staffName: assignedStaff.user?.name || assignedStaff.name,
+            available,
+          };
+        }),
+      );
+
+      const unavailableAssignment = availabilityChecks.find(
+        (check) => !check.available,
+      );
+
+      if (unavailableAssignment) {
+        toast.error(
+          `${unavailableAssignment.staffName || "Selected staff"} is no longer available for ${unavailableAssignment.serviceTitle} at this time. Please choose another slot or staff member.`,
+          { duration: 6000 },
+        );
+        setSelectedTime("");
+        await loadAvailableSlots();
+        setCurrentStep("time");
+        setBookingLoading(false);
+        return;
+      }
 
       const bookingData: any = {
         salonId: salon.id,
@@ -1825,17 +1923,21 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                   <button
                                     key={slot.startTime}
                                     onClick={() => handleTimeSelect(slot)}
-                                    disabled={!slot.available}
+                                    disabled={!slot.available || !!slotValidationLoading}
                                     className={`p-4 text-center rounded-lg border-2 transition-all duration-200 ${
                                       selectedTime === slot.startTime
                                         ? "border-[#FF7A00] bg-orange-50 text-[#FF7A00] font-semibold"
-                                        : slot.available
-                                          ? "border-[#CBCBCB] hover:border-[#1E1E1E] bg-[#ECE3DC] text-[#1E1E1E] hover:bg-[#CBCBCB]"
+                                      : slot.available
+                                        ? "border-[#CBCBCB] hover:border-[#1E1E1E] bg-[#ECE3DC] text-[#1E1E1E] hover:bg-[#CBCBCB]"
                                           : "border-[#CBCBCB] bg-[#CBCBCB] text-[#616161] cursor-not-allowed"
                                     }`}
                                   >
                                     <div className="flex items-center justify-center">
-                                      <span>{formatTime(slot.startTime)}</span>
+                                      <span>
+                                        {slotValidationLoading === slot.startTime
+                                          ? "Checking..."
+                                          : formatTime(slot.startTime)}
+                                      </span>
                                       {selectedTime === slot.startTime && (
                                         <Check className="h-4 w-4 ml-2" />
                                       )}
@@ -1914,108 +2016,12 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                           Payment Method
                         </h3>
                         <div className="space-y-3">
-                          {/* Pay with Stripe */}
-                          <button
-                            onClick={() => setPaymentMethod("STRIPE")}
-                            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                              paymentMethod === "STRIPE"
-                                ? "border-[#FF7A00] bg-orange-50"
-                                : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
-                            }`}
-                          >
+                          <div className="w-full p-4 rounded-xl border-2 border-[#FF7A00] bg-[#ECE3DC] text-left">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                                    paymentMethod === "STRIPE"
-                                      ? "bg-[#FF7A00]"
-                                      : "bg-[#CBCBCB]"
-                                  }`}
-                                >
+                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-[#FF7A00]">
                                   <svg
-                                    className="w-6 h-6 text-white"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
-                                  </svg>
-                                </div>
-                                <div>
-                                  <p className="font-semibold text-black">
-                                    Credit Card (Stripe)
-                                  </p>
-                                  <p className="text-sm text-gray-600">
-                                    Secure payment with Stripe
-                                  </p>
-                                </div>
-                              </div>
-                              {paymentMethod === "STRIPE" && (
-                                <Check className="h-5 w-5 text-[#FF7A00]" />
-                              )}
-                            </div>
-                          </button>
-
-                          {/* Pay with If-Then Pay CCARD */}
-                          <button
-                            onClick={() => setPaymentMethod("CCARD")}
-                            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                              paymentMethod === "CCARD"
-                                ? "border-[#FF7A00] bg-orange-50"
-                                : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                                    paymentMethod === "CCARD"
-                                      ? "bg-[#FF7A00]"
-                                      : "bg-[#CBCBCB]"
-                                  }`}
-                                >
-                                  <svg
-                                    className="w-6 h-6 text-white"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
-                                  </svg>
-                                </div>
-                                <div>
-                                  <p className="font-semibold text-black">
-                                    Credit Card (If-Then Pay)
-                                  </p>
-                                  <p className="text-sm text-gray-600">
-                                    Pay via If-Then Pay gateway
-                                  </p>
-                                </div>
-                              </div>
-                              {paymentMethod === "CCARD" && (
-                                <Check className="h-5 w-5 text-[#FF7A00]" />
-                              )}
-                            </div>
-                          </button>
-
-                          {/* Pay with MB WAY */}
-                          <button
-                            onClick={() => setPaymentMethod("MBWAY")}
-                            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                              paymentMethod === "MBWAY"
-                                ? "border-[#FF7A00] bg-orange-50"
-                                : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                                    paymentMethod === "MBWAY"
-                                      ? "bg-[#FF7A00]"
-                                      : "bg-[#CBCBCB]"
-                                  }`}
-                                >
-                                  <svg
-                                    className="w-6 h-6 text-white"
+                                    className="w-6 h-6 text-[#ECE3DC]"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -2029,86 +2035,33 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                   </svg>
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-black">
-                                    MB WAY
-                                  </p>
+                                  <p className="font-semibold text-black">MB WAY</p>
                                   <p className="text-sm text-gray-600">
                                     Instant payment via mobile app
                                   </p>
                                 </div>
                               </div>
-                              {paymentMethod === "MBWAY" && (
-                                <Check className="h-5 w-5 text-[#FF7A00]" />
-                              )}
+                              <Check className="h-5 w-5 text-[#FF7A00]" />
                             </div>
-                          </button>
-
-                          {/* Pay on Spot */}
-                          <button
-                            onClick={() => setPaymentMethod("ONSPOT")}
-                            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                              paymentMethod === "ONSPOT"
-                                ? "border-[#FF7A00] bg-orange-50"
-                                : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                                    paymentMethod === "ONSPOT"
-                                      ? "bg-[#FF7A00]"
-                                      : "bg-[#CBCBCB]"
-                                  }`}
-                                >
-                                  <svg
-                                    className="w-6 h-6 text-white"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                                    />
-                                  </svg>
-                                </div>
-                                <div>
-                                  <p className="font-semibold text-black">
-                                    Pay on Spot
-                                  </p>
-                                  <p className="text-sm text-gray-600">
-                                    Pay after your appointment
-                                  </p>
-                                </div>
-                              </div>
-                              {paymentMethod === "ONSPOT" && (
-                                <Check className="h-5 w-5 text-[#FF7A00]" />
-                              )}
-                            </div>
-                          </button>
+                          </div>
                         </div>
 
                         {/* MB WAY Mobile Number Input */}
-                        {paymentMethod === "MBWAY" && (
-                          <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-                            <label className="block text-sm font-medium text-black mb-2">
-                              MB WAY Mobile Number
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="351#912345678"
-                              value={mobileNumber}
-                              onChange={(e) => setMobileNumber(e.target.value)}
-                              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#FF7A00] focus:outline-none bg-white"
-                            />
-                            <p className="text-xs text-gray-600 mt-2">
-                              Format: countryCode#phoneNumber (e.g., 351#912345678)
-                            </p>
-                          </div>
-                        )}
+                        <div className="mt-4 p-4 bg-[#ECE3DC] border-2 border-[#FF7A00] rounded-lg">
+                          <label className="block text-sm font-medium text-black mb-2">
+                            MB WAY Mobile Number
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="351#912345678"
+                            value={mobileNumber}
+                            onChange={(e) => setMobileNumber(e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#FF7A00] focus:outline-none bg-[#ECE3DC]"
+                          />
+                          <p className="text-xs text-gray-600 mt-2">
+                            Format: countryCode#phoneNumber (e.g., 351#912345678)
+                          </p>
+                        </div>
                       </div>
 
                       <Button
@@ -2119,14 +2072,10 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         {bookingLoading ? (
                           <>
                             <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                            {paymentMethod !== "ONSPOT"
-                              ? "Redirecting to payment..."
-                              : "Creating booking..."}
+                            Opening MB WAY payment...
                           </>
-                        ) : paymentMethod !== "ONSPOT" ? (
-                          "Proceed to Payment"
                         ) : (
-                          "Confirm Appointment"
+                          "Proceed to MB WAY Payment"
                         )}
                       </Button>
                     </div>
@@ -2207,7 +2156,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm p-4 sm:p-6 flex items-center justify-center"
+            className="fixed inset-0 z-[100] bg-[#7A5C43]/35 backdrop-blur-sm p-4 sm:p-6 flex items-center justify-center"
           >
             <motion.div
               initial={{ opacity: 0, y: 24, scale: 0.98 }}

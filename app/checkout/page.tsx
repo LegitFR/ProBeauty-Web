@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -39,24 +38,11 @@ import {
   type ApiCartItem,
   type CartResponse,
 } from "@/lib/api/cart";
-import {
-  Elements,
-  PaymentElement,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
-import { stripePromise } from "@/lib/stripe/config";
-import { StripePaymentForm } from "@/components/StripePaymentForm";
-import { IfThenPayCCARDForm } from "@/components/IfThenPayCCARDForm";
 import { MBWayPaymentForm } from "@/components/MBWayPaymentForm";
 import { OfferSelector } from "@/components/OfferSelector";
 import type { Offer } from "@/lib/types/offer";
 import type { PaymentMethod, PaymentResponse } from "@/lib/types/ifthenpay";
-import {
-  isCCARDPayment,
-  isMBWayPayment,
-  isStripePayment,
-} from "@/lib/types/ifthenpay";
+import { isMBWayPayment } from "@/lib/types/ifthenpay";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -68,8 +54,7 @@ function CheckoutContent() {
     updateQuantity,
   } = useCart();
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<PaymentMethod>("STRIPE");
+  const [selectedPaymentMethod] = useState<PaymentMethod>("MBWAY");
   const [isProcessing, setIsProcessing] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -340,9 +325,9 @@ function CheckoutContent() {
       return;
     }
 
-    // Validate phone format
-    if (formData.phone.length < 10) {
-      toast.error("Please enter a valid phone number");
+    // Validate phone format (9 to 14 digits)
+    if (!/^\d{9,14}$/.test(formData.phone)) {
+      toast.error("Phone number must be 9 to 14 digits");
       return;
     }
 
@@ -525,18 +510,11 @@ function CheckoutContent() {
       setOrderId(data.data.order.id);
 
       // Handle different payment methods
-      if (data.data.clientSecret) {
-        // Stripe payment
-        console.log("📝 Setting up STRIPE payment with clientSecret");
-        setClientSecret(data.data.clientSecret);
-        setPaymentIntentId(data.data.paymentIntentId);
-        setPaymentResponse(null);
-      } else if (data.data.payment) {
+      if (data.data.payment) {
         // If-Then Pay payment
         console.log("📝 Setting up IF-THEN PAY payment");
         console.log("Payment provider:", data.data.payment.provider);
         console.log("Payment method:", data.data.payment.method);
-        console.log("Is CCARD?", isCCARDPayment(data.data.payment));
         console.log("Is MBWAY?", isMBWayPayment(data.data.payment));
         setPaymentResponse(data.data.payment);
         if (isMBWayPayment(data.data.payment)) {
@@ -545,7 +523,8 @@ function CheckoutContent() {
         setClientSecret(null);
         setPaymentIntentId(null);
       } else {
-        console.error("❌ No payment data received from backend!");
+        console.error("❌ No MB WAY payment data received from backend!");
+        throw new Error("MB WAY payment initialization failed");
       }
 
       setIsProcessing(false);
@@ -840,8 +819,8 @@ function CheckoutContent() {
                           className={`p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all active:scale-98 ${
                             selectedAddressId === address.id
                               ? "border-[#FF6A00] bg-orange-50"
-                              : "border-gray-300 hover:border-[#FF6A00] bg-white"
-                          }`}
+                              : "border-gray-300 hover:border-[#FF6A00] bg-[#ECE3DC]"
+                            }`}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0">
@@ -1147,129 +1126,46 @@ function CheckoutContent() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6 space-y-4 bg-[#ECE3DC]">
-                    {!clientSecret && !paymentResponse ? (
+                    {!paymentResponse ? (
                       <>
-                        {/* Payment Method Selection */}
                         <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
                           <Label className="text-[#1E1E1E] font-semibold text-sm sm:text-base">
-                            Choose Payment Method
+                            MB WAY Payment
                           </Label>
-                          <RadioGroup
-                            value={selectedPaymentMethod}
-                            onValueChange={(value) =>
-                              setSelectedPaymentMethod(value as PaymentMethod)
-                            }
+                          <div className="flex items-start space-x-3 p-3 sm:p-4 border-2 border-[#FF6A00] bg-[#ECE3DC] rounded-lg"
                           >
-                            {/* Stripe */}
-                            <div
-                              className={`flex items-start space-x-3 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all active:scale-98 ${
-                                selectedPaymentMethod === "STRIPE"
-                                  ? "border-[#FF6A00] bg-orange-50"
-                                  : "border-gray-300 hover:border-[#FF6A00]"
-                              }`}
-                              onClick={() => setSelectedPaymentMethod("STRIPE")}
-                            >
-                              <RadioGroupItem
-                                value="STRIPE"
-                                id="stripe"
-                                className="mt-0.5 sm:mt-1"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <Label
-                                  htmlFor="stripe"
-                                  className="font-semibold text-[#1E1E1E] cursor-pointer flex items-center gap-2 text-sm sm:text-base"
-                                >
-                                  <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-[#FF6A00] shrink-0" />
-                                  <span>Credit/Debit Card (Stripe)</span>
-                                </Label>
-                                <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                                  Pay securely with Visa, Mastercard, or American
-                                  Express
-                                </p>
-                              </div>
+                            <div className="flex-1 min-w-0">
+                              <Label className="font-semibold text-[#1E1E1E] flex items-center gap-2 text-sm sm:text-base">
+                                <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-[#FF6A00] shrink-0" />
+                                <span>MB WAY</span>
+                              </Label>
+                              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                                Pay instantly via your MB WAY mobile app
+                              </p>
                             </div>
-
-                            {/* If-Then Pay CCARD */}
-                            <div
-                              className={`flex items-start space-x-3 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all active:scale-98 ${
-                                selectedPaymentMethod === "CCARD"
-                                  ? "border-[#FF6A00] bg-orange-50"
-                                  : "border-gray-300 hover:border-[#FF6A00]"
-                              }`}
-                              onClick={() => setSelectedPaymentMethod("CCARD")}
-                            >
-                              <RadioGroupItem
-                                value="CCARD"
-                                id="ccard"
-                                className="mt-0.5 sm:mt-1"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <Label
-                                  htmlFor="ccard"
-                                  className="font-semibold text-[#1E1E1E] cursor-pointer flex items-center gap-2 text-sm sm:text-base"
-                                >
-                                  <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-[#FF6A00] shrink-0" />
-                                  <span>Credit Card (If-Then Pay)</span>
-                                </Label>
-                                <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                                  Secure payment via If-Then Pay gateway
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* MB WAY */}
-                            <div
-                              className={`flex items-start space-x-3 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all active:scale-98 ${
-                                selectedPaymentMethod === "MBWAY"
-                                  ? "border-[#FF6A00] bg-orange-50"
-                                  : "border-gray-300 hover:border-[#FF6A00]"
-                              }`}
-                              onClick={() => setSelectedPaymentMethod("MBWAY")}
-                            >
-                              <RadioGroupItem
-                                value="MBWAY"
-                                id="mbway"
-                                className="mt-0.5 sm:mt-1"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <Label
-                                  htmlFor="mbway"
-                                  className="font-semibold text-[#1E1E1E] cursor-pointer flex items-center gap-2 text-sm sm:text-base"
-                                >
-                                  <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-[#FF6A00] shrink-0" />
-                                  <span>MB WAY</span>
-                                </Label>
-                                <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                                  Pay instantly via your MB WAY mobile app
-                                </p>
-                              </div>
-                            </div>
-                          </RadioGroup>
+                          </div>
                         </div>
 
-                        {/* MB WAY Mobile Number Input */}
-                        {selectedPaymentMethod === "MBWAY" && (
-                          <div className="space-y-2">
-                            <Label
-                              htmlFor="mbway-mobile"
-                              className="text-[#1E1E1E] font-medium text-sm sm:text-base"
-                            >
-                              MB WAY Mobile Number <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                              id="mbway-mobile"
-                              type="text"
-                              placeholder="351#912345678"
-                              value={mobileNumber}
-                              onChange={(e) => setMobileNumber(e.target.value)}
-                              className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-white text-sm sm:text-base font-mono"
-                              required
-                            />
-                            <p className="text-xs text-gray-600">
-                              Format: <span className="font-mono font-medium">countryCode#phoneNumber</span> (e.g., 351#912345678 or 91#7676589397)
-                            </p>
-                          </div>
-                        )}
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="mbway-mobile"
+                            className="text-[#1E1E1E] font-medium text-sm sm:text-base"
+                          >
+                            MB WAY Mobile Number <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id="mbway-mobile"
+                            type="text"
+                            placeholder="351#912345678"
+                            value={mobileNumber}
+                            onChange={(e) => setMobileNumber(e.target.value)}
+                            className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-[#ECE3DC] text-sm sm:text-base font-mono"
+                            required
+                          />
+                          <p className="text-xs text-gray-600">
+                            Format: <span className="font-mono font-medium">countryCode#phoneNumber</span> (e.g., 351#912345678)
+                          </p>
+                        </div>
 
                         <div className="text-center py-6 sm:py-8">
                           <p className="text-sm sm:text-base text-gray-600 mb-4">
@@ -1278,12 +1174,7 @@ function CheckoutContent() {
                           </p>
                           <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-gray-500">
                             <Lock className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span>
-                              Powered by{" "}
-                              {selectedPaymentMethod === "STRIPE"
-                                ? "Stripe"
-                                : "If-Then Pay"}
-                            </span>
+                            <span>Powered by If-Then Pay</span>
                           </div>
                         </div>
                       </>
@@ -1331,57 +1222,11 @@ function CheckoutContent() {
                           if (paymentResponse) {
                             console.log("paymentResponse.provider:", paymentResponse.provider);
                             console.log("paymentResponse.method:", (paymentResponse as any).method);
-                            console.log("Is CCARD?", isCCARDPayment(paymentResponse));
                             console.log("Is MBWAY?", isMBWayPayment(paymentResponse));
                           }
                           return null;
                         })()}
                         
-                        {clientSecret && (
-                          <>
-                            {console.log("🔵 Rendering STRIPE payment form")}
-                            <Elements
-                              stripe={stripePromise}
-                              options={{
-                                clientSecret,
-                                appearance: {
-                                  theme: "stripe",
-                                  variables: {
-                                    colorPrimary: "#FF6A00",
-                                  },
-                                },
-                              }}
-                            >
-                              <StripePaymentForm
-                                orderId={orderId || ""}
-                                onSuccess={() => {
-                                  toast.success(
-                                    "Payment processing... Redirecting to confirmation page.",
-                                  );
-                                }}
-                                onError={(error) => {
-                                  console.error("Payment error:", error);
-                                }}
-                              />
-                            </Elements>
-                          </>
-                        )}
-
-                        {paymentResponse && isCCARDPayment(paymentResponse) && (
-                          <>
-                            {console.log("🟠 Rendering CCARD payment form")}
-                            <IfThenPayCCARDForm
-                              payment={paymentResponse}
-                              orderId={orderId || undefined}
-                              onSuccess={() => {
-                                toast.success(
-                                  "Redirecting to payment gateway...",
-                                );
-                              }}
-                            />
-                          </>
-                        )}
-
                         {paymentResponse && isMBWayPayment(paymentResponse) && (
                           <div className="rounded-xl border-2 border-[#1E1E1E] bg-[#ECE3DC] p-4 sm:p-5 text-center space-y-3">
                             <p className="text-sm sm:text-base text-[#1E1E1E] font-medium">
@@ -1403,7 +1248,7 @@ function CheckoutContent() {
                 </Card>
 
                 {/* Security Badge */}
-                <div className="flex items-center gap-2 text-sm text-gray-700 bg-green-50 border-2 border-green-200 p-4 rounded-xl">
+                <div className="flex items-center gap-2 text-sm text-gray-700 bg-[#ECE3DC] border-2 border-[#1E1E1E]/20 p-4 rounded-xl">
                   <Lock className="h-5 w-5 text-green-600" />
                   <span className="font-medium">
                     Your payment information is encrypted and secure
@@ -1652,7 +1497,7 @@ function CheckoutContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm p-4 sm:p-6 flex items-center justify-center"
+            className="fixed inset-0 z-[100] bg-[#7A5C43]/35 backdrop-blur-sm p-4 sm:p-6 flex items-center justify-center"
           >
             <motion.div
               initial={{ opacity: 0, y: 24, scale: 0.98 }}

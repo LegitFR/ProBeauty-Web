@@ -4,13 +4,12 @@
  */
 
 import {
-  Review,
   CreateReviewData,
   UpdateReviewData,
   ReviewsResponse,
   SingleReviewResponse,
 } from "@/lib/types/review";
-import { fetchWithAuth, fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
+import { fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
 
 const API_BASE_URL = "/api/reviews";
 
@@ -108,7 +107,7 @@ export async function getReviewsBySalon(
  * @returns Promise with user's reviews and pagination
  */
 export async function getMyReviews(
-  token: string,
+  _token: string,
   page = 1,
   limit = 10,
 ): Promise<ReviewsResponse> {
@@ -117,22 +116,10 @@ export async function getMyReviews(
     limit: limit.toString(),
   });
 
-  const response = await fetch(`${API_BASE_URL}/user/me?${params}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      message: "Failed to fetch reviews",
-    }));
-    throw new Error(error.message || "Failed to fetch reviews");
-  }
-
-  return response.json();
+  return await fetchJsonWithAuth<ReviewsResponse>(
+    `${API_BASE_URL}/user/me?${params}`,
+    { method: "GET" },
+  );
 }
 
 /**
@@ -143,27 +130,14 @@ export async function getMyReviews(
  * @returns Promise with the updated review
  */
 export async function updateReview(
-  token: string,
+  _token: string,
   id: string,
   data: UpdateReviewData,
 ): Promise<SingleReviewResponse> {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
+  return await fetchJsonWithAuth<SingleReviewResponse>(`${API_BASE_URL}/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      message: "Failed to update review",
-    }));
-    throw new Error(error.message || "Failed to update review");
-  }
-
-  return response.json();
 }
 
 /**
@@ -173,23 +147,10 @@ export async function updateReview(
  * @returns Promise with success message
  */
 export async function deleteReview(
-  token: string,
+  _token: string,
   id: string,
 ): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
+  return await fetchJsonWithAuth<{ message: string }>(`${API_BASE_URL}/${id}`, {
     method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      message: "Failed to delete review",
-    }));
-    throw new Error(error.message || "Failed to delete review");
-  }
-
-  return response.json();
 }

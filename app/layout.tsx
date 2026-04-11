@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   title: "Pro Beauty",
   description:
     "Pro Beauty is a beauty salon management software that helps you manage your appointments, clients, and staff. It also provides you with a website and a mobile app to help you grow your business.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

@@ -3,6 +3,8 @@
  * Handles address management for authenticated users
  */
 
+import { fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
+
 const API_BASE_URL = "/api/address";
 
 export interface Address {
@@ -34,22 +36,13 @@ export interface SingleAddressResponse {
 /**
  * Get all addresses for authenticated user
  */
-export async function getAddresses(token: string): Promise<Address[]> {
+export async function getAddresses(_token: string): Promise<Address[]> {
+  void _token;
   try {
-    const response = await fetch(API_BASE_URL, {
+    const data = await fetchJsonWithAuth<AddressResponse>(API_BASE_URL, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
       cache: "no-store",
     });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch addresses");
-    }
-
-    const data: AddressResponse = await response.json();
     return data.data || [];
   } catch (error) {
     console.error("[Address API] Get addresses error:", error);
@@ -61,7 +54,7 @@ export async function getAddresses(token: string): Promise<Address[]> {
  * Create a new address
  */
 export async function createAddress(
-  token: string,
+  _token: string,
   addressData: {
     fullName: string;
     phone: string;
@@ -74,22 +67,12 @@ export async function createAddress(
     isDefault?: boolean;
   }
 ): Promise<Address> {
+  void _token;
   try {
-    const response = await fetch(API_BASE_URL, {
+    const data = await fetchJsonWithAuth<SingleAddressResponse>(API_BASE_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
       body: JSON.stringify(addressData),
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to create address");
-    }
-
-    const data: SingleAddressResponse = await response.json();
     return data.data;
   } catch (error) {
     console.error("[Address API] Create address error:", error);
@@ -101,7 +84,7 @@ export async function createAddress(
  * Update an existing address
  */
 export async function updateAddress(
-  token: string,
+  _token: string,
   addressId: string,
   addressData: Partial<{
     fullName: string;
@@ -115,21 +98,15 @@ export async function updateAddress(
     isDefault: boolean;
   }>
 ): Promise<Address> {
+  void _token;
   try {
-    const response = await fetch(`${API_BASE_URL}/${addressId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    const data = await fetchJsonWithAuth<SingleAddressResponse>(
+      `${API_BASE_URL}/${addressId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(addressData),
       },
-      body: JSON.stringify(addressData),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to update address");
-    }
-
-    const data: SingleAddressResponse = await response.json();
+    );
     return data.data;
   } catch (error) {
     console.error("[Address API] Update address error:", error);
@@ -141,32 +118,17 @@ export async function updateAddress(
  * Delete an address
  */
 export async function deleteAddress(
-  token: string,
+  _token: string,
   addressId: string
 ): Promise<void> {
+  void _token;
   console.log("[Address API] Deleting address:", addressId);
   console.log("[Address API] Delete URL:", `${API_BASE_URL}/${addressId}`);
 
   try {
-    const response = await fetch(`${API_BASE_URL}/${addressId}`, {
+    await fetchJsonWithAuth<{ message: string }>(`${API_BASE_URL}/${addressId}`, {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
     });
-
-    console.log("[Address API] Delete response status:", response.status);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("[Address API] Delete failed:", errorData);
-      console.error("[Address API] Validation errors:", errorData.errors);
-
-      const errorMessage =
-        errorData.message || `Failed to delete address (${response.status})`;
-      throw new Error(errorMessage);
-    }
 
     console.log("[Address API] Address deleted successfully");
   } catch (error) {
@@ -179,23 +141,17 @@ export async function deleteAddress(
  * Set address as default
  */
 export async function setDefaultAddress(
-  token: string,
+  _token: string,
   addressId: string
 ): Promise<Address> {
+  void _token;
   try {
-    const response = await fetch(`${API_BASE_URL}/${addressId}/set-default`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    const data = await fetchJsonWithAuth<SingleAddressResponse>(
+      `${API_BASE_URL}/${addressId}/set-default`,
+      {
+        method: "PATCH",
       },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to set default address");
-    }
-
-    const data: SingleAddressResponse = await response.json();
+    );
     return data.data;
   } catch (error) {
     console.error("[Address API] Set default address error:", error);

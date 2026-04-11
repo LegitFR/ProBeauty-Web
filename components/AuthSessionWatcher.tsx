@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { getAccessToken, logout } from "@/lib/api/auth";
+import {
+  getAccessToken,
+  getRefreshToken,
+  refreshAccessToken,
+  logout,
+} from "@/lib/api/auth";
 
 function isJwtExpired(token: string) {
   try {
@@ -26,6 +31,7 @@ function isJwtExpired(token: string) {
 
 export function AuthSessionWatcher() {
   const handledRef = useRef(false);
+  const refreshingRef = useRef(false);
 
   useEffect(() => {
     const handleExpiredSession = () => {
@@ -38,7 +44,7 @@ export function AuthSessionWatcher() {
       window.dispatchEvent(new Event("auth-expired"));
     };
 
-    const checkTokenExpiry = () => {
+    const checkTokenExpiry = async () => {
       const token = getAccessToken();
       if (!token) {
         handledRef.current = false;
@@ -46,18 +52,41 @@ export function AuthSessionWatcher() {
       }
 
       if (isJwtExpired(token)) {
-        handleExpiredSession();
+        if (refreshingRef.current) {
+          return;
+        }
+
+        refreshingRef.current = true;
+        try {
+          const refreshToken = getRefreshToken();
+          if (!refreshToken) {
+            handleExpiredSession();
+            return;
+          }
+
+          await refreshAccessToken(refreshToken);
+          handledRef.current = false;
+        } catch {
+          handleExpiredSession();
+        } finally {
+          refreshingRef.current = false;
+        }
       }
     };
 
-    checkTokenExpiry();
+    void checkTokenExpiry();
 
-    const intervalId = window.setInterval(checkTokenExpiry, 30000);
-    window.addEventListener("focus", checkTokenExpiry);
+    const intervalId = window.setInterval(() => {
+      void checkTokenExpiry();
+    }, 30000);
+    const onFocus = () => {
+      void checkTokenExpiry();
+    };
+    window.addEventListener("focus", onFocus);
 
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener("focus", checkTokenExpiry);
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 

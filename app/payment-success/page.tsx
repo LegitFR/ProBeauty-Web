@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ import { useOrderStatus } from "@/lib/hooks/useOrderStatus";
 import { useBookingStatus } from "@/lib/hooks/useBookingStatus";
 
 function PaymentSuccessContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
   const bookingId = searchParams.get("bookingId");
@@ -75,7 +74,7 @@ function PaymentSuccessContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Card className={`shadow-xl`}>
+          <Card className="shadow-2xl border-2 border-[#1E1E1E] bg-[#ECE3DC] overflow-hidden">
             <CardContent className="pt-8 pb-8 text-center bg-[#ECE3DC] rounded-lg">
               <motion.div
                 initial={{ scale: 0 }}
@@ -84,17 +83,17 @@ function PaymentSuccessContent() {
                 className="flex justify-center mb-6"
               >
                 {isPaymentPending && (
-                  <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center">
+                  <div className="w-24 h-24 bg-[#ECE3DC] border-2 border-[#FF6A00] rounded-full flex items-center justify-center">
                     <Loader2 className="w-16 h-16 text-orange-600 animate-spin" />
                   </div>
                 )}
                 {isPaymentConfirmed && (
-                  <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center">
+                  <div className="w-24 h-24 bg-[#ECE3DC] border-2 border-green-500 rounded-full flex items-center justify-center">
                     <CheckCircle2 className="w-16 h-16 text-green-600" />
                   </div>
                 )}
                 {isPaymentFailed && (
-                  <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center">
+                  <div className="w-24 h-24 bg-[#ECE3DC] border-2 border-red-500 rounded-full flex items-center justify-center">
                     <XCircle className="w-16 h-16 text-red-600" />
                   </div>
                 )}
@@ -138,13 +137,13 @@ function PaymentSuccessContent() {
               )}
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div className="bg-[#ECE3DC] border-2 border-red-300 rounded-lg p-4 mb-6">
                   <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
 
               {(orderId || bookingId) && (
-                <div className="bg-gray-50 rounded-lg p-4 mb-6 inline-block">
+                <div className="bg-[#ECE3DC] border-2 border-[#1E1E1E]/20 rounded-lg p-4 mb-6 inline-block">
                   <p className="text-sm text-gray-600 mb-1">
                     {isOrder ? "Order ID" : "Booking ID"}
                   </p>

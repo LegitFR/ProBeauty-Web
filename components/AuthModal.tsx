@@ -259,9 +259,9 @@ export function AuthModal({
       return;
     }
 
-    // Validate phone number (basic validation)
-    if (signupForm.phone && !/^\d{10}$/.test(signupForm.phone)) {
-      toast.error("Phone number must be 10 digits");
+    // Validate phone number (9 to 14 digits)
+    if (signupForm.phone && !/^\d{9,14}$/.test(signupForm.phone)) {
+      toast.error("Phone number must be 9 to 14 digits");
       return;
     }
 
@@ -711,7 +711,7 @@ export function AuthModal({
                             <Input
                               id="signup-phone"
                               type="tel"
-                              placeholder="10 digits"
+                              placeholder="9 to 14 digits"
                               className="pl-10 h-10 border-[#1e1e1e] bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all"
                               value={signupForm.phone}
                               onChange={(e) =>
@@ -722,7 +722,7 @@ export function AuthModal({
                               }
                               disabled={isLoading}
                               required
-                              maxLength={10}
+                              maxLength={14}
                             />
                           </div>
                         </div>

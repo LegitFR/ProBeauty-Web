@@ -3,7 +3,7 @@
  * Handles appointment bookings
  */
 
-import { fetchWithAuth, fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
+import { fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
 
 const API_BASE_URL = "/api/bookings";
 
@@ -84,6 +84,19 @@ export interface TimeSlot {
   available: boolean;
 }
 
+export interface AvailableStaffAtTimeResponse {
+  message: string;
+  data: Array<{
+    id: string;
+    name?: string;
+    user?: {
+      id: string;
+      name: string;
+      email: string;
+    };
+  }>;
+}
+
 export interface AvailabilityResponse {
   message: string;
   data: {
@@ -141,7 +154,12 @@ export async function createBooking(
   console.log("Input data:", data);
 
   // Build request body - backend expects arrays for serviceIds and staffIds
-  const requestData: any = {
+  const requestData: {
+    salonId: string;
+    startTime: string;
+    serviceIds?: string[];
+    staffIds?: string[];
+  } = {
     salonId: data.salonId,
     startTime: data.startTime,
   };
@@ -176,9 +194,12 @@ export async function createBooking(
     );
     console.log("✅ Booking created successfully");
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Booking creation failed");
-    console.error("Error message:", error.message);
+    console.error(
+      "Error message:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
     throw error;
   }
 }
@@ -247,13 +268,36 @@ export async function getAvailableSlots(params: {
           const backendError = JSON.parse(match[0]);
           errorMessage = backendError.message || errorMessage;
         }
-      } catch (e) {
+      } catch {
         // If parsing fails, use the original message
       }
     }
 
     throw new Error(errorMessage);
   }
+  return await response.json();
+}
+
+/**
+ * Validate which staff are available at an exact start time for a service
+ * Uses user-facing salon endpoint: /salons/:salonId/services/:serviceId/available-staff
+ */
+export async function getAvailableStaffAtTime(params: {
+  salonId: string;
+  serviceId: string;
+  startTime: string;
+}): Promise<AvailableStaffAtTimeResponse> {
+  const response = await fetch(
+    `/api/salons/${params.salonId}/services/${params.serviceId}/available-staff?startTime=${encodeURIComponent(params.startTime)}`,
+  );
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to validate staff availability" }));
+    throw new Error(error.message || "Failed to validate staff availability");
+  }
+
   return await response.json();
 }
 

@@ -2210,16 +2210,16 @@ export default function ProfilePage() {
                               addresses.map((address) => (
                                 <Card
                                   key={address.id}
-                                  className={`transition-all hover:shadow-lg ${
+                                  className={`transition-all hover:shadow-lg rounded-2xl overflow-hidden bg-[#ECE3DC] ${
                                     address.isDefault
-                                      ? "border-2 border-[#FF6A00] shadow-md"
+                                      ? "border-2 border-[#FF6A00] shadow-[0_0_0_2px_rgba(255,106,0,0.18)]"
                                       : "border border-gray-200"
                                   }`}
                                 >
                                   <CardContent
                                     className={`p-5 ${
                                       address.isDefault
-                                        ? "bg-gradient-to-br from-orange-50/50 to-white"
+                                        ? "bg-[#ECE3DC]"
                                         : "bg-[#ECE3DC]"
                                     }`}
                                   >
@@ -2559,17 +2559,22 @@ export default function ProfilePage() {
             open={showOrderDetailDialog}
             onOpenChange={setShowOrderDetailDialog}
           >
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Order Details</DialogTitle>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-2 border-[#1E1E1E] bg-[#ECE3DC] shadow-2xl">
+              <DialogHeader className="pb-4 border-b border-[#1E1E1E]/20">
+                <DialogTitle className="text-[#1E1E1E] text-xl font-bold flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-[#FF6A00] text-[#ECE3DC] flex items-center justify-center">
+                    <ShoppingBag className="h-4 w-4" />
+                  </div>
+                  Order Details
+                </DialogTitle>
               </DialogHeader>
               {selectedOrder && (
                 <div className="space-y-4">
                   {/* Order Info */}
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-[#ECE3DC] border-2 border-[#1E1E1E]/20 rounded-xl">
                     <div>
                       <p className="text-sm text-gray-600">Order ID</p>
-                      <p className="font-medium">
+                      <p className="font-mono font-semibold text-[#1E1E1E]">
                         #{selectedOrder.id.slice(0, 8)}
                       </p>
                     </div>
@@ -2578,18 +2583,18 @@ export default function ProfilePage() {
                       <Badge
                         className={
                           selectedOrder.status === "DELIVERED"
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-[#ECE3DC] border border-green-400 text-green-800"
                             : selectedOrder.status === "SHIPPED"
-                              ? "bg-blue-100 text-blue-800"
+                              ? "bg-[#ECE3DC] border border-blue-400 text-blue-800"
                               : selectedOrder.status === "CONFIRMED"
-                                ? "bg-purple-100 text-purple-800"
+                                ? "bg-[#ECE3DC] border border-[#FF6A00] text-[#FF6A00]"
                                 : selectedOrder.status === "PAYMENT_PENDING"
-                                  ? "bg-orange-100 text-orange-800"
+                                  ? "bg-[#ECE3DC] border border-orange-400 text-orange-800"
                                   : selectedOrder.status === "PAYMENT_FAILED"
-                                    ? "bg-rose-100 text-rose-800"
+                                    ? "bg-[#ECE3DC] border border-rose-400 text-rose-800"
                                     : selectedOrder.status === "CANCELLED"
-                                      ? "bg-red-100 text-red-800"
-                                      : "bg-yellow-100 text-yellow-800"
+                                      ? "bg-[#ECE3DC] border border-red-400 text-red-800"
+                                      : "bg-[#ECE3DC] border border-yellow-400 text-yellow-800"
                         }
                       >
                         {selectedOrder.status.replace(/_/g, " ")}
@@ -2611,8 +2616,8 @@ export default function ProfilePage() {
 
                   {/* Salon Info */}
                   {selectedOrder.salon && (
-                    <div className="p-4 border rounded-lg">
-                      <h3 className="font-semibold mb-2">Salon Information</h3>
+                    <div className="p-4 border-2 border-[#1E1E1E]/20 rounded-xl bg-[#ECE3DC]">
+                      <h3 className="font-semibold mb-2 text-[#1E1E1E]">Salon Information</h3>
                       <div className="text-sm text-gray-600">
                         <p className="font-medium">
                           {selectedOrder.salon.name}
@@ -2622,7 +2627,7 @@ export default function ProfilePage() {
                           {selectedOrder.salon.address}
                         </p>
                         {selectedOrder.salon.verified && (
-                          <Badge className="mt-2 bg-green-100 text-green-800">
+                          <Badge className="mt-2 bg-[#ECE3DC] border border-green-400 text-green-800">
                             Verified
                           </Badge>
                         )}
@@ -2631,8 +2636,8 @@ export default function ProfilePage() {
                   )}
 
                   {/* Order Items */}
-                  <div className="border rounded-lg">
-                    <h3 className="font-semibold p-4 border-b flex items-center gap-2">
+                  <div className="border-2 border-[#1E1E1E]/20 rounded-xl bg-[#ECE3DC] overflow-hidden">
+                    <h3 className="font-semibold p-4 border-b border-[#1E1E1E]/20 flex items-center gap-2 text-[#1E1E1E]">
                       <ShoppingBag className="h-4 w-4" />
                       Order Items
                     </h3>
@@ -2640,14 +2645,14 @@ export default function ProfilePage() {
                       {selectedOrder.orderItems?.map((item) => (
                         <div
                           key={item.id}
-                          className="p-4 flex items-center gap-4"
+                          className="p-4 flex items-center gap-4 bg-[#ECE3DC]"
                         >
                           {item.product?.images?.[0] && (
                             <img
                               src={item.product.images[0]}
                               alt={item.product.title || "Product"}
-                              className="w-16 h-16 object-cover rounded"
-                            />
+                               className="w-16 h-16 object-cover rounded-lg border border-[#1E1E1E]/20"
+                             />
                           )}
                           <div className="flex-1">
                             <p className="font-medium">
@@ -2673,9 +2678,9 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Order Total */}
-                    <div className="p-4 border-t bg-gray-50">
+                    <div className="p-4 border-t border-[#1E1E1E]/20 bg-[#ECE3DC]">
                       <div className="flex justify-between font-bold text-lg">
-                        <span>Total</span>
+                        <span className="text-[#1E1E1E]">Total</span>
                         <span className="text-orange-600">
                           ${selectedOrder.total}
                         </span>
@@ -2695,7 +2700,7 @@ export default function ProfilePage() {
                           handleCancelOrder(selectedOrder.id);
                           setShowOrderDetailDialog(false);
                         }}
-                        className="border-red-500 text-red-600 hover:bg-red-50"
+                        className="border-red-500 text-red-600 hover:bg-[#ECE3DC]"
                       >
                         Cancel Order
                       </Button>
@@ -2703,7 +2708,7 @@ export default function ProfilePage() {
                     <Button
                       variant="outline"
                       onClick={() => setShowOrderDetailDialog(false)}
-                      className="ml-auto"
+                      className="ml-auto border-[#1E1E1E] text-[#1E1E1E] hover:bg-[#CBCBCB]"
                     >
                       Close
                     </Button>
