@@ -29,13 +29,13 @@ export function Hero() {
 
       {/* Main Content Container */}
       <div className="relative z-10 max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 w-full">
-        <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center min-h-screen py-16 sm:py-20">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center min-h-screen py-16 sm:py-20">
           {/* Left Side - Content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, delay: 0.3 }}
-            className="text-left"
+            className="text-left max-w-2xl mx-auto lg:mx-0"
           >
             {/* Main Headline */}
             <motion.h1
@@ -107,7 +107,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.1, duration: 1 }}
-              className="flex justify-center items-center md:grid md:grid-cols-3 gap-6 sm:gap-12 mb-10"
+              className="grid grid-cols-3 gap-6 sm:gap-12 mb-10 max-w-xl"
             >
               <div className="text-left">
                 <div className="text-2xl sm:text-3xl md:text-4xl font-regular text-white mb-1">
@@ -143,22 +143,18 @@ export function Hero() {
             transition={{ duration: 1, delay: 0.5 }}
             className="relative flex justify-center items-center"
           >
-            <div className="relative w-full max-w-[500px] aspect-square">
-              {/* Placeholder Image with Orange Gradient */}
-              <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-                {/* Icon in center */}
-                <svg
-                  className="w-32 h-32 sm:w-40 sm:h-40 text-white/30"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <rect x="4" y="4" width="16" height="16" rx="2" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-              </div>
-
-              {/* Subtle glow effect */}
-              <div className="absolute inset-0 bg-[#FF6A00]/20 rounded-3xl blur-3xl -z-10 scale-110"></div>
+            <div className="relative w-full max-w-[560px] mx-auto">
+              <picture>
+                <source
+                  media="(min-width: 1024px)"
+                  srcSet="/probeauty-hero-desktop.png"
+                />
+                <img
+                  src="/probeauty-hero-mobile.png"
+                  alt="Beauty service showcase"
+                  className="w-full h-auto object-contain"
+                />
+              </picture>
             </div>
           </motion.div>
         </div>
