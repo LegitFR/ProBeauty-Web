@@ -70,7 +70,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [slotValidationLoading, setSlotValidationLoading] = useState<string | null>(null);
-  const [paymentMethod] = useState<PaymentMethod>("MBWAY");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("MBWAY");
   const [mobileNumber, setMobileNumber] = useState<string>("");
   const [showMBWayPopup, setShowMBWayPopup] = useState(false);
   const [mbwayPayment, setMbwayPayment] =
@@ -764,6 +764,11 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
   const handleConfirmClick = () => {
     if (userAuthenticated) {
+      if (paymentMethod === "ONSPOT") {
+        handleBookingConfirm();
+        return;
+      }
+
       handlePaymentCheckout();
     } else {
       setCurrentStep("login");
@@ -2016,10 +2021,23 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                           Payment Method
                         </h3>
                         <div className="space-y-3">
-                          <div className="w-full p-4 rounded-xl border-2 border-[#FF7A00] bg-[#ECE3DC] text-left">
+                          <button
+                            onClick={() => setPaymentMethod("MBWAY")}
+                            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                              paymentMethod === "MBWAY"
+                                ? "border-[#FF7A00] bg-[#ECE3DC]"
+                                : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
+                            }`}
+                          >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-[#FF7A00]">
+                                <div
+                                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                    paymentMethod === "MBWAY"
+                                      ? "bg-[#FF7A00]"
+                                      : "bg-[#CBCBCB]"
+                                  }`}
+                                >
                                   <svg
                                     className="w-6 h-6 text-[#ECE3DC]"
                                     fill="none"
@@ -2041,27 +2059,75 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                   </p>
                                 </div>
                               </div>
-                              <Check className="h-5 w-5 text-[#FF7A00]" />
+                              {paymentMethod === "MBWAY" && (
+                                <Check className="h-5 w-5 text-[#FF7A00]" />
+                              )}
                             </div>
-                          </div>
+                          </button>
+
+                          <button
+                            onClick={() => setPaymentMethod("ONSPOT")}
+                            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                              paymentMethod === "ONSPOT"
+                                ? "border-[#FF7A00] bg-[#ECE3DC]"
+                                : "border-[#CBCBCB] bg-[#ECE3DC] hover:border-[#1E1E1E]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                    paymentMethod === "ONSPOT"
+                                      ? "bg-[#FF7A00]"
+                                      : "bg-[#CBCBCB]"
+                                  }`}
+                                >
+                                  <svg
+                                    className="w-6 h-6 text-[#ECE3DC]"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                                    />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-black">Pay on Spot</p>
+                                  <p className="text-sm text-gray-600">
+                                    Confirm booking now and pay at the salon
+                                  </p>
+                                </div>
+                              </div>
+                              {paymentMethod === "ONSPOT" && (
+                                <Check className="h-5 w-5 text-[#FF7A00]" />
+                              )}
+                            </div>
+                          </button>
                         </div>
 
                         {/* MB WAY Mobile Number Input */}
-                        <div className="mt-4 p-4 bg-[#ECE3DC] border-2 border-[#FF7A00] rounded-lg">
-                          <label className="block text-sm font-medium text-black mb-2">
-                            MB WAY Mobile Number
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="351#912345678"
-                            value={mobileNumber}
-                            onChange={(e) => setMobileNumber(e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#FF7A00] focus:outline-none bg-[#ECE3DC]"
-                          />
-                          <p className="text-xs text-gray-600 mt-2">
-                            Format: countryCode#phoneNumber (e.g., 351#912345678)
-                          </p>
-                        </div>
+                        {paymentMethod === "MBWAY" && (
+                          <div className="mt-4 p-4 bg-[#ECE3DC] border-2 border-[#FF7A00] rounded-lg">
+                            <label className="block text-sm font-medium text-black mb-2">
+                              MB WAY Mobile Number
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="351#912345678"
+                              value={mobileNumber}
+                              onChange={(e) => setMobileNumber(e.target.value)}
+                              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#FF7A00] focus:outline-none bg-[#ECE3DC]"
+                            />
+                            <p className="text-xs text-gray-600 mt-2">
+                              Format: countryCode#phoneNumber (e.g., 351#912345678)
+                            </p>
+                          </div>
+                        )}
                       </div>
 
                       <Button
@@ -2072,10 +2138,14 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         {bookingLoading ? (
                           <>
                             <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                            Opening MB WAY payment...
+                            {paymentMethod === "ONSPOT"
+                              ? "Confirming booking..."
+                              : "Opening MB WAY payment..."}
                           </>
                         ) : (
-                          "Proceed to MB WAY Payment"
+                          paymentMethod === "ONSPOT"
+                            ? "Confirm Booking (Pay on Spot)"
+                            : "Proceed to MB WAY Payment"
                         )}
                       </Button>
                     </div>

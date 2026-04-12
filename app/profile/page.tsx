@@ -43,6 +43,7 @@ import {
   type Booking,
   type BookingStatus,
 } from "@/lib/api/booking";
+import { updateCurrentUserProfile } from "@/lib/api/user";
 import {
   getOrders,
   cancelOrder,
@@ -136,6 +137,8 @@ export default function ProfilePage() {
     name: "",
     phone: "",
   });
+  const [phoneError, setPhoneError] = useState<string>("");
+  const [savingProfile, setSavingProfile] = useState(false);
   const [addressFormData, setAddressFormData] = useState({
     fullName: "",
     phone: "",
@@ -147,6 +150,7 @@ export default function ProfilePage() {
     country: "United Kingdom",
     isDefault: false,
   });
+  const [addressPhoneError, setAddressPhoneError] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -400,14 +404,71 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSaveProfile = () => {
-    // TODO: Implement profile update API
-    console.log("Saving profile:", formData);
+  const handleSaveProfile = async () => {
+    const trimmedName = formData.name.trim();
+    const trimmedPhone = formData.phone.trim();
+
+    if (!trimmedName) {
+      toast.error("Name is required");
+      return;
+    }
+
+    if (!/^\d{9,14}$/.test(trimmedPhone)) {
+      setPhoneError("Phone number must be 9 to 14 digits");
+      toast.error("Phone number must be 9 to 14 digits");
+      return;
+    }
+
+    setPhoneError("");
+    setSavingProfile(true);
+
+    try {
+      const response = await updateCurrentUserProfile({
+        name: trimmedName,
+        phone: trimmedPhone,
+      });
+
+      const updatedUser = response.user;
+      setUser(updatedUser as any);
+      setFormData({
+        name: updatedUser.name || "",
+        phone: updatedUser.phone || "",
+      });
+
+      if (typeof window !== "undefined") {
+        const existingUser = getUser() || {};
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...existingUser,
+            name: updatedUser.name,
+            phone: updatedUser.phone,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            id: updatedUser.id,
+          }),
+        );
+        window.dispatchEvent(new Event("storage"));
+      }
+
+      toast.success(response.message || "Profile updated successfully");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to update profile");
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const handleCreateAddress = async () => {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
+
+    if (!/^\d{9,14}$/.test(addressFormData.phone)) {
+      setAddressPhoneError("Phone number must be 9 to 14 digits");
+      alert("Phone number must be 9 to 14 digits");
+      return;
+    }
+    setAddressPhoneError("");
 
     setSavingAddress(true);
     try {
@@ -427,6 +488,13 @@ export default function ProfilePage() {
   const handleUpdateAddress = async (addressId: string) => {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
+
+    if (!/^\d{9,14}$/.test(addressFormData.phone)) {
+      setAddressPhoneError("Phone number must be 9 to 14 digits");
+      alert("Phone number must be 9 to 14 digits");
+      return;
+    }
+    setAddressPhoneError("");
 
     setSavingAddress(true);
     try {
@@ -502,6 +570,7 @@ export default function ProfilePage() {
       country: "United Kingdom",
       isDefault: false,
     });
+    setAddressPhoneError("");
   };
 
   // Prevent hydration mismatch
@@ -1957,20 +2026,39 @@ export default function ProfilePage() {
                               type="tel"
                               value={formData.phone}
                               onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  phone: e.target.value,
-                                })
+                                {
+                                  const rawValue = e.target.value;
+                                  const cleanedValue = rawValue.replace(/\D/g, "").slice(0, 14);
+                                  setFormData({
+                                    ...formData,
+                                    phone: cleanedValue,
+                                  });
+
+                                  if (cleanedValue.length === 0) {
+                                    setPhoneError("Phone number is required");
+                                  } else if (!/^\d{9,14}$/.test(cleanedValue)) {
+                                    setPhoneError("Phone number must be 9 to 14 digits");
+                                  } else {
+                                    setPhoneError("");
+                                  }
+                                }
                               }
-                              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
+                              className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none ${
+                                phoneError ? "border-red-400" : "border-gray-300"
+                              }`}
+                              maxLength={14}
                             />
+                            {phoneError && (
+                              <p className="text-xs text-red-600 mt-2">{phoneError}</p>
+                            )}
                           </div>
                           <div className="pt-4">
                             <Button
                               onClick={handleSaveProfile}
+                              disabled={savingProfile || !!phoneError}
                               className="bg-orange-500 hover:bg-orange-600"
                             >
-                              Save Changes
+                              {savingProfile ? "Saving..." : "Save Changes"}
                             </Button>
                           </div>
                         </div>
@@ -2046,14 +2134,29 @@ export default function ProfilePage() {
                                       <input
                                         type="tel"
                                         value={addressFormData.phone}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
+                                          const cleanedValue = e.target.value.replace(/\D/g, "").slice(0, 14);
                                           setAddressFormData({
                                             ...addressFormData,
-                                            phone: e.target.value,
-                                          })
-                                        }
-                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none"
+                                            phone: cleanedValue,
+                                          });
+
+                                          if (cleanedValue.length === 0) {
+                                            setAddressPhoneError("Phone number is required");
+                                          } else if (!/^\d{9,14}$/.test(cleanedValue)) {
+                                            setAddressPhoneError("Phone number must be 9 to 14 digits");
+                                          } else {
+                                            setAddressPhoneError("");
+                                          }
+                                        }}
+                                        className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none ${
+                                          addressPhoneError ? "border-red-400" : "border-gray-300"
+                                        }`}
+                                        maxLength={14}
                                       />
+                                      {addressPhoneError && (
+                                        <p className="text-xs text-red-600 mt-2">{addressPhoneError}</p>
+                                      )}
                                     </div>
                                     <div className="md:col-span-2">
                                       <label className="block text-sm font-medium text-gray-800 mb-2">
@@ -2264,14 +2367,29 @@ export default function ProfilePage() {
                                             <input
                                               type="tel"
                                               value={addressFormData.phone}
-                                              onChange={(e) =>
+                                              onChange={(e) => {
+                                                const cleanedValue = e.target.value.replace(/\D/g, "").slice(0, 14);
                                                 setAddressFormData({
                                                   ...addressFormData,
-                                                  phone: e.target.value,
-                                                })
-                                              }
-                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                  phone: cleanedValue,
+                                                });
+
+                                                if (cleanedValue.length === 0) {
+                                                  setAddressPhoneError("Phone number is required");
+                                                } else if (!/^\d{9,14}$/.test(cleanedValue)) {
+                                                  setAddressPhoneError("Phone number must be 9 to 14 digits");
+                                                } else {
+                                                  setAddressPhoneError("");
+                                                }
+                                              }}
+                                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                                addressPhoneError ? "border-red-400" : "border-gray-300"
+                                              }`}
+                                              maxLength={14}
                                             />
+                                            {addressPhoneError && (
+                                              <p className="text-xs text-red-600 mt-1">{addressPhoneError}</p>
+                                            )}
                                           </div>
                                           <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-1">

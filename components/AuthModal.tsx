@@ -84,6 +84,7 @@ export function AuthModal({
     confirmPassword: "",
     role: "customer" as "customer" | "salon_owner",
   });
+  const [signupPhoneError, setSignupPhoneError] = useState("");
 
   // Load Google Sign-In script
   useEffect(() => {
@@ -261,9 +262,11 @@ export function AuthModal({
 
     // Validate phone number (9 to 14 digits)
     if (signupForm.phone && !/^\d{9,14}$/.test(signupForm.phone)) {
+      setSignupPhoneError("Phone number must be 9 to 14 digits");
       toast.error("Phone number must be 9 to 14 digits");
       return;
     }
+    setSignupPhoneError("");
 
     setIsLoading(true);
     try {
@@ -712,18 +715,34 @@ export function AuthModal({
                               id="signup-phone"
                               type="tel"
                               placeholder="9 to 14 digits"
-                              className="pl-10 h-10 border-[#1e1e1e] bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all"
+                              className={`pl-10 h-10 bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all ${
+                                signupPhoneError ? "border-red-500" : "border-[#1e1e1e]"
+                              }`}
                               value={signupForm.phone}
                               onChange={(e) =>
-                                setSignupForm({
-                                  ...signupForm,
-                                  phone: e.target.value,
-                                })
+                                {
+                                  const cleanedValue = e.target.value.replace(/\D/g, "").slice(0, 14);
+                                  setSignupForm({
+                                    ...signupForm,
+                                    phone: cleanedValue,
+                                  });
+
+                                  if (cleanedValue.length === 0) {
+                                    setSignupPhoneError("Phone number is required");
+                                  } else if (!/^\d{9,14}$/.test(cleanedValue)) {
+                                    setSignupPhoneError("Phone number must be 9 to 14 digits");
+                                  } else {
+                                    setSignupPhoneError("");
+                                  }
+                                }
                               }
                               disabled={isLoading}
                               required
                               maxLength={14}
                             />
+                            {signupPhoneError && (
+                              <p className="mt-1 text-xs text-red-600">{signupPhoneError}</p>
+                            )}
                           </div>
                         </div>
                       </div>

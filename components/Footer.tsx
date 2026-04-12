@@ -186,7 +186,8 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
             {/* Copyright */}
             <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 order-1 sm:order-2 text-[#ECE3DC] text-xs sm:text-sm">
-              © {currentYear} ProBeauty. All rights reserved. Made with care
+              © ProBeauty App 2017 - {currentYear}. All rights reserved. Made
+              with care
               <div className="flex items-center gap-1.5 text-xs text-[#ECE3DC]">
                 <span className="text-red-500">❤️</span>
                 <span>for beauty enthusiasts.</span>

@@ -59,6 +59,7 @@ function CheckoutContent() {
   const [mounted, setMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
@@ -287,6 +288,23 @@ function CheckoutContent() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.name === "phone") {
+      const cleanedValue = e.target.value.replace(/\D/g, "").slice(0, 14);
+      setFormData({
+        ...formData,
+        phone: cleanedValue,
+      });
+
+      if (cleanedValue.length === 0) {
+        setPhoneError("Phone number is required");
+      } else if (!/^\d{9,14}$/.test(cleanedValue)) {
+        setPhoneError("Phone number must be 9 to 14 digits");
+      } else {
+        setPhoneError("");
+      }
+      return;
+    }
+
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -327,9 +345,11 @@ function CheckoutContent() {
 
     // Validate phone format (9 to 14 digits)
     if (!/^\d{9,14}$/.test(formData.phone)) {
+      setPhoneError("Phone number must be 9 to 14 digits");
       toast.error("Phone number must be 9 to 14 digits");
       return;
     }
+    setPhoneError("");
 
     // Save address if checkbox is checked and user is authenticated
     if (formData.saveAddress && token && isAuthenticated) {
@@ -765,12 +785,18 @@ function CheckoutContent() {
                         id="phone"
                         name="phone"
                         type="tel"
-                        placeholder="+44 7123 456789"
+                        placeholder="9 to 14 digits"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="border-2 border-gray-300 focus:border-[#FF6A00] h-11 sm:h-12 bg-transparent text-sm sm:text-base"
+                        className={`border-2 focus:border-[#FF6A00] h-11 sm:h-12 bg-transparent text-sm sm:text-base ${
+                          phoneError ? "border-red-400" : "border-gray-300"
+                        }`}
+                        maxLength={14}
                         required
                       />
+                      {phoneError && (
+                        <p className="text-xs text-red-600">{phoneError}</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
