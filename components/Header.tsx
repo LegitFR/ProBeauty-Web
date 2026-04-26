@@ -147,7 +147,7 @@ export function Header() {
             {/* Desktop Navigation - Clean and minimal */}
             <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6">
               <a
-                href="https://pro-beauty-salon-dashboard.vercel.app/"
+                href="https://salon.probeautyapp.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-white transition-colors duration-200 text-sm font-medium"
@@ -343,7 +343,7 @@ export function Header() {
                   Salons
                 </a>
                 <a
-                  href="https://pro-beauty-salon-dashboard.vercel.app/"
+                  href="https://salon.probeautyapp.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-gray-300 hover:text-white transition-colors text-sm font-medium"
