@@ -173,8 +173,18 @@ export function Newsletter() {
             transition={{ duration: 0.6, delay: 0.8 }}
             className="text-sm text-gray-500 mb-8"
           >
-            By subscribing, you agree to our Privacy Policy and Terms of
-            Service. Unsubscribe anytime.
+            By subscribing, you agree to our{" "}
+            <a href="privacy_policy" className="text-[#FF6A00] hover:underline">
+              Privacy Policy
+            </a>{" "}
+            and{" "}
+            <a
+              href="terms_of_service"
+              className="text-[#FF6A00] hover:underline"
+            >
+              Terms of Service
+            </a>
+            . Unsubscribe anytime.
           </motion.p>
 
           {/* Subscriber Count */}

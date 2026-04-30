@@ -2065,6 +2065,28 @@ export default function ProfilePage() {
                       </CardContent>
                     </Card>
 
+                    {/* Account Deletion */}
+                    <Card>
+                      <CardContent className="p-6 bg-[#ECE3DC]">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold text-[#1E1E1E]">
+                              Account Deletion
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              Review the deletion process and request account removal.
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => router.push("/account-deletion")}
+                            className="bg-[#FF6A00] hover:bg-orange-600 text-white"
+                          >
+                            View Account Deletion
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
                     {/* Saved Addresses */}
                     <Card>
                       <CardContent className="p-6 bg-[#ECE3DC]">
