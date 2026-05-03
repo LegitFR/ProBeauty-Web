@@ -2078,7 +2078,7 @@ export default function ProfilePage() {
                             </p>
                           </div>
                           <Button
-                            onClick={() => router.push("/account-deletion")}
+                            onClick={() => router.push("/remove")}
                             className="bg-[#FF6A00] hover:bg-orange-600 text-white"
                           >
                             View Account Deletion

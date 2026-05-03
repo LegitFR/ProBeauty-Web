@@ -73,6 +73,34 @@ export default function AccountDeletionPage() {
                 anonymized.
               </p>
             </section>
+
+            <section className="policy-section">
+              <h3 className="policy-section-title">Disclosures for Pro Beauty</h3>
+              <ul className="policy-list">
+                <li>
+                  <strong>Required user data types collected and/or shared: </strong>
+                  Identifiers (name, email, phone), booking and order details,
+                  saved addresses, payment metadata, and account preferences.
+                </li>
+                <li>
+                  <strong>Data sent off the device by SDKs:</strong> Google
+                  Identity Services is used for Google sign-in and transmits the
+                  ID token to Google for authentication. No other client SDKs in
+                  this app transmit personal data off-device.
+                </li>
+                <li>
+                  <strong>Data transferred from server to third parties: </strong>
+                  Payment processing data for MB WAY via If-Then Pay, order and
+                  booking details shared with the selected salon, and email
+                  delivery for OTP or account communications.
+                </li>
+                <li>
+                  <strong>Data collected or transferred through webviews: </strong>
+                  The app does not embed webviews that collect or transfer user
+                  data. Links open the user&apos;s browser to the open web.
+                </li>
+              </ul>
+            </section>
           </div>
           </section>
         </div>
