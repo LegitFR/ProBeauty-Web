@@ -110,7 +110,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
         >
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-black mb-10">
             Book Your Perfect{" "}
-            <span className="bg-linear-to-r from-orange-600 via-red-500 to-orange-600 bg-clip-text text-transparent bg-size-[400%_400%]">
+            <span className="bg-gradient-to-r text-primary bg-clip-text bg-[length:400%_400%]">
               Beauty Experience
             </span>
           </h2>

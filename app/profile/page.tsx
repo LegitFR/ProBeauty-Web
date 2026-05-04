@@ -614,7 +614,7 @@ export default function ProfilePage() {
                           </span>
                         </div>
                       </div>
-                      <button className="absolute bottom-0 right-0 w-10 h-10 bg-black rounded-full flex items-center justify-center text-white shadow-lg hover:bg-orange-600 transition-all hover:scale-110">
+                      <button className="absolute bottom-0 right-0 w-10 h-10 bg-black rounded-full flex items-center justify-center text-[#ffffff] shadow-lg hover:bg-orange-600 transition-all hover:scale-110">
                         <Camera className="h-5 w-5" />
                       </button>
                     </div>
@@ -623,11 +623,11 @@ export default function ProfilePage() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                          <h1 className="text-3xl font-bold text-[gray-900] mb-1">
                             {user.name}
                           </h1>
                           <div className="flex items-center gap-2 text-gray-600 mb-3">
-                            <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">
+                            <Badge className="bg-orange-100 text-[#1e1e1e] hover:bg-orange-100">
                               {user.role === "customer"
                                 ? "Customer"
                                 : "Salon Owner"}
@@ -638,7 +638,7 @@ export default function ProfilePage() {
                               </Badge>
                             )}
                           </div>
-                          <div className="space-y-2 text-sm text-gray-600">
+                          <div className="space-y-2 text-sm text-[#6D6E70]">
                             <div className="flex items-center gap-2">
                               <Mail className="h-4 w-4" />
                               <span>{user.email}</span>
@@ -669,7 +669,7 @@ export default function ProfilePage() {
                           <div className="text-2xl font-bold text-gray-900">
                             {bookings.length}
                           </div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-[#6D6E70]">
                             Appointments
                           </div>
                         </div>
@@ -951,16 +951,19 @@ export default function ProfilePage() {
                             <button
                               key={filter.key}
                               onClick={() => setAppointmentFilter(filter.key)}
-                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                              className={`relative px-4 pt-2 pb-3 rounded-lg text-sm font-medium transition-all ${
                                 appointmentFilter === filter.key
-                                  ? "bg-orange-500 text-white"
-                                  : "bg-orange-50 text-orange-600 hover:bg-orange-100"
+                                  ? "bg-[#F7931D] text-[#1e1e1e]"
+                                  : "bg-orange-50 text-[#1e1e1e] hover:bg-orange-100"
                               }`}
                             >
                               {filter.label}
                               <span className="ml-2 text-xs opacity-75">
                                 ({filter.count})
                               </span>
+                              {appointmentFilter === filter.key && (
+                                <span className="pointer-events-none absolute bottom-1 left-1/2 h-1 w-6 -translate-x-1/2 rounded-full bg-[#1e1e1e]" />
+                              )}
                             </button>
                           ))}
                         </div>
@@ -1368,17 +1371,17 @@ export default function ProfilePage() {
                 )}
 
                 {activeTab === "wishlist" && (
-                  <Card>
+                  <Card className="bg-[#ECE3DC]">
                     <CardContent className="p-6 bg-[#ECE3DC]">
-                      <div className="text-center py-12 text-gray-500">
+                      <div className="text-center py-12 text-[#6D6E70]">
                         <Heart className="h-16 w-16 mx-auto mb-4 text-orange-500" />
-                        <h3 className="text-xl font-semibold mb-2">
+                        <h3 className="text-xl font-semibold mb-2 text-[#1e1e1e]">
                           Your wishlist is empty
                         </h3>
                         <p className="mb-6">Save items you love for later</p>
                         <Button
                           onClick={() => (window.location.href = "/#shop")}
-                          className="bg-orange-500 hover:bg-orange-600"
+                          className="bg-orange-500 hover:bg-orange-600 text-[#1e1e1e]"
                         >
                           Discover Products
                         </Button>
@@ -2025,31 +2028,37 @@ export default function ProfilePage() {
                             <input
                               type="tel"
                               value={formData.phone}
-                              onChange={(e) =>
-                                {
-                                  const rawValue = e.target.value;
-                                  const cleanedValue = rawValue.replace(/\D/g, "").slice(0, 14);
-                                  setFormData({
-                                    ...formData,
-                                    phone: cleanedValue,
-                                  });
+                              onChange={(e) => {
+                                const rawValue = e.target.value;
+                                const cleanedValue = rawValue
+                                  .replace(/\D/g, "")
+                                  .slice(0, 14);
+                                setFormData({
+                                  ...formData,
+                                  phone: cleanedValue,
+                                });
 
-                                  if (cleanedValue.length === 0) {
-                                    setPhoneError("Phone number is required");
-                                  } else if (!/^\d{9,14}$/.test(cleanedValue)) {
-                                    setPhoneError("Phone number must be 9 to 14 digits");
-                                  } else {
-                                    setPhoneError("");
-                                  }
+                                if (cleanedValue.length === 0) {
+                                  setPhoneError("Phone number is required");
+                                } else if (!/^\d{9,14}$/.test(cleanedValue)) {
+                                  setPhoneError(
+                                    "Phone number must be 9 to 14 digits",
+                                  );
+                                } else {
+                                  setPhoneError("");
                                 }
-                              }
+                              }}
                               className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none ${
-                                phoneError ? "border-red-400" : "border-gray-300"
+                                phoneError
+                                  ? "border-red-400"
+                                  : "border-gray-300"
                               }`}
                               maxLength={14}
                             />
                             {phoneError && (
-                              <p className="text-xs text-red-600 mt-2">{phoneError}</p>
+                              <p className="text-xs text-red-600 mt-2">
+                                {phoneError}
+                              </p>
                             )}
                           </div>
                           <div className="pt-4">
@@ -2074,7 +2083,8 @@ export default function ProfilePage() {
                               Account Deletion
                             </h3>
                             <p className="text-sm text-gray-600">
-                              Review the deletion process and request account removal.
+                              Review the deletion process and request account
+                              removal.
                             </p>
                           </div>
                           <Button
@@ -2157,27 +2167,39 @@ export default function ProfilePage() {
                                         type="tel"
                                         value={addressFormData.phone}
                                         onChange={(e) => {
-                                          const cleanedValue = e.target.value.replace(/\D/g, "").slice(0, 14);
+                                          const cleanedValue = e.target.value
+                                            .replace(/\D/g, "")
+                                            .slice(0, 14);
                                           setAddressFormData({
                                             ...addressFormData,
                                             phone: cleanedValue,
                                           });
 
                                           if (cleanedValue.length === 0) {
-                                            setAddressPhoneError("Phone number is required");
-                                          } else if (!/^\d{9,14}$/.test(cleanedValue)) {
-                                            setAddressPhoneError("Phone number must be 9 to 14 digits");
+                                            setAddressPhoneError(
+                                              "Phone number is required",
+                                            );
+                                          } else if (
+                                            !/^\d{9,14}$/.test(cleanedValue)
+                                          ) {
+                                            setAddressPhoneError(
+                                              "Phone number must be 9 to 14 digits",
+                                            );
                                           } else {
                                             setAddressPhoneError("");
                                           }
                                         }}
                                         className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#FF6A00] focus:border-[#FF6A00] bg-[#ECE3DC] transition-all outline-none ${
-                                          addressPhoneError ? "border-red-400" : "border-gray-300"
+                                          addressPhoneError
+                                            ? "border-red-400"
+                                            : "border-gray-300"
                                         }`}
                                         maxLength={14}
                                       />
                                       {addressPhoneError && (
-                                        <p className="text-xs text-red-600 mt-2">{addressPhoneError}</p>
+                                        <p className="text-xs text-red-600 mt-2">
+                                          {addressPhoneError}
+                                        </p>
                                       )}
                                     </div>
                                     <div className="md:col-span-2">
@@ -2390,27 +2412,42 @@ export default function ProfilePage() {
                                               type="tel"
                                               value={addressFormData.phone}
                                               onChange={(e) => {
-                                                const cleanedValue = e.target.value.replace(/\D/g, "").slice(0, 14);
+                                                const cleanedValue =
+                                                  e.target.value
+                                                    .replace(/\D/g, "")
+                                                    .slice(0, 14);
                                                 setAddressFormData({
                                                   ...addressFormData,
                                                   phone: cleanedValue,
                                                 });
 
                                                 if (cleanedValue.length === 0) {
-                                                  setAddressPhoneError("Phone number is required");
-                                                } else if (!/^\d{9,14}$/.test(cleanedValue)) {
-                                                  setAddressPhoneError("Phone number must be 9 to 14 digits");
+                                                  setAddressPhoneError(
+                                                    "Phone number is required",
+                                                  );
+                                                } else if (
+                                                  !/^\d{9,14}$/.test(
+                                                    cleanedValue,
+                                                  )
+                                                ) {
+                                                  setAddressPhoneError(
+                                                    "Phone number must be 9 to 14 digits",
+                                                  );
                                                 } else {
                                                   setAddressPhoneError("");
                                                 }
                                               }}
                                               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
-                                                addressPhoneError ? "border-red-400" : "border-gray-300"
+                                                addressPhoneError
+                                                  ? "border-red-400"
+                                                  : "border-gray-300"
                                               }`}
                                               maxLength={14}
                                             />
                                             {addressPhoneError && (
-                                              <p className="text-xs text-red-600 mt-1">{addressPhoneError}</p>
+                                              <p className="text-xs text-red-600 mt-1">
+                                                {addressPhoneError}
+                                              </p>
                                             )}
                                           </div>
                                           <div className="md:col-span-2">
@@ -2757,7 +2794,9 @@ export default function ProfilePage() {
                   {/* Salon Info */}
                   {selectedOrder.salon && (
                     <div className="p-4 border-2 border-[#1E1E1E]/20 rounded-xl bg-[#ECE3DC]">
-                      <h3 className="font-semibold mb-2 text-[#1E1E1E]">Salon Information</h3>
+                      <h3 className="font-semibold mb-2 text-[#1E1E1E]">
+                        Salon Information
+                      </h3>
                       <div className="text-sm text-gray-600">
                         <p className="font-medium">
                           {selectedOrder.salon.name}
@@ -2791,8 +2830,8 @@ export default function ProfilePage() {
                             <img
                               src={item.product.images[0]}
                               alt={item.product.title || "Product"}
-                               className="w-16 h-16 object-cover rounded-lg border border-[#1E1E1E]/20"
-                             />
+                              className="w-16 h-16 object-cover rounded-lg border border-[#1E1E1E]/20"
+                            />
                           )}
                           <div className="flex-1">
                             <p className="font-medium">

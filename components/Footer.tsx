@@ -58,7 +58,11 @@ export function Footer() {
             <div className="col-span-2 md:col-span-2 lg:col-span-2">
               <div className="mb-5">
                 <h3 className="font-display text-2xl sm:text-3xl font-bold mb-4">
-                  <img src={footerLogo.src} alt="ProBeauty Logo" />
+                  <img
+                    src={footerLogo.src}
+                    alt="ProBeauty Logo"
+                    className="h-9 sm:h-10 w-auto"
+                  />
                 </h3>
                 <p className="text-[#ECE3DC] text-sm leading-relaxed max-w-sm">
                   Your ultimate destination for premium beauty products and

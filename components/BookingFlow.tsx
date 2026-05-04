@@ -1931,7 +1931,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                     disabled={!slot.available || !!slotValidationLoading}
                                     className={`p-4 text-center rounded-lg border-2 transition-all duration-200 ${
                                       selectedTime === slot.startTime
-                                        ? "border-[#FF7A00] bg-orange-50 text-[#FF7A00] font-semibold"
+                                        ? "border-[#FF7A00] bg-orange-50 text-white font-semibold"
                                       : slot.available
                                         ? "border-[#CBCBCB] hover:border-[#1E1E1E] bg-[#ECE3DC] text-[#1E1E1E] hover:bg-[#CBCBCB]"
                                           : "border-[#CBCBCB] bg-[#CBCBCB] text-[#616161] cursor-not-allowed"

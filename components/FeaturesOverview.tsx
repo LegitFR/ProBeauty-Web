@@ -50,7 +50,7 @@ export function FeaturesOverview() {
         >
           <h2 className="font-display text-4xl md:text-5xl font-semibold text-black mb-4">
             Everything You Need for{" "}
-            <span className="text-[#FF6A00]">Beautiful You</span>
+            <span className="text-[#F7931D]">Beautiful You</span>
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto font-body">
             Experience the future of beauty with our comprehensive platform
@@ -82,7 +82,7 @@ export function FeaturesOverview() {
                   </motion.div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-display font-bold text-black mb-3 group-hover:text-[#FF6A00] transition-colors duration-300">
+                  <h3 className="text-xl font-display font-bold text-black mb-3 group-hover:text-[#F7914E] transition-colors duration-300">
                     {feature.title}
                   </h3>
 

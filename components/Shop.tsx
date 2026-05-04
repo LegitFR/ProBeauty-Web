@@ -390,7 +390,7 @@ export function Shop() {
             transition={{ duration: 8, repeat: Infinity }}
           >
             <span className="mr-4">Special Offers</span>
-            <span className="bg-gradient-to-r from-orange-600 via-red-500 to-orange-600 bg-clip-text text-transparent bg-[length:400%_400%]">
+            <span className="bg-gradient-to-r text-primary bg-clip-text bg-[length:400%_400%]">
               Beauty Products
             </span>
           </motion.h2>

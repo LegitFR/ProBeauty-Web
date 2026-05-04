@@ -139,7 +139,7 @@ export function Header() {
                 <img
                   src={logoImage.src}
                   alt="ProBeauty"
-                  className="h-6 sm:h-7 w-auto"
+                  className="h-7 sm:h-8 w-auto"
                 />
               </div>
             </Link>
@@ -188,13 +188,13 @@ export function Header() {
                         </p>
                       </div>
                       <Link href="/profile">
-                        <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-orange-500 flex items-center space-x-2">
+                        <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-[#F7931D] flex items-center space-x-2">
                           <User className="h-4 w-4" />
                           <span>My Profile</span>
                         </button>
                       </Link>
                       {/* <Link href="/profile/settings">
-                        <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                        <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-[#F7931D] flex items-center space-x-2">
                           <Settings className="h-4 w-4" />
                           <span>Settings</span>
                         </button>
@@ -249,7 +249,7 @@ export function Header() {
               </button>
               <Button
                 onClick={() => navigationActions.shop()}
-                className="bg-linear-to-r from-[#E66B02] to-[#F44A01] hover:bg-orange-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                className="bg-[#F7931D] text-white px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200"
               >
                 Get Started
               </Button>
