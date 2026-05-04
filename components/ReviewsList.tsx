@@ -79,7 +79,7 @@ export function ReviewsList({
       fetchReviews(currentPage);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete review"
+        error instanceof Error ? error.message : "Failed to delete review",
       );
     }
   };
@@ -97,7 +97,7 @@ export function ReviewsList({
           <Star
             key={star}
             className={`w-4 h-4 ${
-              star <= rating ? "fill-[#FF7A00] text-[#FF7A00]" : "text-gray-300"
+              star <= rating ? "fill-[#F7931D] text-[#F7931D]" : "text-gray-300"
             }`}
           />
         ))}
@@ -127,7 +127,7 @@ export function ReviewsList({
       {total > 0 && (
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Star className="w-6 h-6 fill-[#FF7A00] text-[#FF7A00]" />
+            <Star className="w-6 h-6 fill-[#F7931D] text-[#F7931D]" />
             <span className="text-2xl font-bold text-black">
               {averageRating.toFixed(1)}
             </span>

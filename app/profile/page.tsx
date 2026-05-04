@@ -826,8 +826,8 @@ export default function ProfilePage() {
                                 <Badge
                                   className={`text-xs h-fit px-3 py-1 font-medium ${
                                     booking.status === "CONFIRMED"
-                                      ? "bg-gradient-to-r from-orange-100 to-orange-200 text-[#FF6A00] border-orange-300"
-                                      : "bg-gradient-to-r from-amber-100 to-amber-200 text-amber-700 border-amber-300"
+                                      ? "bg-gradient-to-r from-orange-100 to-orange-200 text-[#1e1e1e] border-orange-300"
+                                      : "bg-gradient-to-r from-amber-100 to-amber-200 text-[#1e1e1e] border-amber-300"
                                   }`}
                                 >
                                   {booking.status.charAt(0) +
@@ -1443,7 +1443,7 @@ export default function ProfilePage() {
                                               key={star}
                                               className={`w-4 h-4 ${
                                                 star <= review.rating
-                                                  ? "fill-yellow-400 text-yellow-400"
+                                                  ? "fill-[#F7931D] text-[#F7931D]"
                                                   : "text-gray-300"
                                               }`}
                                             />
@@ -1576,7 +1576,7 @@ export default function ProfilePage() {
                       open={showEditDialog}
                       onOpenChange={setShowEditDialog}
                     >
-                      <DialogContent className="max-w-2xl">
+                      <DialogContent className="max-w-2xl border-2 border-[#1E1E1E] bg-[#ECE3DC] shadow-2xl">
                         <DialogHeader>
                           <DialogTitle>Edit Your Review</DialogTitle>
                         </DialogHeader>
@@ -1692,7 +1692,7 @@ export default function ProfilePage() {
                                               key={star}
                                               className={`w-4 h-4 ${
                                                 star <= review.rating
-                                                  ? "fill-yellow-400 text-yellow-400"
+                                                  ? "fill-[#F7931D] text-[#F7931D]"
                                                   : "text-gray-300"
                                               }`}
                                             />
@@ -2604,7 +2604,7 @@ export default function ProfilePage() {
                                                 {address.fullName}
                                               </h4>
                                               {address.isDefault && (
-                                                <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">
+                                                <Badge className="bg-orange-100 text-[#1e1e1e] hover:bg-orange-100">
                                                   Default
                                                 </Badge>
                                               )}
@@ -2670,7 +2670,7 @@ export default function ProfilePage() {
                                                   address.id,
                                                 )
                                               }
-                                              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                              className="bg-[#F7931D] text-[#1E1E1E] hover:text-orange-700 hover:bg-orange-50"
                                             >
                                               <Check className="h-3.5 w-3.5 mr-1" />
                                               Set as Default
@@ -2698,7 +2698,7 @@ export default function ProfilePage() {
 
           {/* Review Dialog */}
           <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl border-2 border-[#1E1E1E] bg-[#ECE3DC] shadow-2xl">
               <DialogHeader>
                 <DialogTitle>Write a Review</DialogTitle>
               </DialogHeader>

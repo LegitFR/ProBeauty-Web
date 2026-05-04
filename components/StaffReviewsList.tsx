@@ -90,7 +90,7 @@ export default function StaffReviewsList({
             {totalRatings > 0 && (
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex items-center gap-1">
-                  <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
+                  <Star className="h-5 w-5 fill-[#F7931D] text-[#F7931D]" />
                   <span className="text-xl font-bold text-[#8B7355]">
                     {averageRating?.toFixed(1)}
                   </span>
@@ -108,7 +108,7 @@ export default function StaffReviewsList({
       {reviews.length === 0 ? (
         <Card className="border-[#D4C5B9] bg-[#ECE3DC]">
           <CardContent className="py-12 text-center">
-            <Star className="h-12 w-12 text-[#8B7355]/30 mx-auto mb-4" />
+            <Star className="h-12 w-12 text-[#F7931D]/30 mx-auto mb-4" />
             <p className="text-[#8B7355]/70">No reviews yet</p>
             <p className="text-sm text-[#8B7355]/50 mt-1">
               Be the first to review this staff member
@@ -150,8 +150,8 @@ export default function StaffReviewsList({
                                 key={star}
                                 className={`h-4 w-4 ${
                                   star <= review.rating
-                                    ? "fill-amber-400 text-amber-400"
-                                    : "text-[#8B7355]/20"
+                                    ? "fill-[#F7931D] text-[#F7931D]"
+                                    : "text-[#F7931D]/20"
                                 }`}
                               />
                             ))}

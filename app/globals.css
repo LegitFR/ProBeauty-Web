@@ -5421,6 +5421,16 @@ html {
     color: #6d6e70;
   }
 
+  .text-\[\#F7931D\],
+  .text-\[\#f7931d\] {
+    color: #f7931d;
+  }
+
+  .fill-\[\#F7931D\],
+  .fill-\[\#f7931d\] {
+    fill: #f7931d;
+  }
+
   .text-white {
     color: #ffffff;
   }

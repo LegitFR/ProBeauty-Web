@@ -86,7 +86,7 @@ export function Testimonials() {
                     {[...Array(testimonial.rating)].map((_, i) => (
                       <Star
                         key={i}
-                        className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-[#FF6A00] text-[#FF6A00]"
+                        className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-[#F7931D] text-[#F7931D]"
                       />
                     ))}
                   </div>
@@ -134,8 +134,8 @@ export function Testimonials() {
                     key={i}
                     className={`h-4 w-4 sm:h-5 sm:w-5 ${
                       i < 4
-                        ? "fill-[#FF6A00] text-[#FF6A00]"
-                        : "fill-[#FF6A00]/50 text-[#FF6A00]/50"
+                        ? "fill-[#F7931D] text-[#F7931D]"
+                        : "fill-[#F7931D]/50 text-[#F7931D]/50"
                     }`}
                   />
                 ))}

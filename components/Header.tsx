@@ -139,7 +139,7 @@ export function Header() {
                 <img
                   src={logoImage.src}
                   alt="ProBeauty"
-                  className="h-7 sm:h-8 w-auto"
+                  className="h-[34px] sm:h-[38px] w-auto"
                 />
               </div>
             </Link>

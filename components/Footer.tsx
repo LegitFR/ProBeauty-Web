@@ -61,7 +61,7 @@ export function Footer() {
                   <img
                     src={footerLogo.src}
                     alt="ProBeauty Logo"
-                    className="h-9 sm:h-10 w-auto"
+                    className="h-11 sm:h-12 w-auto"
                   />
                 </h3>
                 <p className="text-[#ECE3DC] text-sm leading-relaxed max-w-sm">

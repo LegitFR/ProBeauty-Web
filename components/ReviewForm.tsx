@@ -74,7 +74,7 @@ export function ReviewForm({
       onSuccess?.();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to submit review"
+        error instanceof Error ? error.message : "Failed to submit review",
       );
     } finally {
       setIsSubmitting(false);
@@ -112,7 +112,7 @@ export function ReviewForm({
               <Star
                 className={`w-8 h-8 transition-colors ${
                   star <= (hoveredRating || rating)
-                    ? "fill-yellow-400 text-yellow-400"
+                    ? "fill-[#F7931D] text-[#F7931D]"
                     : "text-gray-300"
                 }`}
               />
@@ -153,8 +153,8 @@ export function ReviewForm({
           {isSubmitting
             ? "Submitting..."
             : existingReview
-            ? "Update Review"
-            : "Submit Review"}
+              ? "Update Review"
+              : "Submit Review"}
         </Button>
         {onCancel && (
           <Button
