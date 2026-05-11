@@ -7,11 +7,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.BACKEND_API_URL ||
-  "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ productId: string }> }
+  { params }: { params: Promise<{ productId: string }> },
 ) {
   try {
     const token = request.headers.get("authorization");
@@ -19,7 +20,7 @@ export async function PATCH(
     if (!token) {
       return NextResponse.json(
         { message: "User not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -31,7 +32,7 @@ export async function PATCH(
     if (!quantity) {
       return NextResponse.json(
         { message: "quantity is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -51,14 +52,14 @@ export async function PATCH(
     console.error("[Cart Item API] PATCH Error:", error);
     return NextResponse.json(
       { message: "Failed to update cart item", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ productId: string }> }
+  { params }: { params: Promise<{ productId: string }> },
 ) {
   try {
     const token = request.headers.get("authorization");
@@ -66,7 +67,7 @@ export async function DELETE(
     if (!token) {
       return NextResponse.json(
         { message: "User not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
     const receivedParams = await params;
@@ -78,7 +79,7 @@ export async function DELETE(
           "Content-Type": "application/json",
           Authorization: token,
         },
-      }
+      },
     );
 
     const data = await response.json();
@@ -88,7 +89,7 @@ export async function DELETE(
     console.error("[Cart Item API] DELETE Error:", error);
     return NextResponse.json(
       { message: "Failed to remove cart item", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -4,7 +4,10 @@
  * Client-side functions use Next.js API proxy route
  */
 
-const API_BASE_URL = "https://probeauty-backend.onrender.com/api/v1";
+const API_BASE_URL =
+  process.env.BACKEND_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 const CLIENT_API_BASE_URL = "/api/products";
 
 interface ApiProduct {

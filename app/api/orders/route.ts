@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_API_URL ||
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,7 +11,7 @@ export async function GET(request: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { message: "User not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       return NextResponse.json(
         { message: data.message || "Failed to fetch orders" },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching orders:", error);
     return NextResponse.json(
       { message: error.message || "Failed to fetch orders" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { message: "User not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       return NextResponse.json(
         { message: data.message || "Failed to create order" },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -81,7 +83,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating order:", error);
     return NextResponse.json(
       { message: error.message || "Failed to create order" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

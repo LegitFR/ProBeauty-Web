@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.BACKEND_URL ||
   process.env.BACKEND_API_URL ||
-  "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 export async function GET(
   request: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ id: string; serviceId: string }> },
+  { params }: { params: Promise<{ id: string; serviceId: string }> },
 ) {
   try {
     const { id, serviceId } = await params;

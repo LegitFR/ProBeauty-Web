@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_API_URL ||
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const token = request.headers.get("authorization");
@@ -13,7 +15,7 @@ export async function PUT(
     if (!token) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -26,7 +28,7 @@ export async function PUT(
         headers: {
           Authorization: token,
         },
-      }
+      },
     );
 
     const data = await response.json();
@@ -34,7 +36,7 @@ export async function PUT(
     if (!response.ok) {
       return NextResponse.json(
         { success: false, message: data.message || "Failed to mark as read" },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -43,14 +45,14 @@ export async function PUT(
     console.error("Error marking notification as read:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const token = request.headers.get("authorization");
@@ -58,7 +60,7 @@ export async function DELETE(
     if (!token) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -71,7 +73,7 @@ export async function DELETE(
         headers: {
           Authorization: token,
         },
-      }
+      },
     );
 
     const data = await response.json();
@@ -82,7 +84,7 @@ export async function DELETE(
           success: false,
           message: data.message || "Failed to delete notification",
         },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -91,7 +93,7 @@ export async function DELETE(
     console.error("Error deleting notification:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

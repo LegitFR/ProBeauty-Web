@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.BACKEND_URL || "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_API_URL ||
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 export async function PUT(request: NextRequest) {
   try {
@@ -10,7 +12,7 @@ export async function PUT(request: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -29,7 +31,7 @@ export async function PUT(request: NextRequest) {
           success: false,
           message: data.message || "Failed to mark all as read",
         },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -38,7 +40,7 @@ export async function PUT(request: NextRequest) {
     console.error("Error marking all notifications as read:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

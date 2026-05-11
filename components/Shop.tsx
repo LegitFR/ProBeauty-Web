@@ -383,7 +383,7 @@ export function Shop() {
           className="text-center mb-12 sm:mb-16 lg:mb-20"
         >
           <motion.h2
-            className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-black mb-4 sm:mb-6 px-4"
+            className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-black mb-4 sm:mb-6 px-4"
             animate={{
               backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
             }}
@@ -394,7 +394,7 @@ export function Shop() {
               Beauty Products
             </span>
           </motion.h2>
-          <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4 py-10">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4 py-4">
             Discover premium beauty products with AI-powered recommendations and
             exclusive offers curated just for you
           </p>

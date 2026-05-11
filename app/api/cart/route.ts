@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.BACKEND_API_URL ||
-  "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 // GET /api/cart - Get cart
 // POST /api/cart/items - Add item
@@ -21,14 +22,14 @@ export async function GET(request: NextRequest) {
     const token = request.headers.get("authorization");
     console.log(
       "[Cart Proxy] Token:",
-      token ? `${token.substring(0, 30)}...` : "none"
+      token ? `${token.substring(0, 30)}...` : "none",
     );
 
     if (!token) {
       console.log("[Cart Proxy] No token provided");
       return NextResponse.json(
         { message: "User not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
       console.error("[Cart Proxy] Failed to parse response as JSON:", e);
       return NextResponse.json(
         { message: "Invalid response from backend", rawResponse: responseText },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
     console.error("[Cart Proxy] Error stack:", error.stack);
     return NextResponse.json(
       { message: "Failed to get cart", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -76,7 +77,7 @@ export async function DELETE(request: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { message: "User not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -95,7 +96,7 @@ export async function DELETE(request: NextRequest) {
     console.error("[Cart API] DELETE Error:", error);
     return NextResponse.json(
       { message: "Failed to clear cart", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -5,11 +5,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL = "https://probeauty-backend.onrender.com/api/v1";
+const API_BASE_URL =
+  process.env.BACKEND_API_URL ||
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ productId: string }> }
+  { params }: { params: Promise<{ productId: string }> },
 ) {
   try {
     const { productId } = await params;
@@ -26,7 +29,7 @@ export async function DELETE(
     if (!token) {
       return NextResponse.json(
         { message: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -43,7 +46,7 @@ export async function DELETE(
     if (!response.ok) {
       return NextResponse.json(
         { message: data.message || "Failed to remove from favourites" },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -52,7 +55,7 @@ export async function DELETE(
     console.error("Error removing from favourites:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

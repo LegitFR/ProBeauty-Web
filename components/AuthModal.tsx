@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -76,6 +76,8 @@ export function AuthModal({
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
+  const [isGoogleReady, setIsGoogleReady] = useState(false);
+  const googleInitRef = useRef(false);
   const [signupForm, setSignupForm] = useState({
     name: "",
     email: "",
@@ -87,37 +89,52 @@ export function AuthModal({
   const [signupPhoneError, setSignupPhoneError] = useState("");
 
   // Load Google Sign-In script
+  const initializeGoogle = () => {
+    if (googleInitRef.current || !window.google) return;
+    window.google.accounts.id.initialize({
+      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+      callback: (response: any) => handleGoogleSignIn(response.credential),
+      use_fedcm_for_prompt: false,
+    });
+    googleInitRef.current = true;
+    setIsGoogleReady(true);
+  };
+
   useEffect(() => {
     if (!isOpen) return;
 
+    if (window.google) {
+      initializeGoogle();
+      return;
+    }
+
+    const existingScript = document.getElementById(
+      "google-identity-service",
+    ) as HTMLScriptElement | null;
+
+    if (existingScript) {
+      existingScript.addEventListener("load", initializeGoogle);
+      return () => {
+        existingScript.removeEventListener("load", initializeGoogle);
+      };
+    }
+
     const script = document.createElement("script");
+    script.id = "google-identity-service";
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
-
-    script.onload = () => {
-      if (window.google) {
-        // Initialize Google Sign-In with FedCM disabled
-        window.google.accounts.id.initialize({
-          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-          callback: (response: any) => handleGoogleSignIn(response.credential),
-          use_fedcm_for_prompt: false, // Disable FedCM to avoid CORS issues
-        });
-      }
-    };
-
+    script.onload = initializeGoogle;
     document.body.appendChild(script);
 
     return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
+      script.onload = null;
     };
   }, [isOpen]);
 
   // Render Google Sign-In buttons when tab changes or modal opens
   useEffect(() => {
-    if (!isOpen || !window.google) return;
+    if (!isOpen || !isGoogleReady || !window.google) return;
 
     // Use a small delay to ensure DOM is ready
     const timer = setTimeout(() => {
@@ -129,10 +146,14 @@ export function AuthModal({
           // Clear existing content
           loginButton.innerHTML = "";
           // Render button
+          const width =
+            loginButton.clientWidth ||
+            loginButton.parentElement?.clientWidth ||
+            350;
           window.google!.accounts.id.renderButton(loginButton, {
             theme: "outline",
             size: "large",
-            width: loginButton.offsetWidth || 350,
+            width,
             text: "signin_with",
             shape: "rectangular",
           });
@@ -145,10 +166,14 @@ export function AuthModal({
           // Clear existing content
           signupButton.innerHTML = "";
           // Render button
+          const width =
+            signupButton.clientWidth ||
+            signupButton.parentElement?.clientWidth ||
+            350;
           window.google!.accounts.id.renderButton(signupButton, {
             theme: "outline",
             size: "large",
-            width: signupButton.offsetWidth || 350,
+            width,
             text: "signup_with",
             shape: "rectangular",
           });
@@ -157,7 +182,7 @@ export function AuthModal({
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [isOpen, activeTab]);
+  }, [isOpen, activeTab, isGoogleReady]);
 
   const handleGoogleSignIn = async (credential: string) => {
     setIsLoading(true);
@@ -716,32 +741,40 @@ export function AuthModal({
                               type="tel"
                               placeholder="9 to 14 digits"
                               className={`pl-10 h-10 bg-transparent focus:border-orange-500 focus:ring-orange-500 transition-all ${
-                                signupPhoneError ? "border-red-500" : "border-[#1e1e1e]"
+                                signupPhoneError
+                                  ? "border-red-500"
+                                  : "border-[#1e1e1e]"
                               }`}
                               value={signupForm.phone}
-                              onChange={(e) =>
-                                {
-                                  const cleanedValue = e.target.value.replace(/\D/g, "").slice(0, 14);
-                                  setSignupForm({
-                                    ...signupForm,
-                                    phone: cleanedValue,
-                                  });
+                              onChange={(e) => {
+                                const cleanedValue = e.target.value
+                                  .replace(/\D/g, "")
+                                  .slice(0, 14);
+                                setSignupForm({
+                                  ...signupForm,
+                                  phone: cleanedValue,
+                                });
 
-                                  if (cleanedValue.length === 0) {
-                                    setSignupPhoneError("Phone number is required");
-                                  } else if (!/^\d{9,14}$/.test(cleanedValue)) {
-                                    setSignupPhoneError("Phone number must be 9 to 14 digits");
-                                  } else {
-                                    setSignupPhoneError("");
-                                  }
+                                if (cleanedValue.length === 0) {
+                                  setSignupPhoneError(
+                                    "Phone number is required",
+                                  );
+                                } else if (!/^\d{9,14}$/.test(cleanedValue)) {
+                                  setSignupPhoneError(
+                                    "Phone number must be 9 to 14 digits",
+                                  );
+                                } else {
+                                  setSignupPhoneError("");
                                 }
-                              }
+                              }}
                               disabled={isLoading}
                               required
                               maxLength={14}
                             />
                             {signupPhoneError && (
-                              <p className="mt-1 text-xs text-red-600">{signupPhoneError}</p>
+                              <p className="mt-1 text-xs text-red-600">
+                                {signupPhoneError}
+                              </p>
                             )}
                           </div>
                         </div>

@@ -6,11 +6,16 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = "https://probeauty-backend.onrender.com/api/v1/auth";
+const RAW_BACKEND_BASE_URL =
+  process.env.BACKEND_API_URL ||
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
+
+const BACKEND_URL = `${RAW_BACKEND_BASE_URL.replace(/\/+$/, "")}/auth`;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  { params }: { params: Promise<{ path: string[] }> },
 ) {
   try {
     const { path: pathArray } = await params;
@@ -63,7 +68,7 @@ export async function POST(
           message:
             "Request timeout. The backend server might be starting up. Please try again in a moment.",
         },
-        { status: 504 }
+        { status: 504 },
       );
     }
 
@@ -73,7 +78,7 @@ export async function POST(
           message:
             "Backend server is waking up. Please wait a moment and try again.",
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -83,7 +88,7 @@ export async function POST(
           message:
             "Cannot connect to backend server. Please check your internet connection and try again.",
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -93,7 +98,7 @@ export async function POST(
           message:
             "Backend server is not responding. Please try again in a few moments.",
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -103,14 +108,14 @@ export async function POST(
           error.message ||
           "An error occurred connecting to the server. Please check your internet connection.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  { params }: { params: Promise<{ path: string[] }> },
 ) {
   try {
     const { path: pathArray } = await params;
@@ -141,7 +146,7 @@ export async function GET(
     console.error(`[Proxy] Error:`, error);
     return NextResponse.json(
       { message: error.message || "An error occurred" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

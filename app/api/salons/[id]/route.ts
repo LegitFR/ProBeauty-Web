@@ -7,11 +7,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.BACKEND_API_URL ||
-  "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
 
@@ -38,7 +39,7 @@ export async function GET(
     console.error("[Salon API] GET by ID Error:", error);
     return NextResponse.json(
       { message: "Failed to fetch salon", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

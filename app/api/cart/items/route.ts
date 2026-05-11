@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.BACKEND_API_URL ||
-  "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { message: "User not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     if (!productId || !quantity) {
       return NextResponse.json(
         { message: "productId and quantity are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
     console.error("[Cart Items API] POST Error:", error);
     return NextResponse.json(
       { message: "Failed to add item to cart", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

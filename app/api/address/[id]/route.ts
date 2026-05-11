@@ -9,11 +9,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.BACKEND_API_URL ||
-  "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
 
@@ -23,7 +24,7 @@ export async function PATCH(
     if (!token) {
       return NextResponse.json(
         { message: "User not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -44,14 +45,14 @@ export async function PATCH(
     console.error("[Address API] PATCH Error:", error);
     return NextResponse.json(
       { message: "Failed to update address", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   console.log("[Address Proxy] DELETE request for ID:", id);
@@ -62,7 +63,7 @@ export async function DELETE(
     if (!token) {
       return NextResponse.json(
         { message: "User not authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -87,7 +88,7 @@ export async function DELETE(
     console.error("[Address Proxy] DELETE Error:", error);
     return NextResponse.json(
       { message: "Failed to delete address", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

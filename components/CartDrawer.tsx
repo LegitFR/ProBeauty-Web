@@ -33,7 +33,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [clickedItemId, setClickedItemId] = useState<string | number | null>(
-    null
+    null,
   );
 
   // const handleProductClick = (productId: string | number) => {
@@ -111,7 +111,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   {items.map((item) => (
                     <motion.div
                       key={item.id}
-                      className="flex items-center space-x-4 bg-transparent rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="flex items-center space-x-4 bg-transparent rounded-lg p-4 cursor-pointer hover:bg-[#FF7A00] transition-colors"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >

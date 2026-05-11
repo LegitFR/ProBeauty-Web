@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.BACKEND_API_URL ||
-  "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
     if (!query || query.trim().length === 0) {
       return NextResponse.json(
         { message: "Search query is required", data: [] },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -50,14 +51,14 @@ export async function GET(request: NextRequest) {
           "Content-Type": "application/json",
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!response.ok) {
       console.error(`[Products Search API] Backend error: ${response.status}`);
       return NextResponse.json(
         { message: "Failed to search products", data: [] },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
         data: [],
         error: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

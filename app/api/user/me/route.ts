@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.BACKEND_URL ||
   process.env.BACKEND_API_URL ||
-  "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 async function proxyRequest(
   request: NextRequest,
@@ -13,7 +13,10 @@ async function proxyRequest(
   const token = request.headers.get("authorization");
 
   if (!token) {
-    return NextResponse.json({ message: "User not authenticated" }, { status: 401 });
+    return NextResponse.json(
+      { message: "User not authenticated" },
+      { status: 401 },
+    );
   }
 
   const response = await fetch(`${BACKEND_URL}/user/me`, {

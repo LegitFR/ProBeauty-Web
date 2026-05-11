@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://probeauty-backend.onrender.com/api/v1";
+  process.env.BACKEND_API_URL ||
+  process.env.BACKEND_URL ||
+  "http://vps-9ebf5d76.vps.ovh.net:5000/api/v1";
 
 export async function GET(
   request: Request,
-  props: { params: Promise<{ salonId: string }> }
+  props: { params: Promise<{ salonId: string }> },
 ) {
   const params = await props.params;
   try {
@@ -28,7 +29,7 @@ export async function GET(
       console.error(`Backend error: ${errorText}`);
       return NextResponse.json(
         { message: `Backend returned ${response.status}: ${errorText}` },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -50,7 +51,7 @@ export async function GET(
           error instanceof Error ? error.message : "Unknown error"
         }`,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
