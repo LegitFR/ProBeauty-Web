@@ -35,6 +35,7 @@ export function Header() {
   const [showCartDrawer, setShowCartDrawer] = useState(false);
   const [showWishlistDrawer, setShowWishlistDrawer] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
   const [user, setUser] = useState<any>(null);
   const { items } = useCart();
   const { getTotalItems: getWishlistTotal } = useWishlist();
@@ -71,6 +72,13 @@ export function Header() {
       window.removeEventListener("auth-expired", handleAuthExpired);
       window.removeEventListener("storage", handleStorageChange);
     };
+  }, []);
+
+  useEffect(() => {
+    const storedLanguage = window.localStorage.getItem("pb_lang");
+    if (storedLanguage) {
+      setSelectedLanguage(storedLanguage);
+    }
   }, []);
 
   useEffect(() => {
@@ -122,6 +130,24 @@ export function Header() {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const wishlistItems = getWishlistTotal();
 
+  const languageOptions = [
+    { value: "en", label: "English" },
+    { value: "fr", label: "French" },
+    { value: "de", label: "German" },
+    { value: "es", label: "Spanish" },
+    { value: "it", label: "Italian" },
+    { value: "pt", label: "Portuguese" },
+  ];
+
+  const handleLanguageChange = (nextLanguage: string) => {
+    setSelectedLanguage(nextLanguage);
+    window.localStorage.setItem("pb_lang", nextLanguage);
+    const translateWindow = window as Window & {
+      setGoogleTranslateLanguage?: (lang: string) => void;
+    };
+    translateWindow.setGoogleTranslateLanguage?.(nextLanguage);
+  };
+
   return (
     <>
       <header
@@ -161,6 +187,20 @@ export function Header() {
                 <span className="inline-block animate-pulse">🎁</span>
                 Offers
               </Link>
+              <div className="relative">
+                <select
+                  value={selectedLanguage}
+                  onChange={(event) => handleLanguageChange(event.target.value)}
+                  aria-label="Translate page"
+                  className="bg-black/60 text-gray-200 border border-gray-700 rounded-md px-2 py-1 text-xs font-medium hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  {languageOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="w-px h-4 bg-gray-700"></div>
 
               {/* Show user menu or login button */}
@@ -359,6 +399,25 @@ export function Header() {
                   <span className="animate-pulse">🎁</span>
                   Special Offers
                 </Link>
+                <div className="pt-1">
+                  <label className="block text-xs uppercase tracking-wide text-gray-400 mb-2">
+                    Translate
+                  </label>
+                  <select
+                    value={selectedLanguage}
+                    onChange={(event) =>
+                      handleLanguageChange(event.target.value)
+                    }
+                    className="w-full bg-black/60 text-gray-200 border border-gray-700 rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    aria-label="Translate page"
+                  >
+                    {languageOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
                 <div className="border-t border-gray-700 pt-3">
                   {user ? (
