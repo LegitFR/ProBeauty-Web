@@ -136,23 +136,23 @@ export function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* Right Side - Image Placeholder */}
+          {/* Right Side - Hero Visual */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.5 }}
             className="relative flex justify-center items-center"
           >
-            <div className="relative w-full max-w-[560px] mx-auto">
+            <div className="hero-svg-wrap">
               <picture>
                 <source
-                  media="(min-width: 1024px)"
-                  srcSet="/probeauty-hero-desktop.png"
+                  media="(min-width: 768px)"
+                  srcSet="/probeauty-hero-desktop-svg.svg"
                 />
                 <img
-                  src="/probeauty-hero-mobile.png"
+                  src="/probeauty-hero-mobile-svg.svg"
                   alt="Beauty service showcase"
-                  className="w-full h-auto object-contain"
+                  className="hero-svg-image"
                 />
               </picture>
             </div>

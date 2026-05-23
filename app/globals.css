@@ -32,6 +32,25 @@
   padding-bottom: 3.5rem;
 }
 
+/* Hero SVG artwork */
+.hero-svg-wrap {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.hero-svg-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+@media (max-width: 767px) {
+  .hero-svg-wrap {
+    max-width: 420px;
+  }
+}
+
 /* Themed section card for policy pages */
 .theme-section-card {
   background: #ece3dc;
