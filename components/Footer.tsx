@@ -76,19 +76,19 @@ export function Footer() {
                 <div className="flex items-start gap-2.5">
                   <Mail className="h-4 w-4 text-[#F44A01] flex-shrink-0 mt-0.5" />
                   <span className="text-[#ECE3DC] text-sm">
-                    hello@probeauty.com
+                    info@probeautyapp.net
                   </span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <Phone className="h-4 w-4 text-[#F44A01] flex-shrink-0 mt-0.5" />
                   <span className="text-[#ECE3DC] text-sm">
-                    (555) - 123-4567
+                    00351 965091300
                   </span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <MapPin className="h-4 w-4 text-[#F44A01] flex-shrink-0 mt-0.5" />
                   <span className="text-[#ECE3DC] text-sm">
-                    123 Beauty Street, NYC 10001
+                    Ferreiros, Amares, Portugal
                   </span>
                 </div>
               </div>
