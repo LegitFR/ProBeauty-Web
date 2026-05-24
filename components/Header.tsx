@@ -135,7 +135,6 @@ export function Header() {
     { value: "fr", label: "French" },
     { value: "de", label: "German" },
     { value: "es", label: "Spanish" },
-    { value: "it", label: "Italian" },
     { value: "pt", label: "Portuguese" },
   ];
 
