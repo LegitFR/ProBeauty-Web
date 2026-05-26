@@ -15,13 +15,14 @@ import { CartProvider } from "../components/CartContext";
 import { WishlistProvider } from "../components/WishlistContext";
 import { Toaster } from "../components/Toaster";
 import { Salon } from "@/lib/api/salon";
+import { navigateWithTranslate } from "@/lib/utils/translateNavigation";
 
 export default function HomeClient() {
   const router = useRouter();
 
   const handleBookAppointment = (salon: Salon) => {
     // Navigate to the booking page
-    router.push(`/salons/${salon.id}/book`);
+    navigateWithTranslate(router, `/salons/${salon.id}/book`);
   };
 
   return (

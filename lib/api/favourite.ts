@@ -39,20 +39,26 @@ export async function addToFavourites(
  */
 export async function getFavourites(
   token: string,
-  page = 1,
-  limit = 10,
+  page?: number,
+  limit?: number,
 ): Promise<FavouritesResponse> {
-  const params = new URLSearchParams({
-    page: page.toString(),
-    limit: limit.toString(),
-  });
+  const params = new URLSearchParams();
 
-  return await fetchJsonWithAuth<FavouritesResponse>(
-    `${API_BASE_URL}?${params}`,
-    {
-      method: "GET",
-    },
-  );
+  if (page !== undefined) {
+    params.set("page", page.toString());
+  }
+
+  if (limit !== undefined) {
+    params.set("limit", limit.toString());
+  }
+
+  const url = params.toString()
+    ? `${API_BASE_URL}?${params.toString()}`
+    : API_BASE_URL;
+
+  return await fetchJsonWithAuth<FavouritesResponse>(url, {
+    method: "GET",
+  });
 }
 
 /**

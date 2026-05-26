@@ -17,9 +17,13 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useOffers } from "@/lib/hooks/useOffers";
 import { OfferBadge } from "@/components/OfferBadge";
+import { navigateWithTranslate } from "@/lib/utils/translateNavigation";
 
 export default function SalonsPage() {
   const router = useRouter();
+  const handleTranslatedNavigation = (href: string) => {
+    navigateWithTranslate(router, href);
+  };
   const [salons, setSalons] = useState<Salon[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -65,7 +69,7 @@ export default function SalonsPage() {
 
   const handleAuthClose = () => {
     if (!isAuthenticated()) {
-      router.push("/");
+      handleTranslatedNavigation("/");
     } else {
       setShowAuthModal(false);
       loadSalons();
@@ -211,7 +215,9 @@ export default function SalonsPage() {
                     <Card
                       key={salon.id}
                       className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] shadow-md hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden flex flex-col cursor-pointer group"
-                      onClick={() => router.push(`/salons/${salon.id}/book`)}
+                      onClick={() =>
+                        handleTranslatedNavigation(`/salons/${salon.id}/book`)
+                      }
                     >
                       {/* Image Section */}
                       <div className="relative aspect-video overflow-hidden bg-transparent p-4">
@@ -279,7 +285,9 @@ export default function SalonsPage() {
                       <Button
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/salons/${salon.id}/book`);
+                          handleTranslatedNavigation(
+                            `/salons/${salon.id}/book`,
+                          );
                         }}
                         className="w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 bg-[#1E1E1E] hover:bg-[#2a2a2a] text-[#ECE3DC] font-medium text-xs p-7"
                       >

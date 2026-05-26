@@ -281,236 +281,243 @@ function ProductsContent({ products }: ProductsClientProps) {
               >
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
-                {showFilters && <X className="h-4 w-4 ml-2" />}
+                <X
+                  className={`h-4 w-4 ml-2 ${showFilters ? "block" : "hidden"}`}
+                />
               </Button>
             </div>
 
             {/* Expanded Filters */}
-            {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-              >
-                {/* Category Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-[#1E1E1E] mb-2 font-['Poppins']">
-                    Category
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {categories.map((cat) => (
+            <motion.div
+              initial={false}
+              animate={{
+                opacity: showFilters ? 1 : 0,
+                height: showFilters ? "auto" : 0,
+              }}
+              className={`mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${
+                showFilters ? "block" : "hidden"
+              }`}
+              aria-hidden={!showFilters}
+            >
+              {/* Category Filter */}
+              <div>
+                <label className="block text-sm font-medium text-[#1E1E1E] mb-2 font-['Poppins']">
+                  Category
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border-2 ${
+                        selectedCategory === cat
+                          ? "bg-[#F44A01] text-[#ECE3DC] border-[#F44A01]"
+                          : "bg-[#ECE3DC] text-[#1E1E1E] hover:bg-[#CBCBCB] border-[#1E1E1E]"
+                      }`}
+                    >
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price Range Filter */}
+              <div>
+                <label className="block text-sm font-medium text-[#1E1E1E] mb-2 font-['Poppins']">
+                  Price Range
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {["all", "under50", "50-100", "100-200", "over200"].map(
+                    (range) => (
                       <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
+                        key={range}
+                        onClick={() => setPriceRange(range)}
                         className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border-2 ${
-                          selectedCategory === cat
+                          priceRange === range
                             ? "bg-[#F44A01] text-[#ECE3DC] border-[#F44A01]"
                             : "bg-[#ECE3DC] text-[#1E1E1E] hover:bg-[#CBCBCB] border-[#1E1E1E]"
                         }`}
                       >
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                        {range === "all" && "All Prices"}
+                        {range === "under50" && "Under £50"}
+                        {range === "50-100" && "£50 - £100"}
+                        {range === "100-200" && "£100 - £200"}
+                        {range === "over200" && "Over £200"}
                       </button>
-                    ))}
-                  </div>
+                    ),
+                  )}
                 </div>
+              </div>
 
-                {/* Price Range Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-[#1E1E1E] mb-2 font-['Poppins']">
-                    Price Range
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {["all", "under50", "50-100", "100-200", "over200"].map(
-                      (range) => (
-                        <button
-                          key={range}
-                          onClick={() => setPriceRange(range)}
-                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border-2 ${
-                            priceRange === range
-                              ? "bg-[#F44A01] text-[#ECE3DC] border-[#F44A01]"
-                              : "bg-[#ECE3DC] text-[#1E1E1E] hover:bg-[#CBCBCB] border-[#1E1E1E]"
-                          }`}
-                        >
-                          {range === "all" && "All Prices"}
-                          {range === "under50" && "Under £50"}
-                          {range === "50-100" && "£50 - £100"}
-                          {range === "100-200" && "£100 - £200"}
-                          {range === "over200" && "Over £200"}
-                        </button>
-                      ),
-                    )}
-                  </div>
-                </div>
-
-                {/* Active Filters Summary */}
-                <div className="sm:col-span-2 lg:col-span-1">
-                  <label className="block text-sm font-medium text-[#1E1E1E] mb-2 font-['Poppins']">
-                    Active Filters
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-[#616161] font-['Poppins']">
-                      {filteredProducts.length} of {products.length} products
-                    </span>
-                    {(selectedCategory !== "all" ||
+              {/* Active Filters Summary */}
+              <div className="sm:col-span-2 lg:col-span-1">
+                <label className="block text-sm font-medium text-[#1E1E1E] mb-2 font-['Poppins']">
+                  Active Filters
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-[#616161] font-['Poppins']">
+                    {filteredProducts.length} of {products.length} products
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedCategory("all");
+                      setPriceRange("all");
+                      setSearchQuery("");
+                    }}
+                    className={`text-[#F44A01] hover:text-[#F44A01] hover:bg-[#F44A01]/10 rounded-xl ${
+                      selectedCategory !== "all" ||
                       priceRange !== "all" ||
-                      searchQuery) && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedCategory("all");
-                          setPriceRange("all");
-                          setSearchQuery("");
-                        }}
-                        className="text-[#F44A01] hover:text-[#F44A01] hover:bg-[#F44A01]/10 rounded-xl"
-                      >
-                        Clear All
-                      </Button>
-                    )}
-                  </div>
+                      searchQuery
+                        ? "inline-flex"
+                        : "hidden"
+                    }`}
+                  >
+                    Clear All
+                  </Button>
                 </div>
-              </motion.div>
-            )}
+              </div>
+            </motion.div>
           </div>
         </section>
 
         {/* Products Grid */}
         <section className="py-8 sm:py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {filteredProducts.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-16"
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: filteredProducts.length === 0 ? 1 : 0 }}
+              className={`text-center py-16 ${
+                filteredProducts.length === 0 ? "block" : "hidden"
+              }`}
+              aria-hidden={filteredProducts.length !== 0}
+            >
+              <div className="w-24 h-24 bg-[#CBCBCB] rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="h-12 w-12 text-[#616161]" />
+              </div>
+              <h3 className="text-2xl font-bold text-[#1E1E1E] mb-2 font-['Playfair_Display']">
+                No products found
+              </h3>
+              <p className="text-[#616161] mb-6 font-['Poppins']">
+                Try adjusting your filters or search query
+              </p>
+              <Button
+                onClick={() => {
+                  setSelectedCategory("all");
+                  setPriceRange("all");
+                  setSearchQuery("");
+                }}
+                className="bg-[#F44A01] hover:bg-[#FF6A00] text-[#ECE3DC] rounded-xl font-['Poppins']"
               >
-                <div className="w-24 h-24 bg-[#CBCBCB] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="h-12 w-12 text-[#616161]" />
-                </div>
-                <h3 className="text-2xl font-bold text-[#1E1E1E] mb-2 font-['Playfair_Display']">
-                  No products found
-                </h3>
-                <p className="text-[#616161] mb-6 font-['Poppins']">
-                  Try adjusting your filters or search query
-                </p>
-                <Button
-                  onClick={() => {
-                    setSelectedCategory("all");
-                    setPriceRange("all");
-                    setSearchQuery("");
-                  }}
-                  className="bg-[#F44A01] hover:bg-[#FF6A00] text-[#ECE3DC] rounded-xl font-['Poppins']"
-                >
-                  Clear Filters
-                </Button>
-              </motion.div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                {filteredProducts.map((product, index) => {
-                  const isAdded = addedItems.has(product.id);
-                  const isFavorite = isInWishlist(product.id);
-                  const productOffers = getProductOffers(
-                    product.id,
-                    product.salonId,
-                  );
-                  const bestOffer = productOffers[0]; // Show the first/best offer
+                Clear Filters
+              </Button>
+            </motion.div>
 
-                  return (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05, duration: 0.4 }}
-                      whileHover={{ y: -8, scale: 1.02 }}
-                      className="group h-full rounded-3xl"
-                    >
-                      <Card className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] shadow-md hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden flex flex-col">
-                        {/* Image Section - Matching home page design */}
-                        <div className="relative aspect-[4/3] overflow-hidden bg-transparent p-4">
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-lg"
-                          />
+            <div
+              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 ${
+                filteredProducts.length === 0 ? "hidden" : "grid"
+              }`}
+              aria-hidden={filteredProducts.length === 0}
+            >
+              {filteredProducts.map((product, index) => {
+                const isAdded = addedItems.has(product.id);
+                const isFavorite = isInWishlist(product.id);
+                const productOffers = getProductOffers(
+                  product.id,
+                  product.salonId,
+                );
+                const bestOffer = productOffers[0];
 
-                          {/* Offer Badge - Top Left */}
-                          {bestOffer && (
-                            <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
-                              <OfferBadge offer={bestOffer} size="sm" />
-                              <OfferTimer endsAt={bestOffer.endsAt} />
-                            </div>
-                          )}
+                return (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05, duration: 0.4 }}
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    className="group h-full rounded-3xl"
+                  >
+                    <Card className="h-full bg-[#ECE3DC] border-4 border-[#1E1E1E] shadow-md hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden flex flex-col">
+                      {/* Image Section - Matching home page design */}
+                      <div className="relative aspect-[4/3] overflow-hidden bg-transparent p-4">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-lg"
+                        />
 
-                          {/* Wishlist Button - Top Right */}
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => handleToggleWishlist(product)}
-                            className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md z-10 border border-gray-200"
-                          >
-                            <Heart
-                              className={`h-3 w-3 transition-colors ${
-                                isFavorite
-                                  ? "fill-red-500 text-red-500"
-                                  : "text-gray-400 hover:text-gray-600"
-                              }`}
-                            />
-                          </motion.button>
-                        </div>
-
-                        <CardContent className="p-2 flex flex-col flex-grow gap-y-2">
-                          {/* Brand Name in Orange */}
-                          <p className="font-normal text-[#F44A01] mb-0 text-xs">
-                            {product.brand}
-                          </p>
-
-                          {/* Product Name */}
-                          <h3 className="text-sm font-medium text-[#1E1E1E] leading-tight line-clamp-2 mb-1">
-                            {product.name}
-                          </h3>
-
-                          {/* Price Section - Matching home page */}
-                          <div className="flex items-baseline gap-1.5 flex-wrap">
-                            <span className="text-md font-body font-medium text-[#1E1E1E]">
-                              £{product.finalPrice.toLocaleString()}
-                            </span>
-                            {/* Commented out until salon owners decide on offers */}
-                            {/* <span className="text-md text-[#616161] line-through">
-                              £{product.originalPrice.toLocaleString()}
-                            </span>
-                            <span className="text-sm text-[#1E1E1E] font-normal">
-                              ({product.discount}% off)
-                            </span> */}
+                        {/* Offer Badge - Top Left */}
+                        {bestOffer && (
+                          <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                            <OfferBadge offer={bestOffer} size="sm" />
+                            <OfferTimer endsAt={bestOffer.endsAt} />
                           </div>
-                        </CardContent>
+                        )}
 
-                        {/* Add to Cart Button - At bottom edge-to-edge like home page */}
-                        <Button
-                          onClick={() => handleAddToCart(product)}
-                          disabled={isAdded || !product.inStock}
-                          className={`w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 font-medium text-xs ${
-                            isAdded
-                              ? "bg-green-500 hover:bg-green-600 text-white"
-                              : "bg-[#1E1E1E] hover:bg-[#2a2a2a] text-white"
+                        {/* Wishlist Button - Top Right */}
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleToggleWishlist(product)}
+                          className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md z-10 border border-gray-200"
+                        >
+                          <Heart
+                            className={`h-3 w-3 transition-colors ${
+                              isFavorite
+                                ? "fill-red-500 text-red-500"
+                                : "text-gray-400 hover:text-gray-600"
+                            }`}
+                          />
+                        </motion.button>
+                      </div>
+
+                      <CardContent className="p-2 flex flex-col flex-grow gap-y-2">
+                        {/* Brand Name in Orange */}
+                        <p className="font-normal text-[#F44A01] mb-0 text-xs">
+                          {product.brand}
+                        </p>
+
+                        {/* Product Name */}
+                        <h3 className="text-sm font-medium text-[#1E1E1E] leading-tight line-clamp-2 mb-1">
+                          {product.name}
+                        </h3>
+
+                        {/* Price Section - Matching home page */}
+                        <div className="flex items-baseline gap-1.5 flex-wrap">
+                          <span className="text-md font-body font-medium text-[#1E1E1E]">
+                            £{product.finalPrice.toLocaleString()}
+                          </span>
+                        </div>
+                      </CardContent>
+
+                      {/* Add to Cart Button - At bottom edge-to-edge like home page */}
+                      <Button
+                        onClick={() => handleAddToCart(product)}
+                        disabled={isAdded || !product.inStock}
+                        className={`w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 font-medium text-xs ${
+                          isAdded
+                            ? "bg-green-500 hover:bg-green-600 text-white"
+                            : "bg-[#1E1E1E] hover:bg-[#2a2a2a] text-white"
+                        }`}
+                      >
+                        <span
+                          className={`items-center ${
+                            isAdded ? "inline-flex" : "hidden"
                           }`}
                         >
-                          {isAdded ? (
-                            <>
-                              <ShoppingCart className="h-3 w-3 mr-1" />
-                              Added
-                            </>
-                          ) : product.inStock ? (
-                            "Add to Cart"
-                          ) : (
-                            "Out of Stock"
-                          )}
-                        </Button>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
+                          <ShoppingCart className="h-3 w-3 mr-1" />
+                          Added
+                        </span>
+                        <span className={isAdded ? "hidden" : "block"}>
+                          {product.inStock ? "Add to Cart" : "Out of Stock"}
+                        </span>
+                      </Button>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         </section>
       </main>

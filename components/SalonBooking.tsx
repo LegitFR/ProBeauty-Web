@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
+import { navigateWithTranslate } from "@/lib/utils/translateNavigation";
 import { Card, CardContent, CardDescription, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import {
@@ -33,6 +34,9 @@ interface SalonBookingProps {
 
 export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
   const router = useRouter();
+  const handleTranslatedNavigation = (href: string) => {
+    navigateWithTranslate(router, href);
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [selectedService, setSelectedService] = useState("");
@@ -180,7 +184,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
         <div className="flex justify-end mb-6">
           <Button
             variant="ghost"
-            onClick={() => router.push("/salons")}
+            onClick={() => handleTranslatedNavigation("/salons")}
             className="text-black hover:text-orange-600 hover:bg-orange-50 font-medium"
           >
             <p className="text-[#000000]">View All</p>

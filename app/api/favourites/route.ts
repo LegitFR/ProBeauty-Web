@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get("page") || "1";
-    const limit = searchParams.get("limit") || "10";
+    const page = searchParams.get("page");
+    const limit = searchParams.get("limit");
 
     // Get token from Authorization header or cookies
     let token = request.cookies.get("accessToken")?.value;
@@ -81,16 +81,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(
-      `${API_BASE_URL}/favourites?page=${page}&limit=${limit}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+    const params = new URLSearchParams();
+    if (page) params.set("page", page);
+    if (limit) params.set("limit", limit);
+
+    const url = params.toString()
+      ? `${API_BASE_URL}/favourites?${params.toString()}`
+      : `${API_BASE_URL}/favourites`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
 
     const data = await response.json();
 

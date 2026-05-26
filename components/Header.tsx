@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import {
@@ -24,11 +24,13 @@ import { AuthModal } from "./AuthModal";
 import { CartDrawer } from "./CartDrawer";
 import { WishlistDrawer } from "./WishlistDrawer";
 import { getUser, logout } from "@/lib/api/auth";
+import { navigateWithTranslate } from "@/lib/utils/translateNavigation";
 import Link from "next/link";
 import logoImage from "@/public/probeauty-header.svg";
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -98,7 +100,7 @@ export function Header() {
     logout();
     setUser(null);
     setShowUserMenu(false);
-    window.location.href = "/";
+    navigateWithTranslate(router, "/");
   };
 
   useEffect(() => {
@@ -147,6 +149,10 @@ export function Header() {
     translateWindow.setGoogleTranslateLanguage?.(nextLanguage);
   };
 
+  const handleTranslatedNavigation = (href: string) => {
+    navigateWithTranslate(router, href);
+  };
+
   return (
     <>
       <header
@@ -159,7 +165,13 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo - Smaller, cleaner */}
-            <Link href="/">
+            <Link
+              href="/"
+              onClick={(event) => {
+                event.preventDefault();
+                handleTranslatedNavigation("/");
+              }}
+            >
               <div className="flex items-center">
                 <img
                   src={logoImage.src}
@@ -182,6 +194,10 @@ export function Header() {
               <Link
                 href="/offers"
                 className="text-gray-300 hover:text-white transition-colors duration-200 text-sm font-medium flex items-center gap-1.5"
+                onClick={(event) => {
+                  event.preventDefault();
+                  handleTranslatedNavigation("/offers");
+                }}
               >
                 <span className="inline-block animate-pulse">🎁</span>
                 Offers
@@ -226,7 +242,13 @@ export function Header() {
                           {user.email}
                         </p>
                       </div>
-                      <Link href="/profile">
+                      <Link
+                        href="/profile"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          handleTranslatedNavigation("/profile");
+                        }}
+                      >
                         <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-[#F7931D] flex items-center space-x-2">
                           <User className="h-4 w-4" />
                           <span>My Profile</span>
@@ -355,11 +377,15 @@ export function Header() {
                         <p className="text-gray-400 text-xs">{user.email}</p>
                       </div>
                     </div>
-                    <Link href="/profile">
-                      <button
-                        onClick={() => setIsOpen(false)}
-                        className="w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
-                      >
+                    <Link
+                      href="/profile"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        setIsOpen(false);
+                        handleTranslatedNavigation("/profile");
+                      }}
+                    >
+                      <button className="w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors text-sm font-medium flex items-center gap-2">
                         <User className="h-4 w-4" />
                         My Profile
                       </button>
@@ -393,7 +419,11 @@ export function Header() {
                 <Link
                   href="/offers"
                   className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm font-medium"
-                  onClick={() => setIsOpen(false)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setIsOpen(false);
+                    handleTranslatedNavigation("/offers");
+                  }}
                 >
                   <span className="animate-pulse">🎁</span>
                   Special Offers

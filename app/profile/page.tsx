@@ -79,9 +79,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { navigateWithTranslate } from "@/lib/utils/translateNavigation";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const handleTranslatedNavigation = (href: string) => {
+    navigateWithTranslate(router, href);
+  };
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
@@ -1167,7 +1171,7 @@ export default function ProfilePage() {
                                             size="sm"
                                             variant="outline"
                                             onClick={() =>
-                                              router.push(
+                                              handleTranslatedNavigation(
                                                 `/salons/${booking.salonId}/book`,
                                               )
                                             }
@@ -1213,7 +1217,7 @@ export default function ProfilePage() {
                               Start shopping to see your order history
                             </p>
                             <Button
-                              onClick={() => router.push("/")}
+                              onClick={() => handleTranslatedNavigation("/")}
                               className="bg-orange-500 hover:bg-orange-600"
                             >
                               Browse Products
@@ -2088,7 +2092,9 @@ export default function ProfilePage() {
                             </p>
                           </div>
                           <Button
-                            onClick={() => router.push("/remove")}
+                            onClick={() =>
+                              handleTranslatedNavigation("/remove")
+                            }
                             className="bg-[#FF6A00] hover:bg-orange-600 text-white"
                           >
                             View Account Deletion

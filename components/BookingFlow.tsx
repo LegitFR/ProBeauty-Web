@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Fragment } from "react";
 import Image from "next/image";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -69,12 +69,15 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   );
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
-  const [slotValidationLoading, setSlotValidationLoading] = useState<string | null>(null);
+  const [slotValidationLoading, setSlotValidationLoading] = useState<
+    string | null
+  >(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("MBWAY");
   const [mobileNumber, setMobileNumber] = useState<string>("");
   const [showMBWayPopup, setShowMBWayPopup] = useState(false);
-  const [mbwayPayment, setMbwayPayment] =
-    useState<MBWayPaymentResponse | null>(null);
+  const [mbwayPayment, setMbwayPayment] = useState<MBWayPaymentResponse | null>(
+    null,
+  );
   const [mbwayBookingId, setMbwayBookingId] = useState<string | null>(null);
 
   // Offer state - support multiple offers
@@ -736,17 +739,17 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
           return;
         }
 
-      console.log("=== TIME SLOT SELECTED ===");
-      console.log("Slot start time (ISO):", slot.startTime);
-      console.log(
-        "Slot start time (local):",
-        new Date(slot.startTime).toString(),
-      );
-      console.log(
-        "Slot start time (local hours):",
-        new Date(slot.startTime).getHours(),
-      );
-      setSelectedTime(slot.startTime);
+        console.log("=== TIME SLOT SELECTED ===");
+        console.log("Slot start time (ISO):", slot.startTime);
+        console.log(
+          "Slot start time (local):",
+          new Date(slot.startTime).toString(),
+        );
+        console.log(
+          "Slot start time (local hours):",
+          new Date(slot.startTime).getHours(),
+        );
+        setSelectedTime(slot.startTime);
       } catch (error) {
         toast.error("Could not validate this slot. Please try another time.");
       } finally {
@@ -1091,9 +1094,29 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     return formatted;
   };
 
+  const summaryKey = useMemo(() => {
+    const serviceIds = selectedServices.map((service) => service.id).join(",");
+    return [
+      serviceIds,
+      selectedDate,
+      selectedTime,
+      serviceStaffMap.size.toString(),
+      offerDiscount.toFixed(2),
+    ].join("|");
+  }, [
+    selectedServices,
+    selectedDate,
+    selectedTime,
+    serviceStaffMap.size,
+    offerDiscount,
+  ]);
+
   // Render booking summary sidebar
   const renderBookingSummary = () => (
-    <Card className="bg-[#ECE3DC] shadow-lg rounded-2xl overflow-hidden sticky top-6 border-none">
+    <Card
+      key={summaryKey}
+      className="bg-[#ECE3DC] shadow-lg rounded-2xl overflow-hidden sticky top-6 border-none"
+    >
       <CardContent className="p-6">
         {/* Salon Info */}
         <div className="flex items-start space-x-3 mb-6 pb-6 border-b">
@@ -1308,9 +1331,8 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
           <div className="mb-8 bg-[#ECE3DC] py-6 px-4 rounded-xl shadow-lg">
             <div className="flex items-center justify-center text-sm flex-wrap gap-y-3">
               {steps.map((step, index) => (
-                <>
+                <Fragment key={step.key}>
                   <span
-                    key={step.key}
                     className={`px-4 py-3 rounded-full transition-colors ${
                       step.active
                         ? "bg-linear-to-r from-[#FD7501] to-[#F65000] text-white font-medium"
@@ -1326,7 +1348,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                       →
                     </span>
                   )}
-                </>
+                </Fragment>
               ))}
             </div>
           </div>
@@ -1928,18 +1950,21 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                   <button
                                     key={slot.startTime}
                                     onClick={() => handleTimeSelect(slot)}
-                                    disabled={!slot.available || !!slotValidationLoading}
+                                    disabled={
+                                      !slot.available || !!slotValidationLoading
+                                    }
                                     className={`p-4 text-center rounded-lg border-2 transition-all duration-200 ${
                                       selectedTime === slot.startTime
                                         ? "border-[#FF7A00] bg-orange-50 text-white font-semibold"
-                                      : slot.available
-                                        ? "border-[#CBCBCB] hover:border-[#1E1E1E] bg-[#ECE3DC] text-[#1E1E1E] hover:bg-[#CBCBCB]"
+                                        : slot.available
+                                          ? "border-[#CBCBCB] hover:border-[#1E1E1E] bg-[#ECE3DC] text-[#1E1E1E] hover:bg-[#CBCBCB]"
                                           : "border-[#CBCBCB] bg-[#CBCBCB] text-[#616161] cursor-not-allowed"
                                     }`}
                                   >
                                     <div className="flex items-center justify-center">
                                       <span>
-                                        {slotValidationLoading === slot.startTime
+                                        {slotValidationLoading ===
+                                        slot.startTime
                                           ? "Checking..."
                                           : formatTime(slot.startTime)}
                                       </span>
@@ -2053,7 +2078,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                   </svg>
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-black">MB WAY</p>
+                                  <p className="font-semibold text-black">
+                                    MB WAY
+                                  </p>
                                   <p className="text-sm text-gray-600">
                                     Instant payment via mobile app
                                   </p>
@@ -2097,7 +2124,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                   </svg>
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-black">Pay on Spot</p>
+                                  <p className="font-semibold text-black">
+                                    Pay on Spot
+                                  </p>
                                   <p className="text-sm text-gray-600">
                                     Confirm booking now and pay at the salon
                                   </p>
@@ -2124,7 +2153,8 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                               className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#FF7A00] focus:outline-none bg-[#ECE3DC]"
                             />
                             <p className="text-xs text-gray-600 mt-2">
-                              Format: countryCode#phoneNumber (e.g., 351#912345678)
+                              Format: countryCode#phoneNumber (e.g.,
+                              351#912345678)
                             </p>
                           </div>
                         )}
@@ -2135,18 +2165,21 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                         disabled={bookingLoading}
                         className="w-full bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white py-6 rounded-xl font-semibold text-lg disabled:opacity-50"
                       >
-                        {bookingLoading ? (
-                          <>
-                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                            {paymentMethod === "ONSPOT"
-                              ? "Confirming booking..."
-                              : "Opening MB WAY payment..."}
-                          </>
-                        ) : (
-                          paymentMethod === "ONSPOT"
+                        <span
+                          className={`items-center ${
+                            bookingLoading ? "inline-flex" : "hidden"
+                          }`}
+                        >
+                          <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                          {paymentMethod === "ONSPOT"
+                            ? "Confirming booking..."
+                            : "Opening MB WAY payment..."}
+                        </span>
+                        <span className={bookingLoading ? "hidden" : "block"}>
+                          {paymentMethod === "ONSPOT"
                             ? "Confirm Booking (Pay on Spot)"
-                            : "Proceed to MB WAY Payment"
-                        )}
+                            : "Proceed to MB WAY Payment"}
+                        </span>
                       </Button>
                     </div>
                   </motion.div>
@@ -2220,56 +2253,49 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         </div>
       </div>
 
-      <AnimatePresence>
-        {showMBWayPopup && mbwayPayment && mbwayBookingId && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-[#7A5C43]/35 backdrop-blur-sm p-4 sm:p-6 flex items-center justify-center"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 24, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 16, scale: 0.98 }}
-              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border-2 border-[#1E1E1E] bg-[#ECE3DC] shadow-2xl"
-            >
-              <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#1E1E1E]/20">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-[#FF6A00] font-semibold">
-                    Secure Payment
-                  </p>
-                  <h3 className="text-lg sm:text-xl font-bold text-[#1E1E1E]">
-                    Complete MB WAY Payment
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setShowMBWayPopup(false)}
-                  className="h-9 w-9 rounded-full border border-[#1E1E1E]/20 flex items-center justify-center text-[#1E1E1E] hover:bg-[#CBCBCB] transition-colors"
-                  aria-label="Close payment popup"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+      {mbwayPayment && mbwayBookingId && (
+        <div
+          className={`fixed inset-0 z-[100] bg-[#7A5C43]/35 backdrop-blur-sm p-4 sm:p-6 items-center justify-center ${
+            showMBWayPopup ? "flex" : "hidden"
+          }`}
+          aria-hidden={!showMBWayPopup}
+        >
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border-2 border-[#1E1E1E] bg-[#ECE3DC] shadow-2xl">
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#1E1E1E]/20">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-[#FF6A00] font-semibold">
+                  Secure Payment
+                </p>
+                <h3 className="text-lg sm:text-xl font-bold text-[#1E1E1E]">
+                  Complete MB WAY Payment
+                </h3>
               </div>
+              <button
+                onClick={() => setShowMBWayPopup(false)}
+                className="h-9 w-9 rounded-full border border-[#1E1E1E]/20 flex items-center justify-center text-[#1E1E1E] hover:bg-[#CBCBCB] transition-colors"
+                aria-label="Close payment popup"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-              <div className="p-4 sm:p-5">
-                <MBWayPaymentForm
-                  payment={mbwayPayment}
-                  bookingId={mbwayBookingId}
-                  amount={(getTotalPrice() - offerDiscount).toFixed(2)}
-                  onSuccess={() => {
-                    setShowMBWayPopup(false);
-                    window.location.href = `/payment-success?bookingId=${mbwayBookingId}`;
-                  }}
-                  onError={(error) => {
-                    toast.error(error || "MB WAY payment failed");
-                  }}
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="p-4 sm:p-5">
+              <MBWayPaymentForm
+                payment={mbwayPayment}
+                bookingId={mbwayBookingId}
+                amount={(getTotalPrice() - offerDiscount).toFixed(2)}
+                onSuccess={() => {
+                  setShowMBWayPopup(false);
+                  window.location.href = `/payment-success?bookingId=${mbwayBookingId}`;
+                }}
+                onError={(error) => {
+                  toast.error(error || "MB WAY payment failed");
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

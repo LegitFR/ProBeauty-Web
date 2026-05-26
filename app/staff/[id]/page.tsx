@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import StaffReviewsList from "@/components/StaffReviewsList";
 import { getStaffById, type Staff } from "@/lib/api/staff";
 import { toast } from "sonner";
+import { navigateWithTranslate } from "@/lib/utils/translateNavigation";
 
 export default function StaffDetailsPage() {
   const params = useParams();
@@ -48,7 +49,7 @@ export default function StaffDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FAF8F5] to-[#ECE3DC] flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-[#FAF8F5] to-[#ECE3DC] flex items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-[#8B7355]" />
       </div>
     );
@@ -56,7 +57,7 @@ export default function StaffDetailsPage() {
 
   if (!staff) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FAF8F5] to-[#ECE3DC] flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-[#FAF8F5] to-[#ECE3DC] flex items-center justify-center">
         <Card className="border-[#D4C5B9] bg-[#ECE3DC] p-8">
           <p className="text-[#8B7355]">Staff member not found</p>
           <Button
@@ -92,8 +93,12 @@ export default function StaffDetailsPage() {
     );
   };
 
+  const handleTranslatedNavigation = (href: string) => {
+    navigateWithTranslate(router, href);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FAF8F5] to-[#ECE3DC]">
+    <div className="min-h-screen bg-linear-to-br from-[#FAF8F5] to-[#ECE3DC]">
       {/* Header */}
       <div className="bg-[#ECE3DC] border-b border-[#D4C5B9] sticky top-0 z-10 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
@@ -116,7 +121,7 @@ export default function StaffDetailsPage() {
             <Card className="border-[#D4C5B9] bg-[#ECE3DC] overflow-hidden">
               <CardContent className="p-0">
                 {/* Profile Image */}
-                <div className="relative h-80 w-full bg-gradient-to-br from-[#8B7355] to-[#6B5744]">
+                <div className="relative h-80 w-full bg-linear-to-br from-[#8B7355] to-[#6B5744]">
                   {staffImage ? (
                     <Image
                       src={staffImage}
@@ -272,7 +277,7 @@ export default function StaffDetailsPage() {
 
                   <Button
                     onClick={() =>
-                      router.push(
+                      handleTranslatedNavigation(
                         `/salons/${staff.salonId}?staffId=${staff.id}`,
                       )
                     }

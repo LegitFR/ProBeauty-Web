@@ -17,6 +17,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "next/navigation";
 import { cn } from "@/components/ui/utils";
+import { navigateWithTranslate } from "@/lib/utils/translateNavigation";
 
 interface NotificationListProps {
   onClose?: () => void;
@@ -66,14 +67,16 @@ export function NotificationList({ onClose }: NotificationListProps) {
         switch (notification.data.screen) {
           case "BookingDetails":
             if (notification.data.bookingId) {
-              router.push(
+              navigateWithTranslate(
+                router,
                 `/profile?tab=bookings&id=${notification.data.bookingId}`,
               );
             }
             break;
           case "OrderDetails":
             if (notification.data.orderId) {
-              router.push(
+              navigateWithTranslate(
+                router,
                 `/profile?tab=orders&id=${notification.data.orderId}`,
               );
             }

@@ -65,7 +65,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     onClose();
 
     // Navigate to checkout page
-    router.push("/checkout");
+    window.location.href = "/checkout";
   };
 
   const totalItems = getTotalItems();
@@ -201,17 +201,22 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   disabled={isCheckingOut}
                   className="w-full bg-[#F44A01] hover:bg-[#e66900] text-white py-6"
                 >
-                  {isCheckingOut ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Processing...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="h-4 w-4" />
-                      Checkout - £{totalPrice.toFixed(2)}
-                    </div>
-                  )}
+                  <span
+                    className={`items-center gap-2 ${
+                      isCheckingOut ? "inline-flex" : "hidden"
+                    }`}
+                  >
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Processing...
+                  </span>
+                  <span
+                    className={`items-center gap-2 ${
+                      isCheckingOut ? "hidden" : "inline-flex"
+                    }`}
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    Checkout - £{totalPrice.toFixed(2)}
+                  </span>
                 </Button>
 
                 <Button variant="outline" onClick={onClose} className="w-full">

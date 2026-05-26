@@ -199,8 +199,8 @@ export function Shop() {
       toast.info("Please login to view all products");
       navigationActions.login();
     } else {
-      // User logged in, navigate to products page
-      router.push("/products");
+      // Use full navigation to avoid DOM removal issues with translation tools
+      window.location.href = "/products";
     }
   };
 
@@ -599,14 +599,17 @@ export function Shop() {
                           : "bg-[#1E1E1E] hover:bg-[#2a2a2a] text-white"
                       }`}
                     >
-                      {isAdded ? (
-                        <>
-                          <Check className="h-3 w-3 mr-1" />
-                          Added
-                        </>
-                      ) : (
-                        "Add to Cart"
-                      )}
+                      <span
+                        className={`items-center ${
+                          isAdded ? "inline-flex" : "hidden"
+                        }`}
+                      >
+                        <Check className="h-3 w-3 mr-1" />
+                        Added
+                      </span>
+                      <span className={isAdded ? "hidden" : "block"}>
+                        Add to Cart
+                      </span>
                     </Button>
                   </Card>
                 </motion.div>

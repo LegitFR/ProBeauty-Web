@@ -101,13 +101,45 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
-      const response = await getFavourites(token, 1, 100); // Load all favourites
-      const wishlistItems = response.data.map(convertToWishlistItem);
+      const PAGE_LIMIT = 10;
+      let page = 1;
+      let totalPages = 1;
+      const allFavourites: Favourite[] = [];
+
+      do {
+        const response = await getFavourites(token, page, PAGE_LIMIT);
+        allFavourites.push(...response.data);
+        totalPages = response.pagination?.totalPages || 1;
+        page += 1;
+      } while (page <= totalPages);
+
+      const wishlistItems = allFavourites.map(convertToWishlistItem);
       setItems(wishlistItems);
       console.log("[WishlistContext] ✅ Loaded", wishlistItems.length, "items");
     } catch (error) {
-      console.error("[WishlistContext] Failed to load wishlist:", error);
-      // Don't show error toast on initial load
+      if (
+        error instanceof Error &&
+        error.message.includes("Validation failed in query")
+      ) {
+        try {
+          const response = await getFavourites(token);
+          const wishlistItems = response.data.map(convertToWishlistItem);
+          setItems(wishlistItems);
+          console.log(
+            "[WishlistContext] ✅ Loaded",
+            wishlistItems.length,
+            "items",
+          );
+        } catch (retryError) {
+          console.error(
+            "[WishlistContext] Failed to load wishlist after retry:",
+            retryError,
+          );
+        }
+      } else {
+        console.error("[WishlistContext] Failed to load wishlist:", error);
+        // Don't show error toast on initial load
+      }
     } finally {
       setIsLoading(false);
     }
