@@ -144,17 +144,11 @@ export function Hero() {
             className="relative flex justify-center items-center"
           >
             <div className="hero-svg-wrap relative">
-              <picture>
-                <source
-                  media="(min-width: 768px)"
-                  srcSet="/probeauty-hero-desktop-svg.svg"
-                />
-                <img
-                  src="/probeauty-hero-mobile-svg.svg"
-                  alt="Beauty service showcase"
-                  className="hero-svg-image"
-                />
-              </picture>
+              <img
+                src="/probeauty-hero-desktop-svg.svg"
+                alt="Beauty service showcase"
+                className="hero-svg-image"
+              />
               <div className="absolute -left-3 top-1/2 -translate-y-1/2 sm:-left-6 rounded-xl sm:rounded-2xl bg-white/15 px-4 py-3 sm:px-6 sm:py-4 min-w-[170px] sm:min-w-[210px] text-white backdrop-blur-2xl border border-white/20 shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
                 <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-white/70">
                   Hair Spa

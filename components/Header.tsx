@@ -158,8 +158,8 @@ export function Header() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled || needsSolidBg
-            ? "bg-black/95 backdrop-blur-md border-b border-gray-800"
-            : "bg-transparent"
+            ? "bg-[#1e1e1e] lg:bg-black/95 backdrop-blur-md border-b border-gray-800"
+            : "bg-[#1e1e1e] lg:bg-transparent"
         } py-2 sm:py-4`}
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
@@ -361,7 +361,7 @@ export function Header() {
 
           {/* Mobile Navigation */}
           {isOpen && (
-            <div className="lg:hidden bg-black/95 backdrop-blur-md border-t border-gray-800">
+            <div className="lg:hidden bg-[#1e1e1e] backdrop-blur-md border-t border-gray-800">
               <div className="px-4 py-4 space-y-3">
                 {/* User Info in Mobile Menu */}
                 {user && (
