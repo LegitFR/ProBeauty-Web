@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Facebook,
   Instagram,
@@ -9,36 +11,97 @@ import {
   Linkedin,
 } from "lucide-react";
 import footerLogo from "../public/probeauty-footer.svg";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 export function Footer() {
+  const language = useLanguage();
+  const text =
+      language === "pt"
+        ? {
+            description:
+              "O seu destino definitivo para produtos de beleza premium e serviços profissionais de salão. Com tecnologia de IA para oferecer recomendações personalizadas que realmente funcionam.",
+            headings: {
+              company: "Empresa",
+              services: "Serviços",
+              support: "Suporte",
+              legal: "Legal",
+            },
+            links: {
+              company: [
+                { name: "Sobre nós", href: "#" },
+                { name: "A nossa história", href: "#" },
+                { name: "Carreiras", href: "#" },
+                { name: "Imprensa", href: "#" },
+              ],
+              services: [
+                { name: "Reserve salão", href: "#book" },
+                { name: "compre produtos", href: "#shop" },
+                { name: "Recomendações por AI", href: "#" },
+                { name: "Listar a empresa", href: "#list-business" },
+              ],
+              support: [
+                { name: "Centro de apoio", href: "#" },
+                { name: "Contacte-nos", href: "#" },
+                { name: "Informação de entrega", href: "#" },
+                { name: "devoluções", href: "#" },
+              ],
+              legal: [
+                { name: "Política de privacidade", href: "privacy_policy" },
+                { name: "Termos do serviço", href: "#" },
+                { name: "Política de cookies", href: "#" },
+                { name: "RGPD", href: "#" },
+              ],
+            },
+            copyright: "Todos os direitos reservados. Feito com carinho",
+            passion: "para os amantes de beleza.",
+            trustedBy: "Confiado por",
+            customers: "clientes",
+            systemsOperational: "Todos os sistemas operacionais",
+          }
+      : {
+          description:
+            "Your ultimate destination for premium beauty products and professional salon services. Powered by AI to give you personalized recommendations that work.",
+          headings: {
+            company: "Company",
+            services: "Services",
+            support: "Support",
+            legal: "Legal",
+          },
+          links: {
+            company: [
+              { name: "About Us", href: "#" },
+              { name: "Our Story", href: "#" },
+              { name: "Careers", href: "#" },
+              { name: "Press", href: "#" },
+            ],
+            services: [
+              { name: "Book Salon", href: "#book" },
+              { name: "Shop Products", href: "#shop" },
+              { name: "AI Recommendations", href: "#" },
+              { name: "Business Listing", href: "#list-business" },
+            ],
+            support: [
+              { name: "Help Center", href: "#" },
+              { name: "Contact Us", href: "#" },
+              { name: "Shipping Info", href: "#" },
+              { name: "Returns", href: "#" },
+            ],
+            legal: [
+              { name: "Privacy Policy", href: "privacy_policy" },
+              { name: "Terms of Service", href: "#" },
+              { name: "Cookie Policy", href: "#" },
+              { name: "GDPR", href: "#" },
+            ],
+          },
+          copyright: "All rights reserved. Made with care",
+          passion: "for beauty enthusiasts.",
+          trustedBy: "Trusted by",
+          customers: "customers",
+          systemsOperational: "All systems operational",
+        };
   const currentYear = new Date().getFullYear();
 
-  const footerLinks = {
-    company: [
-      { name: "About Us", href: "#" },
-      { name: "Our Story", href: "#" },
-      { name: "Careers", href: "#" },
-      { name: "Press", href: "#" },
-    ],
-    services: [
-      { name: "Book Salon", href: "#book" },
-      { name: "Shop Products", href: "#shop" },
-      { name: "AI Recommendations", href: "#" },
-      { name: "Business Listing", href: "#list-business" },
-    ],
-    support: [
-      { name: "Help Center", href: "#" },
-      { name: "Contact Us", href: "#" },
-      { name: "Shipping Info", href: "#" },
-      { name: "Returns", href: "#" },
-    ],
-    legal: [
-      { name: "Privacy Policy", href: "privacy_policy" },
-      { name: "Terms of Service", href: "#" },
-      { name: "Cookie Policy", href: "#" },
-      { name: "GDPR", href: "#" },
-    ],
-  };
+  const footerLinks = text.links;
 
   const socialLinks = [
     { icon: Facebook, href: "#" },
@@ -65,9 +128,7 @@ export function Footer() {
                   />
                 </h3>
                 <p className="text-[#ECE3DC] text-sm leading-relaxed max-w-sm">
-                  Your ultimate destination for premium beauty products and
-                  professional salon services. Powered by AI to give you
-                  personalized recommendations that work.
+                  {text.description}
                 </p>
               </div>
 
@@ -110,7 +171,7 @@ export function Footer() {
             {/* Company */}
             <div>
               <h4 className="font-semibold text-[#F44A01] text-sm mb-4 lg:mb-5 pb-3">
-                Company
+                {text.headings.company}
               </h4>
               <ul className="space-y-8">
                 {footerLinks.company.map((link, index) => (
@@ -129,7 +190,7 @@ export function Footer() {
             {/* Services */}
             <div>
               <h4 className="font-semibold text-[#F44A01] text-sm mb-4 lg:mb-5 pb-3">
-                Services
+                {text.headings.services}
               </h4>
               <ul className="space-y-8">
                 {footerLinks.services.map((link, index) => (
@@ -148,7 +209,7 @@ export function Footer() {
             {/* Support */}
             <div>
               <h4 className="font-semibold text-[#F44A01] text-sm mb-4 lg:mb-5 pb-3">
-                Support
+                {text.headings.support}
               </h4>
               <ul className="space-y-8">
                 {footerLinks.support.map((link, index) => (
@@ -167,7 +228,7 @@ export function Footer() {
             {/* Legal */}
             <div>
               <h4 className="font-semibold text-[#F44A01] text-sm mb-4 lg:mb-5 pb-3">
-                Legal
+                {text.headings.legal}
               </h4>
               <ul className="space-y-8">
                 {footerLinks.legal.map((link, index) => (
@@ -189,25 +250,24 @@ export function Footer() {
         <div className="border-t border-[#3D3D3D] mt-10 py-10 border-b">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
             {/* Copyright */}
-            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 order-1 sm:order-2 text-[#ECE3DC] text-xs sm:text-sm">
-              © ProBeauty App 2017 - {currentYear}. All rights reserved. Made
-              with care
+            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 order-1 sm:order-2 text-[#ECE3DC] text-xs sm:text-sm">       
+              <span>© ProBeauty App 2017 - {currentYear}. {text.copyright}</span>
               <div className="flex items-center gap-1.5 text-xs text-[#ECE3DC]">
                 <span className="text-red-500">❤️</span>
-                <span>for beauty enthusiasts.</span>
+                <span>{text.passion}</span>
               </div>
             </div>
 
             {/* Trust Badges */}
             <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 order-1 sm:order-2">
               <div className="text-xs text-[#ECE3DC]">
-                Trusted by{" "}
+                <span>{text.trustedBy}</span>{" "}
                 <span className="text-white font-semibold">50,000+</span>{" "}
-                customers
+                <span>{text.customers}</span>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-[#ECE3DC]">
                 <span className="text-green-500">●</span>
-                <span>All systems operational</span>
+                <span>{text.systemsOperational}</span>
               </div>
             </div>
           </div>

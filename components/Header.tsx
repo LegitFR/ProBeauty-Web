@@ -131,6 +131,34 @@ export function Header() {
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const wishlistItems = getWishlistTotal();
+  const isPortuguese = selectedLanguage === "pt";
+  const text = isPortuguese
+    ? {
+        listBusiness: "Registe a sua empresa",
+        offers: "Ofertas",
+        myProfile: "Meu perfil",
+        signOut: "Sair",
+        logIn: "Login",
+        getStarted: "Comece agora",
+        shop: "Produtos",
+        salons: "Salões",
+        specialOffers: "Ofertas especiais",
+        translate: "Traduzir",
+        translateAria: "Traduzir página",
+      }
+    : {
+        listBusiness: "List Your Business",
+        offers: "Offers",
+        myProfile: "My Profile",
+        signOut: "Sign Out",
+        logIn: "Log in",
+        getStarted: "Get Started",
+        shop: "Shop",
+        salons: "Salons",
+        specialOffers: "Special Offers",
+        translate: "Translate",
+        translateAria: "Translate page",
+      };
 
   const languageOptions = [
     { value: "en", label: "English" },
@@ -147,6 +175,9 @@ export function Header() {
       setGoogleTranslateLanguage?: (lang: string) => void;
     };
     translateWindow.setGoogleTranslateLanguage?.(nextLanguage);
+    
+    // Force a reload to prevent React and Google Translate from fighting over the DOM
+    window.location.reload();
   };
 
   const handleTranslatedNavigation = (href: string) => {
@@ -189,7 +220,7 @@ export function Header() {
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-white transition-colors duration-200 text-sm font-medium"
               >
-                List Your Business
+                {text.listBusiness}
               </a>
               <Link
                 href="/offers"
@@ -200,13 +231,13 @@ export function Header() {
                 }}
               >
                 <span className="inline-block animate-pulse">🎁</span>
-                Offers
+                {text.offers}
               </Link>
               <div className="relative">
                 <select
                   value={selectedLanguage}
                   onChange={(event) => handleLanguageChange(event.target.value)}
-                  aria-label="Translate page"
+                  aria-label={text.translateAria}
                   className="bg-black/60 text-gray-200 border border-gray-700 rounded-md px-2 py-1 text-xs font-medium hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   {languageOptions.map((option) => (
@@ -251,7 +282,7 @@ export function Header() {
                       >
                         <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-[#F7931D] flex items-center space-x-2">
                           <User className="h-4 w-4" />
-                          <span>My Profile</span>
+                          <span>{text.myProfile}</span>
                         </button>
                       </Link>
                       {/* <Link href="/profile/settings">
@@ -266,7 +297,7 @@ export function Header() {
                           className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
                         >
                           <LogOut className="h-4 w-4" />
-                          <span>Sign Out</span>
+                          <span>{text.signOut}</span>
                         </button>
                       </div>
                     </div>
@@ -277,7 +308,7 @@ export function Header() {
                   onClick={() => setShowAuthModal(true)}
                   className="text-gray-300 hover:text-white transition-colors duration-200 text-sm font-medium"
                 >
-                  Log in
+                  {text.logIn}
                 </button>
               )}
               {/* Notification Bell - Only show when logged in */}
@@ -312,7 +343,7 @@ export function Header() {
                 onClick={() => navigationActions.shop()}
                 className="bg-[#F7931D] text-white px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200"
               >
-                Get Started
+                {text.getStarted}
               </Button>
             </nav>
 
@@ -387,7 +418,7 @@ export function Header() {
                     >
                       <button className="w-full text-left px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors text-sm font-medium flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        My Profile
+                        {text.myProfile}
                       </button>
                     </Link>
                   </div>
@@ -398,14 +429,14 @@ export function Header() {
                   className="block text-gray-300 hover:text-white transition-colors text-sm font-medium"
                   onClick={() => setIsOpen(false)}
                 >
-                  Shop
+                  {text.shop}
                 </a>
                 <a
                   href="#book"
                   className="block text-gray-300 hover:text-white transition-colors text-sm font-medium"
                   onClick={() => setIsOpen(false)}
                 >
-                  Salons
+                  {text.salons}
                 </a>
                 <a
                   href="https://salon.probeautyapp.com"
@@ -414,7 +445,7 @@ export function Header() {
                   className="block text-gray-300 hover:text-white transition-colors text-sm font-medium"
                   onClick={() => setIsOpen(false)}
                 >
-                  List Your Business
+                  {text.listBusiness}
                 </a>
                 <Link
                   href="/offers"
@@ -426,11 +457,11 @@ export function Header() {
                   }}
                 >
                   <span className="animate-pulse">🎁</span>
-                  Special Offers
+                  {text.specialOffers}
                 </Link>
                 <div className="pt-1">
                   <label className="block text-xs uppercase tracking-wide text-gray-400 mb-2">
-                    Translate
+                    {text.translate}
                   </label>
                   <select
                     value={selectedLanguage}
@@ -438,7 +469,7 @@ export function Header() {
                       handleLanguageChange(event.target.value)
                     }
                     className="w-full bg-black/60 text-gray-200 border border-gray-700 rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    aria-label="Translate page"
+                    aria-label={text.translateAria}
                   >
                     {languageOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -458,7 +489,7 @@ export function Header() {
                       className="flex items-center gap-2 w-full text-left text-orange-400 hover:text-orange-600 transition-colors text-sm font-medium mb-3"
                     >
                       <LogOut className="h-4 w-4" />
-                      Sign Out
+                      {text.signOut}
                     </button>
                   ) : (
                     <button
@@ -468,7 +499,7 @@ export function Header() {
                       }}
                       className="block w-full text-left text-gray-300 hover:text-white transition-colors text-sm font-medium mb-3"
                     >
-                      Log in
+                      {text.logIn}
                     </button>
                   )}
                   <Button
@@ -478,7 +509,7 @@ export function Header() {
                     }}
                     className="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium"
                   >
-                    Get Started
+                    {text.getStarted}
                   </Button>
                 </div>
               </div>

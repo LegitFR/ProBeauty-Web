@@ -1,9 +1,44 @@
+"use client";
+
 import { Button } from "./ui/button";
 import { ArrowRight, ShoppingBag, Calendar, Star } from "lucide-react";
 import { motion } from "motion/react";
 import { navigationActions } from "./ScrollManager";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 export function Hero() {
+  const language = useLanguage();
+  const text =
+      language === "pt"
+        ? {
+            titleLine1: "Reserve o seu serviço de beleza",
+            titleLine2: "Serviço nas proximidades",
+            subtitle:
+              "Descubra produtos de beleza personalizados e agende serviços de salão premium com o nosso sistema de recomendação inteligente.",
+            shopCta: "Comprar produto",
+            bookCta: "Agendar reserva",
+            statScans: "Procura de serviço de beleza",
+            statPartners: "Salões parceiros",
+            statProducts: "Produtos",
+            hairSpa: "Spa capilar",
+            todayTime: "Hoje · 4:30",
+            ratingLabel: "Avaliação dos clientes",
+          }
+      : {
+          titleLine1: "Book Beauty",
+          titleLine2: "Services Nearby",
+          subtitle:
+            "Discover personalized beauty products and book premium salon services with our intelligent recommendation system.",
+          shopCta: "Shop Product",
+          bookCta: "Book Appointment",
+          statScans: "Beauty Scans",
+          statPartners: "Partner Salons",
+          statProducts: "Products",
+          hairSpa: "Hair Spa",
+          todayTime: "Today · 4:30 PM",
+          ratingLabel: "Customer Rating",
+        };
+
   return (
     <section
       id="home"
@@ -44,10 +79,10 @@ export function Hero() {
               transition={{ delay: 0.5, duration: 1 }}
               className="text-5xl sm:text-6xl md:text-6xl lg:text-6xl font-bold leading-tight mb-6"
             >
-              <span className="text-white font-display">Book Beauty</span>
+              <span className="text-white font-display">{text.titleLine1}</span>
               <br />
               <span className="text-[#FF6A00] font-display">
-                Services Nearby
+                {text.titleLine2}
               </span>
             </motion.h1>
 
@@ -58,8 +93,7 @@ export function Hero() {
               transition={{ delay: 0.7, duration: 1 }}
               className="text-base sm:text-lg text-gray-400 mb-10 max-w-xl leading-relaxed"
             >
-              Discover personalized beauty products and book premium salon
-              services with our intelligent recommendation system.
+              {text.subtitle}
             </motion.p>
 
             {/* CTA Buttons */}
@@ -80,7 +114,7 @@ export function Hero() {
                   className="w-full sm:w-auto bg-[#FF6A00] hover:bg-[#FF7A00] text-white text-base font-semibold px-8 py-6 h-14 rounded-lg group transition-all duration-300 border-0"
                 >
                   <ShoppingBag className="h-5 w-5 mr-2" />
-                  Shop Product
+                  <span>{text.shopCta}</span>
                   <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </motion.div>
@@ -96,7 +130,7 @@ export function Hero() {
                   className="w-full sm:w-auto bg-transparent border-2 border-[#F44A01] text-[#F44A01] hover:bg-[#FF6A00]/10 text-base font-semibold px-8 py-6 h-14 rounded-lg group transition-all duration-300"
                 >
                   <Calendar className="h-5 w-5 mr-2 text-[#F44A01]" />
-                  Book Appointment
+                  <span>{text.bookCta}</span>
                   <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform text-[#F44A01]" />
                 </Button>
               </motion.div>
@@ -114,7 +148,7 @@ export function Hero() {
                   50K+
                 </div>
                 <div className="text-white text-xs sm:text-sm font-normal">
-                  Beauty Scans
+                  {text.statScans}
                 </div>
               </div>
               <div className="text-left">
@@ -122,7 +156,7 @@ export function Hero() {
                   1K+
                 </div>
                 <div className="text-white text-xs sm:text-sm font-normal">
-                  Partner Salons
+                  {text.statPartners}
                 </div>
               </div>
               <div className="text-left">
@@ -130,7 +164,7 @@ export function Hero() {
                   10K+
                 </div>
                 <div className="text-white text-xs sm:text-sm font-normal">
-                  Products
+                  {text.statProducts}
                 </div>
               </div>
             </motion.div>
@@ -151,11 +185,11 @@ export function Hero() {
               />
               <div className="absolute -left-3 top-1/2 -translate-y-1/2 sm:-left-6 rounded-xl sm:rounded-2xl bg-white/15 px-4 py-3 sm:px-6 sm:py-4 min-w-[170px] sm:min-w-[210px] text-white backdrop-blur-2xl border border-white/20 shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
                 <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-white/70">
-                  Hair Spa
+                  {text.hairSpa}
                 </div>
                 <div className="mt-1 flex items-center gap-2 text-[11px] sm:text-sm font-semibold">
                   <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-[#FF6A00]" />
-                  Today · 4:30 PM
+                  <span>{text.todayTime}</span>
                 </div>
               </div>
               <div className="absolute bottom-8 -right-3 sm:bottom-12 sm:-right-6 rounded-xl sm:rounded-2xl bg-white/15 px-4 py-3 sm:px-6 sm:py-4 min-w-[170px] sm:min-w-[210px] text-white backdrop-blur-2xl border border-white/20 shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
@@ -164,7 +198,7 @@ export function Hero() {
                     <Star className="h-3 w-3 sm:h-4 sm:w-4 text-[#FF6A00]" />
                     4.9
                   </span>
-                  <span className="text-white/70">Customer Rating</span>
+                  <span className="text-white/70">{text.ratingLabel}</span>
                 </div>
               </div>
             </div>

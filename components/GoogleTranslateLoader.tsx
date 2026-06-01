@@ -22,7 +22,7 @@ type TranslateWindow = Window & {
 
 const STORAGE_KEY = "pb_lang";
 const DEFAULT_LANG = "en";
-const SUPPORTED_LANGS = ["en", "fr", "de", "es", "pt"];
+const SUPPORTED_LANGS = ["en", "fr", "de", "es"];
 
 function setTranslateCookie(lang: string) {
   const normalized = SUPPORTED_LANGS.includes(lang) ? lang : DEFAULT_LANG;
@@ -71,7 +71,6 @@ export function GoogleTranslateLoader() {
 
     translateWindow.setGoogleTranslateLanguage = (lang: string) => {
       const nextLang = SUPPORTED_LANGS.includes(lang) ? lang : DEFAULT_LANG;
-      window.localStorage.setItem(STORAGE_KEY, nextLang);
       setTranslateCookie(nextLang);
       applyLanguageToWidget(nextLang);
     };

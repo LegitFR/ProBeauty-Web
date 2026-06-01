@@ -1,41 +1,90 @@
+"use client";
+
 import { Card } from "./ui/card";
 import { Brain, MapPin, ShoppingCart } from "lucide-react";
 import { motion } from "motion/react";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 export function FeaturesOverview() {
-  const features = [
-    {
-      icon: Brain,
-      title: "AI Product Recommendations",
-      subtitle: "Smart beauty suggestions just for you",
-      description:
-        "Our advanced AI analyzes your skin type, hair type, and preferences to recommend products that work best for you.",
-      iconColor: "text-[#FF6A00]",
-    },
-    {
-      icon: MapPin,
-      title: "Salon Booking System",
-      subtitle: "Location-based search & date picker",
-      description:
-        "Find and book appointments at premium salons near you with real-time availability and instant confirmation.",
-      iconColor: "text-blue-500",
-    },
-    {
-      icon: ShoppingCart,
-      title: "E-commerce Store",
-      subtitle: "Best-selling beauty products",
-      description:
-        "Shop premium shampoos, conditioners, skincare, and grooming tools from top brands with same-day delivery.",
-      iconColor: "text-green-500",
-    },
-  ];
-
-  const stats = [
-    { label: "Happy Customers", value: "50K+" },
-    { label: "Premium Products", value: "1000+" },
-    { label: "Partner Salons", value: "500+" },
-    { label: "Average Rating", value: "4.8★" },
-  ];
+  const language = useLanguage();
+  const content =
+      language === "pt"
+        ? {
+            title: "Tudo o que precisa para se sentir ainda mais",
+            highlight: "bonita(o)",
+            subtitle:
+              "Experimente o futuro da beleza com a nossa plataforma completa que combina tecnologia de IA, produtos premium e serviços profissionais.",
+            features: [
+              {
+                icon: Brain,
+                title: "Recomendações de produtos com IA",
+                subtitle: "Sugestões de beleza inteligentes feitas à sua medida",
+                description:
+                  "A nossa IA avançada analisa o seu tipo de pele, tipo de cabelo e preferências para recomendar os produtos mais adequados para si.",
+                iconColor: "text-[#FF6A00]",
+              },
+              {
+                icon: MapPin,
+                title: "Sistema de reservas para salões de beleza",
+                subtitle: "Pesquisa por localização e seleção de datas",
+                description:
+                  "Encontre e agende a reserva de horários em salões de beleza premium perto de si, com disponibilidade em tempo real e confirmação instantânea.",
+                iconColor: "text-blue-500",
+              },
+              {
+                icon: ShoppingCart,
+                title: "Loja virtual",
+                subtitle: "Produtos de beleza mais vendidos",
+                description:
+                  "Compre champôs, condicionadores, produtos para a pele e acessórios de beleza premium das melhores marcas com entrega em poucos dias.",
+                iconColor: "text-green-500",
+              },
+            ],
+            stats: [
+              { label: "Clientes satisfeitos", value: "50K+" },
+              { label: "Produtos Premium", value: "1000+" },
+              { label: "Salões parceiros", value: "500+" },
+              { label: "Média de avaliação", value: "4.8★" },
+            ],
+          }
+      : {
+          title: "Everything You Need for",
+          highlight: "Beautiful You",
+          subtitle:
+            "Experience the future of beauty with our comprehensive platform combining AI technology, premium products, and professional services.",
+          features: [
+            {
+              icon: Brain,
+              title: "AI Product Recommendations",
+              subtitle: "Smart beauty suggestions just for you",
+              description:
+                "Our advanced AI analyzes your skin type, hair type, and preferences to recommend products that work best for you.",
+              iconColor: "text-[#FF6A00]",
+            },
+            {
+              icon: MapPin,
+              title: "Salon Booking System",
+              subtitle: "Location-based search & date picker",
+              description:
+                "Find and book appointments at premium salons near you with real-time availability and instant confirmation.",
+              iconColor: "text-blue-500",
+            },
+            {
+              icon: ShoppingCart,
+              title: "E-commerce Store",
+              subtitle: "Best-selling beauty products",
+              description:
+                "Shop premium shampoos, conditioners, skincare, and grooming tools from top brands with same-day delivery.",
+              iconColor: "text-green-500",
+            },
+          ],
+          stats: [
+            { label: "Happy Customers", value: "50K+" },
+            { label: "Premium Products", value: "1000+" },
+            { label: "Partner Salons", value: "500+" },
+            { label: "Average Rating", value: "4.8★" },
+          ],
+        };
 
   return (
     <section id="features" className="py-20 bg-body relative overflow-hidden">
@@ -49,19 +98,17 @@ export function FeaturesOverview() {
           className="text-center mb-16"
         >
           <h2 className="font-display text-4xl md:text-5xl font-semibold text-black mb-4">
-            Everything You Need for{" "}
-            <span className="text-[#F7931D]">Beautiful You</span>
+            <span>{content.title}</span>{" "}
+            <span className="text-[#F7931D]">{content.highlight}</span>
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto font-body">
-            Experience the future of beauty with our comprehensive platform
-            combining AI technology, premium products, and professional
-            services.
+            {content.subtitle}
           </p>
         </motion.div>
 
         {/* Main Features */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-          {features.map((feature, index) => (
+          {content.features.map((feature, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 30 }}
@@ -109,7 +156,7 @@ export function FeaturesOverview() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-8"
         >
-          {stats.map((stat, index) => (
+          {content.stats.map((stat, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, scale: 0.8 }}

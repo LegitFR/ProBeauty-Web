@@ -1,10 +1,80 @@
+"use client";
+
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Mail, Gift, Star, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 export function Newsletter() {
+  const language = useLanguage();
+  const text =
+      language === "pt"
+        ? {
+            title: "Fique a par das novidades do mundo da beleza!",
+            subtitle:
+              "Subscreva a nossa newsletter e receba dicas exclusivas de beleza, lançamentos de produtos e ofertas especiais diretamente na sua caixa de correio.",
+            benefits: [
+              {
+                icon: Gift,
+                title: "10% de desconto na primeira oferta",
+                description: "Desconto exclusivo de boas-vindas",
+              },
+              {
+                icon: Star,
+                title: "Acesso antecipado",
+                description: "Seja o primeiro a experimentar novos produtos",
+              },
+              {
+                icon: Mail,
+                title: "Dicas de Belexa",
+                description: "Conselhos semanais de especialistas",
+              },
+            ],
+            emailPlaceholder: "Entre o seu endereço de email",
+            subscribe: "Subscreva",
+            successTitle: "Bem-vindo a ProBeauty!",
+            successBody:
+              "Verifique o seu email para receber o seu código de desconto exclusivo. Prepare-se para descobrir produtos de beleza incríveis!",
+            privacyLead: "Ao subscrever, concorda com a nossa",
+            privacyPolicy: "Política de Privacidade",
+            privacyAnd: "e",
+            privacyTerms: "Termos de Serviço",
+            privacyTail: ". Cancele a subscrição a qualquer momento.",
+          }
+      : {
+          title: "Stay in the Beauty Loop",
+          subtitle:
+            "Subscribe to our newsletter and get exclusive beauty tips, product launches, and special offers delivered to your inbox.",
+          benefits: [
+            {
+              icon: Gift,
+              title: "10% Off First Order",
+              description: "Exclusive welcome discount",
+            },
+            {
+              icon: Star,
+              title: "Early Access",
+              description: "Be first to try new products",
+            },
+            {
+              icon: Mail,
+              title: "Beauty Tips",
+              description: "Weekly expert advice",
+            },
+          ],
+          emailPlaceholder: "Enter your email address",
+          subscribe: "Subscribe",
+          successTitle: "Welcome to ProBeauty!",
+          successBody:
+            "Check your email for your exclusive discount code. Get ready to discover amazing beauty products!",
+          privacyLead: "By subscribing, you agree to our",
+          privacyPolicy: "Privacy Policy",
+          privacyAnd: "and",
+          privacyTerms: "Terms of Service",
+          privacyTail: ". Unsubscribe anytime.",
+        };
   const [email, setEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
@@ -19,23 +89,7 @@ export function Newsletter() {
     }
   };
 
-  const benefits = [
-    {
-      icon: Gift,
-      title: "10% Off First Order",
-      description: "Exclusive welcome discount",
-    },
-    {
-      icon: Star,
-      title: "Early Access",
-      description: "Be first to try new products",
-    },
-    {
-      icon: Mail,
-      title: "Beauty Tips",
-      description: "Weekly expert advice",
-    },
-  ];
+  const benefits = text.benefits;
 
   const letterBadges = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
@@ -68,7 +122,7 @@ export function Newsletter() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-6"
           >
-            Stay in the Beauty Loop
+            {text.title}
           </motion.h2>
 
           <motion.p
@@ -78,8 +132,7 @@ export function Newsletter() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-md text-gray-600 max-w-2xl mx-auto leading-relaxed mb-20"
           >
-            Subscribe to our newsletter and get exclusive beauty tips, product
-            launches, and special offers delivered to your inbox.
+            {text.subtitle}
           </motion.p>
 
           {/* Benefits Grid */}
@@ -133,7 +186,7 @@ export function Newsletter() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
+                    placeholder={text.emailPlaceholder}
                     className="h-12 pl-4 pr-4 rounded-xl border-2 border-gray-200 bg-white text-gray-900 placeholder-gray-500 focus:border-[#FF6A00] focus:ring-2 focus:ring-[#FF6A00]/20 transition-all duration-300"
                     required
                   />
@@ -143,7 +196,7 @@ export function Newsletter() {
                   type="submit"
                   className="h-12 px-8 bg-[#FF6A00] hover:bg-orange-600 text-white rounded-xl font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
                 >
-                  Subscribe
+                  {text.subscribe}
                 </Button>
               </form>
             ) : (
@@ -155,12 +208,9 @@ export function Newsletter() {
               >
                 <CheckCircle className="h-16 w-16 text-[#FF6A00] mx-auto mb-4" />
                 <h3 className="text-2xl font-bold text-black mb-2">
-                  Welcome to ProBeauty!
+                  {text.successTitle}
                 </h3>
-                <p className="text-gray-600">
-                  Check your email for your exclusive discount code. Get ready
-                  to discover amazing beauty products!
-                </p>
+                <p className="text-gray-600">{text.successBody}</p>
               </motion.div>
             )}
           </motion.div>
@@ -173,18 +223,18 @@ export function Newsletter() {
             transition={{ duration: 0.6, delay: 0.8 }}
             className="text-sm text-gray-500 mb-8"
           >
-            By subscribing, you agree to our{" "}
+            <span>{text.privacyLead}</span>{" "}
             <a href="privacy_policy" className="text-[#FF6A00] hover:underline">
-              Privacy Policy
+              {text.privacyPolicy}
             </a>{" "}
-            and{" "}
+            <span>{text.privacyAnd}</span>{" "}
             <a
               href="terms_of_service"
               className="text-[#FF6A00] hover:underline"
             >
-              Terms of Service
+              {text.privacyTerms}
             </a>
-            . Unsubscribe anytime.
+            <span>{text.privacyTail}</span>
           </motion.p>
 
           {/* Subscriber Count */}

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
@@ -27,6 +29,7 @@ import {
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { getSalons, type Salon } from "@/lib/api/salon";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 interface SalonBookingProps {
   onBookAppointment?: (salon: Salon) => void;
@@ -34,6 +37,53 @@ interface SalonBookingProps {
 
 export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
   const router = useRouter();
+  const language = useLanguage();
+  const text =
+      language === "pt"
+        ? {
+            removedFromFavorites: "Removido dos favoritos",
+            addedToFavorites: "Adicionado aos favoritos",
+            services: [
+              { id: "haircut", name: "Corte e penteado", icon: "✂️" },
+              { id: "facial", name: "Tratamento facial e pele", icon: "✨" },
+              { id: "massage", name: "Massagem terapêutica", icon: "💆" },
+              { id: "nails", name: "Manicure e pedicure", icon: "💅" },
+              { id: "bridal", name: "Pacote para noivas", icon: "👰" },
+              { id: "makeup", name: "Maquilhagem profissional", icon: "💄" },
+            ],
+            titleLead: "Reserve já a sua",
+            titleHighlight: "experiência de beleza perfeita",
+            subtitle:
+              "Descubra salões de beleza premium, faça a sua reserva instantaneamente e desfrute de serviços de beleza personalizados com o nosso sistema de recomendação baseado em inteligência artificial",
+            searchPlaceholder: "Procure localização ou salão...",
+            servicePlaceholder: "Selecione serviço",
+            aiToast: "A IA está a encontrar os salões perfeitos para si...",
+            aiSearch: "Procura com AI",
+            viewAll: "Ver tudo",
+            bookCta: "Agendar reserva",
+          }
+      : {
+          removedFromFavorites: "Removed from favorites",
+          addedToFavorites: "Added to favorites",
+          services: [
+            { id: "haircut", name: "Hair Cut & Style", icon: "✂️" },
+            { id: "facial", name: "Facial & Skincare", icon: "✨" },
+            { id: "massage", name: "Massage Therapy", icon: "💆" },
+            { id: "nails", name: "Manicure & Pedicure", icon: "💅" },
+            { id: "bridal", name: "Bridal Package", icon: "👰" },
+            { id: "makeup", name: "Professional Makeup", icon: "💄" },
+          ],
+          titleLead: "Book Your Perfect",
+          titleHighlight: "Beauty Experience",
+          subtitle:
+            "Discover premium salons, book instantly, and enjoy personalized beauty services with our AI-powered recommendation system",
+          searchPlaceholder: "Search location or salon...",
+          servicePlaceholder: "Select service",
+          aiToast: "AI is finding the perfect salons for you...",
+          aiSearch: "AI Search",
+          viewAll: "View All",
+          bookCta: "Book Appointment",
+        };
   const handleTranslatedNavigation = (href: string) => {
     navigateWithTranslate(router, href);
   };
@@ -76,23 +126,16 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
       const newSet = new Set(prev);
       if (newSet.has(salonId)) {
         newSet.delete(salonId);
-        toast.success("Removed from favorites");
+        toast.success(text.removedFromFavorites);
       } else {
         newSet.add(salonId);
-        toast.success("Added to favorites");
+        toast.success(text.addedToFavorites);
       }
       return newSet;
     });
   };
 
-  const services = [
-    { id: "haircut", name: "Hair Cut & Style", icon: "✂️" },
-    { id: "facial", name: "Facial & Skincare", icon: "✨" },
-    { id: "massage", name: "Massage Therapy", icon: "💆" },
-    { id: "nails", name: "Manicure & Pedicure", icon: "💅" },
-    { id: "bridal", name: "Bridal Package", icon: "👰" },
-    { id: "makeup", name: "Professional Makeup", icon: "💄" },
-  ];
+  const services = text.services;
 
   const filteredSalons = salons.filter((salon) => {
     const searchMatch =
@@ -113,14 +156,13 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
           className="text-center mb-20"
         >
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-black mb-10">
-            Book Your Perfect{" "}
+            {text.titleLead}{" "}
             <span className="bg-gradient-to-r text-primary bg-clip-text bg-[length:400%_400%]">
-              Beauty Experience
+              {text.titleHighlight}
             </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Discover premium salons, book instantly, and enjoy personalized
-            beauty services with our AI-powered recommendation system
+            {text.subtitle}
           </p>
         </motion.div>
 
@@ -137,7 +179,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
               <MapPin className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-[#000000] group-focus-within:text-[#FF7A00] transition-colors z-10" />
               <Input
                 type="text"
-                placeholder="Search location or salon..."
+                placeholder={text.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 sm:pl-12 h-12 sm:h-14 rounded-xl sm:rounded-2xl border-[#616161] border-2 focus:border-[#FF7A00] focus:ring-[#FF7A00] transition-all bg-transparent text-sm sm:text-base placeholder:text-[#1e1e1e]"
@@ -152,7 +194,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
                 <SelectTrigger className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl border-[#616161] border-2 bg-transparent text-sm sm:text-base">
                   <Filter className="h-4 w-4 mr-2 text-[#1e1e1e]" />
                   <SelectValue
-                    placeholder="Select service"
+                    placeholder={text.servicePlaceholder}
                     className="placeholder:text[#1e1e1e]"
                   />
                 </SelectTrigger>
@@ -168,13 +210,11 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
             </div>
 
             <Button
-              onClick={() =>
-                toast.success("AI is finding the perfect salons for you...")
-              }
+              onClick={() => toast.success(text.aiToast)}
               className="h-12 sm:h-14 bg-gradient-to-r from-[#FF7A00] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group w-full text-sm sm:text-base"
             >
               <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-2 group-hover:scale-110 transition-transform" />
-              AI Search
+              {text.aiSearch}
               <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 ml-2" />
             </Button>
           </div>
@@ -187,7 +227,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
             onClick={() => handleTranslatedNavigation("/salons")}
             className="text-black hover:text-orange-600 hover:bg-orange-50 font-medium"
           >
-            <p className="text-[#000000]">View All</p>
+            <p className="text-[#000000]">{text.viewAll}</p>
             <ArrowRight />
           </Button>
         </div>
@@ -331,7 +371,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
                     className="w-full h-10 rounded-none rounded-b-[10px] transition-all duration-200 bg-[#1E1E1E] hover:bg-[#2a2a2a] text-[#ECE3DC] font-medium text-xs p-7"
                   >
                     <Calendar className="h-3 w-3 mr-1" />
-                    Book Appointment
+                    {text.bookCta}
                   </Button>
                 </Card>
               </motion.div>

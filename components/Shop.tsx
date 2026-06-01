@@ -38,6 +38,7 @@ import { useCart } from "./CartContext";
 import { useWishlist } from "./WishlistContext";
 import { AuthModal } from "./AuthModal";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 import {
   DisplayProduct,
   fetchProductsClient,
@@ -47,6 +48,59 @@ import { navigationActions } from "./ScrollManager";
 
 export function Shop() {
   const router = useRouter();
+  const language = useLanguage();
+  const text =
+      language === "pt"
+        ? {
+            loginToAdd: "Faça login para adicionar itens ao carrinho",
+            addedToCartSuffix: "adicionado ao carrinho!",
+            removedFromWishlist: "Removido da lista de desejos",
+            addedToWishlist: "Adicionado à lista de desejos",
+            loginToViewAll: "Faça login para ver todos os produtos",
+            categories: [
+              { id: "all", name: "Todos os produtos", icon: "🛍️" },
+              { id: "skincare", name: "Cuidados de pele", icon: "✨" },
+              { id: "haircare", name: "Cuidado do cabelo", icon: "💁" },
+              { id: "makeup", name: "Maquilhagem", icon: "💄" },
+              { id: "tools", name: "Acessórios de beleza", icon: "🔧" },
+              { id: "wellness", name: "Bem-estar", icon: "🌿" },
+            ],
+            headerTitle: "Ofertas Especiais",
+            headerHighlight: "de Produtos de Beleza",
+            headerSubtitle:
+              "Descubra produtos de beleza premium com recomendações baseadas em inteligência artificial e ofertas exclusivas selecionadas especialmente para si.",
+            searchPlaceholder: "Procurar produtos",
+            aiDealsToast: "A IA está a encontrar as melhores ofertas para si...",
+            aiSuggestions: "Susgestões",
+            viewAll: "Ver tudo",
+            added: "Adicionado",
+            addToCart: "Adicione ao carrinho de compras",
+          }
+      : {
+          loginToAdd: "Please log in to add items to cart",
+          addedToCartSuffix: "added to cart!",
+          removedFromWishlist: "Removed from wishlist",
+          addedToWishlist: "Added to wishlist",
+          loginToViewAll: "Please login to view all products",
+          categories: [
+            { id: "all", name: "All Products", icon: "🛍️" },
+            { id: "skincare", name: "Skincare", icon: "✨" },
+            { id: "haircare", name: "Hair Care", icon: "💁" },
+            { id: "makeup", name: "Makeup", icon: "💄" },
+            { id: "tools", name: "Beauty Tools", icon: "🔧" },
+            { id: "wellness", name: "Wellness", icon: "🌿" },
+          ],
+          headerTitle: "Special Offers",
+          headerHighlight: "Beauty Products",
+          headerSubtitle:
+            "Discover premium beauty products with AI-powered recommendations and exclusive offers curated just for you",
+          searchPlaceholder: "Search products...",
+          aiDealsToast: "AI is finding the best deals for you...",
+          aiSuggestions: "AI Suggestions",
+          viewAll: "View All",
+          added: "Added",
+          addToCart: "Add to Cart",
+        };
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [addedItems, setAddedItems] = useState<Set<string | number>>(new Set());
@@ -143,7 +197,7 @@ export function Shop() {
 
   const handleAddToCart = (product: any) => {
     if (!isAuthenticated) {
-      toast.error("Please log in to add items to cart");
+      toast.error(text.loginToAdd);
       setShowAuthModal(true);
       return;
     }
@@ -155,7 +209,7 @@ export function Shop() {
       image: product.image,
     });
     setAddedItems((prev) => new Set(prev).add(product.id));
-    toast.success(`${product.name} added to cart!`);
+    toast.success(`${product.name} ${text.addedToCartSuffix}`);
 
     setTimeout(() => {
       setAddedItems((prev) => {
@@ -172,7 +226,7 @@ export function Shop() {
 
     if (isFavorite) {
       removeFromWishlist(productId);
-      toast.success("Removed from wishlist");
+      toast.success(text.removedFromWishlist);
     } else {
       addToWishlist({
         id: productId,
@@ -185,7 +239,7 @@ export function Shop() {
         rating: product.rating,
         reviews: product.reviews,
       });
-      toast.success("Added to wishlist");
+      toast.success(text.addedToWishlist);
     }
   };
 
@@ -196,7 +250,7 @@ export function Shop() {
 
     if (!userStr) {
       // User not logged in, show auth modal
-      toast.info("Please login to view all products");
+      toast.info(text.loginToViewAll);
       navigationActions.login();
     } else {
       // Use full navigation to avoid DOM removal issues with translation tools
@@ -204,14 +258,7 @@ export function Shop() {
     }
   };
 
-  const categories = [
-    { id: "all", name: "All Products", icon: "🛍️" },
-    { id: "skincare", name: "Skincare", icon: "✨" },
-    { id: "haircare", name: "Hair Care", icon: "💁" },
-    { id: "makeup", name: "Makeup", icon: "💄" },
-    { id: "tools", name: "Beauty Tools", icon: "🔧" },
-    { id: "wellness", name: "Wellness", icon: "🌿" },
-  ];
+  const categories = text.categories;
 
   // Fallback products (used when API products are not available)
   const fallbackProducts = [
@@ -389,14 +436,13 @@ export function Shop() {
             }}
             transition={{ duration: 8, repeat: Infinity }}
           >
-            <span className="mr-4">Special Offers</span>
+            <span className="mr-4">{text.headerTitle}</span>
             <span className="bg-gradient-to-r text-primary bg-clip-text bg-[length:400%_400%]">
-              Beauty Products
+              {text.headerHighlight}
             </span>
           </motion.h2>
           <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4 py-4">
-            Discover premium beauty products with AI-powered recommendations and
-            exclusive offers curated just for you
+            {text.headerSubtitle}
           </p>
         </motion.div>
 
@@ -413,7 +459,7 @@ export function Shop() {
               <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-[#1e1e1e] group-focus-within:text-[#FF7A00] transition-colors z-10" />
               <Input
                 type="text"
-                placeholder="Search products..."
+                placeholder={text.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 sm:pl-12 h-12 sm:h-14 rounded-xl sm:rounded-2xl border-[#1E1E1E] focus:border-[#F44A01] focus:ring-[#F44A01] bg-transparent text-sm sm:text-base placeholder:text-[#1e1e1e]"
@@ -441,13 +487,11 @@ export function Shop() {
             </div>
 
             <Button
-              onClick={() =>
-                toast.success("AI is finding the best deals for you...")
-              }
+              onClick={() => toast.success(text.aiDealsToast)}
               className="h-12 sm:h-14 bg-gradient-to-r from-[#F44A01] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group text-sm sm:text-base w-full"
             >
               <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 mr-2 group-hover:rotate-12 transition-transform" />
-              <span className="">AI Suggestions</span>
+              <span className="">{text.aiSuggestions}</span>
             </Button>
           </div>
         </motion.div>
@@ -459,7 +503,7 @@ export function Shop() {
             variant="ghost"
             className="text-[#000000] hover:text-orange-600 hover:bg-orange-50 font-medium"
           >
-            <p className="text-[#000000]"> View All </p>
+            <p className="text-[#000000]">{text.viewAll}</p>
             <ArrowRight />
           </Button>
         </div>
@@ -605,10 +649,10 @@ export function Shop() {
                         }`}
                       >
                         <Check className="h-3 w-3 mr-1" />
-                        Added
+                        {text.added}
                       </span>
                       <span className={isAdded ? "hidden" : "block"}>
-                        Add to Cart
+                        {text.addToCart}
                       </span>
                     </Button>
                   </Card>

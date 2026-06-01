@@ -1,9 +1,33 @@
+"use client";
+
 import { Card, CardContent } from "./ui/card";
 import { Star, Quote } from "lucide-react";
 import { motion } from "motion/react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 export function Testimonials() {
+  const language = useLanguage();
+  const text =
+      language === "pt"
+        ? {
+            titleLead: "Ouça o que",
+            titleHighlight: "os nossos clientes",
+            titleTail: "têm para dizer",
+            subtitle:
+              "Junte-se a milhares de clientes satisfeitos que transformaram a sua rotina de beleza com ProBeauty.",
+            customers: "Clientes",
+            reviews: "Reviews",
+          }
+      : {
+          titleLead: "Hear it straight from",
+          titleHighlight: "our customers",
+          titleTail: "",
+          subtitle:
+            "Join thousands of satisfied customers who have transformed their beauty routine with ProBeauty.",
+          customers: "Customers",
+          reviews: "Reviews",
+        };
   const testimonials = [
     {
       name: "Sarah Johnson",
@@ -59,12 +83,12 @@ export function Testimonials() {
           className="text-center mb-10 sm:mb-12 lg:mb-16"
         >
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold text-[#1E1E1E] mb-3 sm:mb-4">
-            Hear it straight from{" "}
-            <span className="text-[#FF6A00]">our customers</span>
+            {text.titleLead}{" "}
+            <span className="text-[#FF6A00]">{text.titleHighlight}</span>
+            {text.titleTail ? ` ${text.titleTail}` : ""}
           </h2>
           <p className="text-sm sm:text-base lg:text-lg text-[#616161] max-w-2xl mx-auto leading-relaxed px-4">
-            Join thousands of satisfied customers who have transformed their
-            beauty routine with ProBeauty.
+            {text.subtitle}
           </p>
         </motion.div>
 
@@ -150,7 +174,9 @@ export function Testimonials() {
               <div className="text-2xl sm:text-3xl font-bold text-[#FF6A00] mb-1">
                 50,000+
               </div>
-              <div className="text-xs sm:text-sm text-[#616161]">Customers</div>
+              <div className="text-xs sm:text-sm text-[#616161]">
+                {text.customers}
+              </div>
             </div>
 
             {/* Reviews */}
@@ -158,7 +184,9 @@ export function Testimonials() {
               <div className="text-2xl sm:text-3xl font-bold text-[#FF6A00] mb-1">
                 25,000+
               </div>
-              <div className="text-xs sm:text-sm text-[#616161]">Reviews</div>
+              <div className="text-xs sm:text-sm text-[#616161]">
+                {text.reviews}
+              </div>
             </div>
           </div>
         </motion.div>

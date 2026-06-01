@@ -1,5 +1,6 @@
 const STORAGE_KEY = "pb_lang";
 const DEFAULT_LANG = "en";
+const TRANSLATE_LANGS = ["fr", "de", "es"];
 
 type RouterLike = {
   push: (href: string) => void;
@@ -12,7 +13,7 @@ export function shouldForceTranslateReload(): boolean {
   }
 
   const storedLang = window.localStorage.getItem(STORAGE_KEY);
-  return !!storedLang && storedLang !== DEFAULT_LANG;
+  return !!storedLang && TRANSLATE_LANGS.includes(storedLang);
 }
 
 export function navigateWithTranslate(
