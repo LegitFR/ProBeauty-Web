@@ -28,7 +28,7 @@ export function Newsletter() {
               },
               {
                 icon: Mail,
-                title: "Dicas de Belexa",
+                title: "Dicas de Beleza",
                 description: "Conselhos semanais de especialistas",
               },
             ],
