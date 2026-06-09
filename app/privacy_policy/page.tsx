@@ -29,7 +29,7 @@ export default function PrivacyPolicyPage() {
             <p className="policy-text">
               If you have any questions, comments, or requests regarding this
               policy, please contact us at
-              <a className="policy-highlight" href="mailto:privacy@probeautyapp.net"> privacy@probeautyapp.net</a>.
+              <span className="policy-highlight"> privacy@probeauty.com</span>.
             </p>
           </section>
 
