@@ -128,7 +128,7 @@ export default function PrivacyPolicyPage() {
               correct, delete, or restrict the processing of your personal data,
               and to object to certain processing. You may also withdraw consent
               where applicable. Contact us at
-              <span className="policy-highlight"> privacy@probeauty.com</span>
+              <span className="policy-highlight"> privacy@probeautyapp.net </span>
               {" "}to exercise these rights.
             </p>
           </section>
