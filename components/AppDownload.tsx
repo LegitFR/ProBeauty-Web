@@ -41,7 +41,7 @@ export function AppDownload() {
   return (
     <section
       id="app"
-      className="py-12 sm:py-20 lg:py-24 bg-linear-to-r from-[#4D1C00] via-[#792800] to-[#F44A01] relative overflow-hidden"
+      className="py-12 sm:py-20 lg:py-24 bg-linear-to-r from-[#2E1B05] via-[#563003] to-[#F7931D] relative overflow-hidden"
     >
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
@@ -79,7 +79,7 @@ export function AppDownload() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="space-y-3 sm:space-y-5 mb-6 sm:mb-10"
+              className="space-y-6 sm:space-y-8 mb-6 sm:mb-10"
             >
               {features.map((feature, index) => (
                 <motion.div
@@ -119,7 +119,7 @@ export function AppDownload() {
               <Button
                 size="lg"
                 onClick={() => toast.info("Redirecting to App Store...")}
-                className="bg-[#FFFFFF1A] text-white hover:bg-black px-5 py-3 sm:px-6 sm:py-4 rounded-2xl group transition-all duration-300 transform hover:scale-105 shadow-lg h-auto"
+                className="bg-[#FFFFFF1A] text-white hover:bg-black px-5 py-3 sm:px-6 sm:py-4 rounded-full group transition-all duration-300 transform hover:scale-105 shadow-lg h-auto"
               >
                 <Download className="h-5 w-5 sm:h-6 sm:w-6 mr-2.5 sm:mr-3 text-white flex-shrink-0" />
                 <div className="text-left">
@@ -132,7 +132,7 @@ export function AppDownload() {
                 onClick={() =>
                   toast.info("Redirecting to Google Play Store...")
                 }
-                className="bg-[#FFFFFF1A] text-white hover:bg-black px-5 py-3 sm:px-6 sm:py-4 rounded-2xl group transition-all duration-300 transform hover:scale-105 shadow-lg h-auto"
+                className="bg-[#FFFFFF1A] text-white hover:bg-black px-5 py-3 sm:px-6 sm:py-4 rounded-full group transition-all duration-300 transform hover:scale-105 shadow-lg h-auto"
               >
                 <Download className="h-5 w-5 sm:h-6 sm:w-6 mr-2.5 sm:mr-3 text-white flex-shrink-0" />
                 <div className="text-left">
@@ -149,7 +149,7 @@ export function AppDownload() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 1 }}
-              className="flex flex-wrap justify-center sm:justify-start items-center gap-6 sm:gap-8"
+              className="flex flex-wrap justify-center sm:justify-start items-center gap-10 sm:gap-16"
             >
               {stats.map((stat, index) => (
                 <motion.div
@@ -166,7 +166,7 @@ export function AppDownload() {
                   <div className="text-xl sm:text-2xl font-bold font-display text-[#F44A01] mb-0.5">
                     {stat.value}
                   </div>
-                  <div className="text-xs sm:text-sm text-white/90">
+                  <div className="text-xs sm:text-sm text-[#ECE3DC]">
                     {stat.label}
                   </div>
                 </motion.div>

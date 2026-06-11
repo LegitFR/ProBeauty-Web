@@ -37,7 +37,7 @@ export default function HomeClient() {
               <Shop />
               <SalonBooking onBookAppointment={handleBookAppointment} />
               <BusinessListing />
-              {/* <AppDownload /> */}
+              <AppDownload />
               <Testimonials />
               <Newsletter />
             </div>
