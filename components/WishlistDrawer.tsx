@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import {
@@ -8,11 +9,13 @@ import {
   SheetTitle,
 } from "./ui/sheet";
 import { ScrollArea } from "./ui/scroll-area";
-import { Heart, X, ShoppingBag, Star, Trash2, Sparkles } from "lucide-react";
+import { Heart, X, ShoppingBag, Star, Sparkles, MapPin, Store } from "lucide-react";
 import { useWishlist } from "./WishlistContext";
 import { useCart } from "./CartContext";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
+import { useRouter } from "next/navigation";
+import { navigateWithTranslate } from "@/lib/utils/translateNavigation";
 
 interface WishlistDrawerProps {
   isOpen: boolean;
@@ -20,11 +23,24 @@ interface WishlistDrawerProps {
 }
 
 export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
-  const { items, removeFromWishlist, getTotalItems } = useWishlist();
+  const router = useRouter();
+  const { 
+    items, 
+    salonItems, 
+    removeFromWishlist, 
+    removeSalonFromWishlist, 
+    getTotalItems 
+  } = useWishlist();
   const { addToCart } = useCart();
+  const [activeTab, setActiveTab] = useState<"products" | "salons">("products");
 
-  const handleRemoveItem = (id: string | number, name: string) => {
-    removeFromWishlist(String(id));
+  const handleRemoveProduct = (id: string, name: string) => {
+    removeFromWishlist(id);
+    toast.success(`${name} removed from wishlist`);
+  };
+
+  const handleRemoveSalon = (id: string, name: string) => {
+    removeSalonFromWishlist(id);
     toast.success(`${name} removed from wishlist`);
   };
 
@@ -40,10 +56,11 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
   };
 
   const totalItems = getTotalItems();
+  const currentItems = activeTab === "products" ? items : salonItems;
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-md bg-[linear-gradient(135deg,_#FFF7ED_0%,_#FFFBEB_15%,_#FFF1F2_35%,_#FFFFFF_50%,_#FFF1F2_65%,_#FFFBEB_85%,_#FEF2F2_100%)] backdrop-blur-3xl border-l border-orange-200/40 shadow-2xl p-6">
+      <SheetContent className="w-full sm:max-w-md bg-[linear-gradient(135deg,_#FFF7ED_0%,_#FFFBEB_15%,_#FFF1F2_35%,_#FFFFFF_50%,_#FFF1F2_65%,_#FFFBEB_85%,_#FEF2F2_100%)] backdrop-blur-3xl border-l border-orange-200/40 shadow-2xl p-6 flex flex-col">
         <SheetHeader className="pb-4">
           <SheetTitle className="flex items-center gap-2 font-display text-xl">
             <motion.div
@@ -62,13 +79,39 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
             )}
           </SheetTitle>
           <SheetDescription className="text-gray-600 text-sm">
-            Your favorite beauty products in one place
+            Your favorite products and salons in one place
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex flex-col h-full mt-4">
-          {items.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+        {/* Tabs */}
+        <div className="flex bg-white/50 backdrop-blur-md rounded-xl p-1 shadow-inner border border-orange-100/50 mb-4">
+          <button
+            onClick={() => setActiveTab("products")}
+            className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+              activeTab === "products"
+                ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md"
+                : "text-gray-600 hover:text-orange-600 hover:bg-orange-50/50"
+            }`}
+          >
+            <ShoppingBag className="h-4 w-4" />
+            Products ({items.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("salons")}
+            className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+              activeTab === "salons"
+                ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md"
+                : "text-gray-600 hover:text-orange-600 hover:bg-orange-50/50"
+            }`}
+          >
+            <Store className="h-4 w-4" />
+            Salons ({salonItems.length})
+          </button>
+        </div>
+
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {currentItems.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-12 h-full">
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -79,19 +122,21 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                 <Heart className="h-16 w-16 text-gray-300 relative" />
               </motion.div>
               <h3 className="text-lg font-bold text-gray-900 mb-2 font-display">
-                Your wishlist is empty
+                No {activeTab} yet
               </h3>
               <p className="text-gray-500 mb-4 max-w-xs text-sm">
-                Start adding your favorite products to keep track of what you
-                love
+                Start adding your favorite {activeTab} to keep track of what you love
               </p>
               <Button
-                onClick={onClose}
+                onClick={() => {
+                  onClose();
+                  navigateWithTranslate(router, activeTab === "products" ? "/products" : "/salons");
+                }}
                 size="sm"
                 className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
-                Discover Products
+                Discover {activeTab === "products" ? "Products" : "Salons"}
               </Button>
             </div>
           ) : (
@@ -99,7 +144,7 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
               <ScrollArea className="flex-1 -mx-6 px-6">
                 <div className="space-y-4 py-2">
                   <AnimatePresence>
-                    {items.map((item, index) => (
+                    {activeTab === "products" && items.map((item, index) => (
                       <motion.div
                         key={item.id}
                         initial={{ opacity: 0, x: -20 }}
@@ -108,16 +153,14 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                         transition={{ duration: 0.3, delay: index * 0.05 }}
                         className="group relative bg-white/80 backdrop-blur-md rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 border border-orange-100/70"
                       >
-                        {/* Remove Button */}
                         <button
-                          onClick={() => handleRemoveItem(item.id, item.name)}
+                          onClick={() => handleRemoveProduct(item.id, item.name)}
                           className="absolute top-2 right-2 z-10 p-1.5 bg-red-50 hover:bg-red-100 rounded-full transition-colors group-hover:scale-110 duration-200"
                         >
                           <X className="h-3.5 w-3.5 text-red-500" />
                         </button>
 
                         <div className="flex items-start space-x-4">
-                          {/* Product Image */}
                           <div className="relative flex-shrink-0">
                             <img
                               src={item.image}
@@ -131,7 +174,6 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                             )}
                           </div>
 
-                          {/* Product Details */}
                           <div className="flex-1 min-w-0 pr-6">
                             <p className="text-[10px] text-orange-600 font-medium mb-0.5">
                               {item.brand}
@@ -140,7 +182,6 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                               {item.name}
                             </h4>
 
-                            {/* Rating */}
                             {item.rating && (
                               <div className="flex items-center space-x-1 mb-1.5">
                                 <div className="flex">
@@ -163,7 +204,6 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                               </div>
                             )}
 
-                            {/* Price */}
                             <div className="flex items-center space-x-1.5 mb-2">
                               <span className="text-sm font-bold text-gray-900">
                                 £{item.price.toLocaleString()}
@@ -175,7 +215,6 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                               )}
                             </div>
 
-                            {/* Move to Cart Button */}
                             <Button
                               onClick={() => handleMoveToCart(item)}
                               size="sm"
@@ -188,64 +227,112 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                         </div>
                       </motion.div>
                     ))}
+
+                    {activeTab === "salons" && salonItems.map((salon, index) => (
+                      <motion.div
+                        key={salon.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className="group relative bg-white/80 backdrop-blur-md rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 border border-orange-100/70"
+                      >
+                        <button
+                          onClick={() => handleRemoveSalon(salon.id, salon.name)}
+                          className="absolute top-2 right-2 z-10 p-1.5 bg-red-50 hover:bg-red-100 rounded-full transition-colors group-hover:scale-110 duration-200"
+                        >
+                          <X className="h-3.5 w-3.5 text-red-500" />
+                        </button>
+
+                        <div className="flex items-start space-x-4">
+                          <div className="relative flex-shrink-0">
+                            <img
+                              src={salon.image || "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=300&q=80"}
+                              alt={salon.name}
+                              className="h-20 w-20 rounded-lg object-cover ring-2 ring-orange-100 group-hover:ring-orange-300 transition-all duration-300"
+                            />
+                            {salon.verified && (
+                              <div className="absolute -top-1 -left-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg">
+                                Verified
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0 pr-6">
+                            <h4 className="text-xs font-bold text-gray-900 line-clamp-2 mb-1.5 group-hover:text-orange-600 transition-colors leading-tight mt-1">
+                              {salon.name}
+                            </h4>
+
+                            <div className="flex items-start space-x-1 mb-3">
+                              <MapPin className="h-3 w-3 text-gray-400 mt-0.5 shrink-0" />
+                              <span className="text-[10px] text-gray-500 line-clamp-2 leading-snug">
+                                {salon.address}
+                              </span>
+                            </div>
+
+                            <Button
+                              onClick={() => {
+                                onClose();
+                                navigateWithTranslate(router, `/salons/${salon.id}`);
+                              }}
+                              size="sm"
+                              className="w-full h-7 text-xs bg-[#1e1e1e] hover:bg-[#2a2a2a] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 group/btn"
+                            >
+                              View Salon
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
                   </AnimatePresence>
                 </div>
               </ScrollArea>
 
-              <div className="border-t border-orange-100/60 -mx-6 px-6 pt-6 mt-5 space-y-3">
-                {/* Summary */}
-                <div className="bg-gradient-to-r from-orange-50 to-red-50 backdrop-blur-md rounded-xl p-3 border border-orange-100/70">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-gray-600">Total Items</span>
-                    <span className="text-base font-bold text-gray-900">
-                      {totalItems}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600">
-                      Estimated Value
-                    </span>
-                    <span className="text-base font-bold bg-gradient-to-r from-orange-600 to-red-500 bg-clip-text text-transparent">
-                      £
-                      {items
-                        .reduce((sum, item) => sum + item.price, 0)
-                        .toLocaleString()}
-                    </span>
-                  </div>
-                </div>
+              <div className="border-t border-orange-100/60 -mx-6 px-6 pt-6 mt-5 space-y-3 shrink-0">
+                {activeTab === "products" && (
+                  <>
+                    <div className="bg-gradient-to-r from-orange-50 to-red-50 backdrop-blur-md rounded-xl p-3 border border-orange-100/70">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs text-gray-600">Total Items</span>
+                        <span className="text-base font-bold text-gray-900">
+                          {items.length}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600">
+                          Estimated Value
+                        </span>
+                        <span className="text-base font-bold bg-gradient-to-r from-orange-600 to-red-500 bg-clip-text text-transparent">
+                          £
+                          {items
+                            .reduce((sum, item) => sum + item.price, 0)
+                            .toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
 
-                {/* Actions */}
-                <div className="space-y-2">
-                  <Button
-                    onClick={() => {
-                      items.forEach((item) => handleMoveToCart(item));
-                    }}
-                    className="w-full h-10 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group"
-                  >
-                    <ShoppingBag className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
-                    Add All to Cart
-                  </Button>
+                    <Button
+                      onClick={() => {
+                        items.forEach((item) => handleMoveToCart(item));
+                      }}
+                      className="w-full h-10 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group"
+                    >
+                      <ShoppingBag className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
+                      Add All to Cart
+                    </Button>
+                  </>
+                )}
 
-                  <Button
-                    variant="outline"
-                    onClick={onClose}
-                    className="w-full h-9 border-2 border-orange-200 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-xl text-sm"
-                  >
-                    Continue Shopping
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      items.forEach((item) => removeFromWishlist(item.id));
-                      toast.success("Wishlist cleared");
-                    }}
-                    className="w-full h-9 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl text-sm"
-                  >
-                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                    Clear Wishlist
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    onClose();
+                    navigateWithTranslate(router, activeTab === "products" ? "/products" : "/salons");
+                  }}
+                  className="w-full h-9 border-2 border-orange-200 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-xl text-sm"
+                >
+                  Continue Shopping
+                </Button>
               </div>
             </>
           )}

@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || "Failed to add to favourites" },
+        data,
         { status: response.status },
       );
     }
@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const type = searchParams.get("type");
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");
 
@@ -82,6 +83,7 @@ export async function GET(request: NextRequest) {
     }
 
     const params = new URLSearchParams();
+    if (type) params.set("type", type);
     if (page) params.set("page", page);
     if (limit) params.set("limit", limit);
 
@@ -101,7 +103,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || "Failed to fetch favourites" },
+        data,
         { status: response.status },
       );
     }

@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSalons, type Salon } from "@/lib/api/salon";
-import { Calendar, Star } from "lucide-react";
+import { Calendar, Star, Heart } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "./ui/card";
 import { motion } from "motion/react";
 import { navigateWithTranslate } from "@/lib/utils/translateNavigation";
+import { useWishlist } from "./WishlistContext";
 
 export function SalonPreview() {
   const router = useRouter();
+  const { isSalonInWishlist, addSalonToWishlist, removeSalonFromWishlist } = useWishlist();
   const handleTranslatedNavigation = (href: string) => {
     navigateWithTranslate(router, href);
   };
@@ -33,6 +35,22 @@ export function SalonPreview() {
       console.error("Failed to load salons:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleFavorite = (e: React.MouseEvent, salon: Salon) => {
+    e.stopPropagation();
+    const isFavorite = isSalonInWishlist(salon.id);
+    if (isFavorite) {
+      removeSalonFromWishlist(salon.id);
+    } else {
+      addSalonToWishlist({
+        id: salon.id,
+        name: salon.name,
+        address: salon.address,
+        image: salon.thumbnail || (salon.images && salon.images[0]) || "",
+        verified: salon.verified || false,
+      });
     }
   };
 
@@ -80,21 +98,41 @@ export function SalonPreview() {
                 <div className="relative aspect-video overflow-hidden bg-transparent p-4">
                   <img
                     src={
-                      salon.id.charCodeAt(0) % 7 === 1
+                      salon.thumbnail ||
+                      (salon.images && salon.images.length > 0
+                        ? salon.images[0]
+                        : "") ||
+                      (salon.id.charCodeAt(0) % 7 === 1
                         ? "https://images.unsplash.com/photo-1562322140-8baeececf3df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBiZWF1dHklMjBzYWxvbiUyMGludGVyaW9yfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080"
                         : salon.id.charCodeAt(0) % 7 === 3
-                          ? "https://images.unsplash.com/photo-1544717297-fa95b6ee9643?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxzcGElMjBpbnRlcmlvcnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080"
+                          ? "https://images.unsplash.com/photo-1544717297-fa95b6ee9643?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzcGElMjBpbnRlcmlvcnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080"
                           : salon.id.charCodeAt(0) % 7 === 4
-                            ? "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxzYWxvbiUyMGNoYWlyfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080"
+                            ? "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzYWxvbiUyMGNoYWlyfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080"
                             : salon.id.charCodeAt(0) % 7 === 5
-                              ? "https://images.unsplash.com/photo-1560066984-138dadb4c035?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxsdXh1cnklMjBzYWxvbnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080"
+                              ? "https://images.unsplash.com/photo-1560066984-138dadb4c035?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBzYWxvbnxlbnwxfHx8fDE3NTc5MTk5NTV8MA&ixlib=rb-4.0&q=80&w=1080"
                               : salon.id.charCodeAt(0) % 7 === 6
-                                ? "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxmYWNpYWwlMjB0cmVhdG1lbnR8ZW58MXx8fHwxNzU3OTE5OTU1fDA&ixlib=rb-4.0&q=80&w=1080"
-                                : "https://images.unsplash.com/photo-1633681926035-ec90e342ced9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBiZWF1dHklMjBzYWxvbiUyMGludGVyaW9yfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080"
+                                ? "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYWNpYWwlMjB0cmVhdG1lbnR8ZW58MXx8fHwxNzU3OTE5OTU1fDA&ixlib=rb-4.0&q=80&w=1080"
+                                : "https://images.unsplash.com/photo-1633681926035-ec90e342ced9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBiZWF1dHklMjBzYWxvbiUyMGludGVyaW9yfGVufDF8fHx8MTc1NzkxOTk1NXww&ixlib=rb-4.0&q=80&w=1080")
                     }
                     alt={salon.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-lg"
                   />
+
+                  {/* Wishlist Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => toggleFavorite(e, salon)}
+                    className="absolute top-6 right-6 p-2 bg-white rounded-full shadow-md z-20 border border-gray-200"
+                  >
+                    <Heart
+                      className={`h-4 w-4 transition-colors ${
+                        isSalonInWishlist(salon.id)
+                          ? "fill-red-500 text-red-500"
+                          : "text-gray-400 hover:text-gray-600"
+                      }`}
+                    />
+                  </motion.button>
                 </div>
 
                 <CardContent className="p-3 flex flex-col grow">

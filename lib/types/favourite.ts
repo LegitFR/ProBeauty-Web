@@ -2,7 +2,7 @@
  * Favourite/Wishlist Type Definitions
  */
 
-export interface Favourite {
+export interface ProductFavourite {
   id: string;
   userId: string;
   productId: string;
@@ -22,8 +22,29 @@ export interface Favourite {
   };
 }
 
+export interface SalonFavourite {
+  id: string;
+  userId: string;
+  salonId: string;
+  createdAt: string;
+  salon: {
+    id: string;
+    name: string;
+    address: string;
+    thumbnail: string;
+    images: string[];
+    venueType: string;
+    verified: boolean;
+    geo: { latitude: number; longitude: number };
+    hours: any;
+  };
+}
+
+export type Favourite = ProductFavourite | SalonFavourite;
+
 export interface AddToFavouritesData {
-  productId: string;
+  type: "product" | "salon";
+  itemId: string;
 }
 
 export interface FavouritesResponse {
@@ -45,7 +66,8 @@ export interface SingleFavouriteResponse {
 export interface FavouriteStatusResponse {
   message: string;
   data: {
-    productId: string;
+    id: string;
+    type: "product" | "salon";
     isFavourited: boolean;
   };
 }

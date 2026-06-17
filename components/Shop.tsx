@@ -263,7 +263,7 @@ export function Shop() {
   // Fallback products (used when API products are not available)
   const fallbackProducts = [
     {
-      id: 1,
+      id: "clxxx12340000000000000001",
       name: "De Fabulous Marula Oil Shampoo with Quinoa ultimate...",
       brand: "De Fabulous",
       category: "haircare",
@@ -281,7 +281,7 @@ export function Shop() {
       inStock: true,
     },
     {
-      id: 2,
+      id: "clxxx12340000000000000002",
       name: "GK Hair Moisturizing Color Protection Conditioner (300ml)",
       brand: "GK Hair",
       category: "haircare",
@@ -298,7 +298,7 @@ export function Shop() {
       inStock: true,
     },
     {
-      id: 3,
+      id: "clxxx12340000000000000003",
       name: "Vitamin C Brightening Face Serum",
       brand: "Glow Secrets",
       category: "skincare",
@@ -315,7 +315,7 @@ export function Shop() {
       inStock: true,
     },
     {
-      id: 4,
+      id: "clxxx12340000000000000004",
       name: "Hydrating Hyaluronic Acid Moisturizer",
       brand: "AquaGlow",
       category: "skincare",
@@ -332,7 +332,7 @@ export function Shop() {
       inStock: true,
     },
     {
-      id: 5,
+      id: "clxxx12340000000000000005",
       name: "Professional Makeup Brush Set",
       brand: "ProBeauty Tools",
       category: "tools",
@@ -349,7 +349,7 @@ export function Shop() {
       inStock: true,
     },
     {
-      id: 6,
+      id: "clxxx12340000000000000006",
       name: "Nourishing Hair Mask Treatment",
       brand: "HairLux",
       category: "haircare",
@@ -366,7 +366,7 @@ export function Shop() {
       inStock: true,
     },
     {
-      id: 7,
+      id: "clxxx12340000000000000007",
       name: "Retinol Anti-Aging Night Cream",
       brand: "YouthGlow",
       category: "skincare",
@@ -383,7 +383,7 @@ export function Shop() {
       inStock: true,
     },
     {
-      id: 8,
+      id: "clxxx12340000000000000008",
       name: "Long-Lasting Matte Lipstick Set",
       brand: "ColorPop Pro",
       category: "makeup",

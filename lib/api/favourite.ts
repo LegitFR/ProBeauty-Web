@@ -1,6 +1,6 @@
 /**
  * Favourite/Wishlist API Client Functions
- * Handles favourite management for products
+ * Handles favourite management for products and salons
  */
 
 import {
@@ -10,14 +10,14 @@ import {
   RemoveFavouriteResponse,
   AddToFavouritesData,
 } from "@/lib/types/favourite";
-import { fetchWithAuth, fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
+import { fetchJsonWithAuth } from "@/lib/utils/fetchWithAuth";
 
 const API_BASE_URL = "/api/favourites";
 
 /**
- * Add a product to favourites
+ * Add an item to favourites
  * @param token - Authentication token
- * @param data - Product ID to add
+ * @param data - The type and ID to add
  * @returns Promise with the created favourite
  */
 export async function addToFavourites(
@@ -33,16 +33,20 @@ export async function addToFavourites(
 /**
  * Get user's favourites with pagination
  * @param token - Authentication token
+ * @param type - The type of favourites to fetch ("product" or "salon")
  * @param page - Page number (default: 1)
  * @param limit - Items per page (default: 10)
  * @returns Promise with favourites and pagination
  */
 export async function getFavourites(
   token: string,
+  type: "product" | "salon",
   page?: number,
   limit?: number,
 ): Promise<FavouritesResponse> {
   const params = new URLSearchParams();
+
+  params.set("type", type);
 
   if (page !== undefined) {
     params.set("page", page.toString());
@@ -52,9 +56,7 @@ export async function getFavourites(
     params.set("limit", limit.toString());
   }
 
-  const url = params.toString()
-    ? `${API_BASE_URL}?${params.toString()}`
-    : API_BASE_URL;
+  const url = `${API_BASE_URL}?${params.toString()}`;
 
   return await fetchJsonWithAuth<FavouritesResponse>(url, {
     method: "GET",
@@ -62,17 +64,19 @@ export async function getFavourites(
 }
 
 /**
- * Check if a product is in favourites
+ * Check if an item is in favourites
  * @param token - Authentication token
- * @param productId - Product ID to check
+ * @param id - Item ID to check
+ * @param type - "product" or "salon"
  * @returns Promise with favourite status
  */
 export async function checkFavouriteStatus(
   token: string,
-  productId: string,
+  id: string,
+  type: "product" | "salon",
 ): Promise<FavouriteStatusResponse> {
   return await fetchJsonWithAuth<FavouriteStatusResponse>(
-    `${API_BASE_URL}/check/${productId}`,
+    `${API_BASE_URL}/check/${id}?type=${type}`,
     {
       method: "GET",
     },
@@ -80,17 +84,19 @@ export async function checkFavouriteStatus(
 }
 
 /**
- * Remove a product from favourites
+ * Remove an item from favourites
  * @param token - Authentication token
- * @param productId - Product ID to remove
+ * @param id - Item ID to remove
+ * @param type - "product" or "salon"
  * @returns Promise with success message
  */
 export async function removeFromFavourites(
   token: string,
-  productId: string,
+  id: string,
+  type: "product" | "salon",
 ): Promise<RemoveFavouriteResponse> {
   return await fetchJsonWithAuth<RemoveFavouriteResponse>(
-    `${API_BASE_URL}/${productId}`,
+    `${API_BASE_URL}/${id}?type=${type}`,
     {
       method: "DELETE",
     },
