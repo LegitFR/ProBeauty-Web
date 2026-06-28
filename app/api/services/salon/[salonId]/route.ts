@@ -11,9 +11,7 @@ export async function GET(
 ) {
   const params = await props.params;
   try {
-    console.log(`Fetching services for salon: ${params.salonId}`);
     const url = `${BACKEND_URL}/services?salonId=${params.salonId}`;
-    console.log(`Request URL: ${url}`);
 
     const response = await fetch(url, {
       method: "GET",
@@ -22,7 +20,6 @@ export async function GET(
       },
     });
 
-    console.log(`Response status: ${response.status}`);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -41,7 +38,6 @@ export async function GET(
       data.data = [];
     }
 
-    console.log(`Successfully fetched ${data.data.length} services`);
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Error fetching salon services:", error);

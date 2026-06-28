@@ -28,15 +28,12 @@ async function attemptTokenRefresh(): Promise<string | null> {
     try {
       const refreshToken = getRefreshToken();
       if (!refreshToken) {
-        console.log("[Fetch Auth] No refresh token available");
         return null;
       }
 
-      console.log("[Fetch Auth] Attempting to refresh access token...");
       const result = await refreshAccessToken(refreshToken);
 
       if (result.accessToken) {
-        console.log("[Fetch Auth] Successfully refreshed access token");
         return result.accessToken;
       }
 
@@ -103,7 +100,6 @@ export async function fetchWithAuth(
   }
 
   // Try to refresh the token
-  console.log("[Fetch Auth] Access token expired, attempting refresh...");
   const newAccessToken = await attemptTokenRefresh();
 
   if (!newAccessToken) {
@@ -113,7 +109,6 @@ export async function fetchWithAuth(
   }
 
   // Retry the original request with the new token
-  console.log("[Fetch Auth] Retrying request with new access token...");
   return fetchWithAuth(url, options, retryCount + 1);
 }
 

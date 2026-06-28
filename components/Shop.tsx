@@ -172,7 +172,6 @@ export function Shop() {
             behavior: "smooth",
           });
         } else {
-          console.log(`Product element not found: product-${productId}`);
         }
       };
 

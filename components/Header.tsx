@@ -48,12 +48,10 @@ export function Header() {
   useEffect(() => {
     // Check if user is logged in
     const userData = getUser();
-    console.log("[Header] Initial user check:", userData);
     setUser(userData);
 
     // Listen for auth expiration event
     const handleAuthExpired = () => {
-      console.log("[Header] Auth expired, showing login modal");
       setUser(null);
       setShowAuthModal(true);
     };
@@ -61,7 +59,6 @@ export function Header() {
     // Listen for storage changes (in case user logs in from another tab)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "user" || e.key === "accessToken") {
-        console.log("[Header] Storage changed, refreshing user data");
         const updatedUser = getUser();
         setUser(updatedUser);
       }

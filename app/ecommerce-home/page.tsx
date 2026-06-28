@@ -137,7 +137,6 @@ export default function EcommerceHomePage() {
 
   const handleProductClick = (productId: string) => {
     // Navigate to product details or add to cart
-    console.log("Product clicked:", productId);
   };
 
   const handleAddToCart = (product: DisplayProduct) => {

@@ -100,7 +100,6 @@ export async function POST(request: NextRequest) {
           { status: 200 },
         );
       } catch {
-        console.log("MB WAY poll backend unreachable, trying next if available...");
       }
     }
 

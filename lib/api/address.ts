@@ -122,15 +122,12 @@ export async function deleteAddress(
   addressId: string
 ): Promise<void> {
   void _token;
-  console.log("[Address API] Deleting address:", addressId);
-  console.log("[Address API] Delete URL:", `${API_BASE_URL}/${addressId}`);
 
   try {
     await fetchJsonWithAuth<{ message: string }>(`${API_BASE_URL}/${addressId}`, {
       method: "DELETE",
     });
 
-    console.log("[Address API] Address deleted successfully");
   } catch (error) {
     console.error("[Address API] Delete address error:", error);
     throw error;

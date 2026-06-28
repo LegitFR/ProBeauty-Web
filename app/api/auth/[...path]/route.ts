@@ -22,8 +22,6 @@ export async function POST(
     const path = pathArray.join("/");
     const body = await request.json();
 
-    console.log(`[Proxy] POST /api/auth/${path} -> ${BACKEND_URL}/${path}`);
-    console.log(`[Proxy] Request body:`, body);
 
     // Add timeout for slow backend responses (e.g., when server is waking up)
     const controller = new AbortController();
@@ -43,12 +41,9 @@ export async function POST(
 
       const data = await response.json();
 
-      console.log(`[Proxy] Response status: ${response.status}`);
-      console.log(`[Proxy] Response data:`, data);
 
       // TODO: REMOVE - Temporary OTP logging for development
       if (path === "signup" && data.otp) {
-        console.log("🔐 [DEV ONLY] OTP from backend:", data.otp);
       }
       // END TODO: REMOVE
 
@@ -130,7 +125,6 @@ export async function GET(
       headers["Authorization"] = token;
     }
 
-    console.log(`[Proxy] GET /api/auth/${path} -> ${BACKEND_URL}/${path}`);
 
     const response = await fetch(`${BACKEND_URL}/${path}`, {
       method: "GET",
@@ -139,7 +133,6 @@ export async function GET(
 
     const data = await response.json();
 
-    console.log(`[Proxy] Response status: ${response.status}`);
 
     return NextResponse.json(data, { status: response.status });
   } catch (error: any) {

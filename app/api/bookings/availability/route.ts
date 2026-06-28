@@ -10,10 +10,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const url = `${BACKEND_URL}/bookings/availability?${searchParams.toString()}`;
 
-    console.log(
-      `Fetching availability with params: ${searchParams.toString()}`,
-    );
-    console.log(`Request URL: ${url}`);
 
     const response = await fetch(url, {
       method: "GET",
@@ -22,7 +18,6 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log(`Response status: ${response.status}`);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -34,9 +29,6 @@ export async function GET(request: Request) {
     }
 
     const data = await response.json();
-    console.log(`Successfully fetched availability slots`);
-    console.log(`Response data:`, JSON.stringify(data, null, 2));
-    console.log(`Number of slots:`, data?.data?.slots?.length || 0);
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Error fetching availability:", error);

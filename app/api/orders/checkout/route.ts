@@ -19,10 +19,6 @@ export async function POST(request: NextRequest) {
     
     const backendUrl = getCheckoutBackendApiUrl(body.paymentMethod);
     
-    console.log("=== CHECKOUT API PROXY ===");
-    console.log("Payment Method:", body.paymentMethod);
-    console.log("Using Backend URL:", backendUrl);
-    console.log("Request Body:", JSON.stringify(body, null, 2));
 
     let response: Response;
     try {
@@ -67,9 +63,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log("=== BACKEND RESPONSE ===");
-    console.log("Status:", response.status);
-    console.log("Response Data:", JSON.stringify(data, null, 2));
 
     if (!response.ok) {
       console.error("❌ Backend Error:", data.message);

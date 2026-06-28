@@ -187,10 +187,6 @@ export function AuthModal({
   const handleGoogleSignIn = async (credential: string) => {
     setIsLoading(true);
     try {
-      console.log(
-        "[Google Auth] Attempting sign-in with client ID:",
-        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-      );
       const response = await googleAuth(credential);
       toast.success(`Welcome, ${response.user.name}!`);
 
@@ -332,8 +328,6 @@ export function AuthModal({
     }
 
     // TODO: REMOVE - Temporary OTP logging for development
-    console.log("🔐 [DEV ONLY] OTP entered for verification:", otp);
-    console.log("🔐 [DEV ONLY] Email:", signupForm.email);
     // END TODO: REMOVE
 
     setIsLoading(true);

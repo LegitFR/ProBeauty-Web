@@ -81,7 +81,6 @@ export function Newsletter() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      console.log("Newsletter subscription:", email);
       setIsSubscribed(true);
       setEmail("");
       // Reset after 3 seconds for demo

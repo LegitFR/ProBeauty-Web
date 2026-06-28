@@ -56,37 +56,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const user = getUser();
         const refreshToken = getRefreshToken();
 
-        console.log("[CartContext] Auth check:", {
-          hasAccessToken: !!accessToken,
-          hasUser: !!user,
-          hasRefreshToken: !!refreshToken,
-        });
 
         if (accessToken && user) {
           setToken(accessToken);
           setIsAuthenticated(true);
-          console.log("[CartContext] ✅ User authenticated with valid token");
           return;
         }
 
         // If we have user data but no access token, try to refresh
         if (user && refreshToken && !accessToken) {
-          console.log(
-            "[CartContext] User found but token missing, attempting refresh...",
-          );
           try {
             const result = await refreshAccessToken(refreshToken);
             if (result.accessToken) {
               setToken(result.accessToken);
               setIsAuthenticated(true);
-              console.log("[CartContext] ✅ Token refreshed successfully");
               return;
             }
           } catch (error: any) {
-            console.log(
-              "[CartContext] Token refresh failed, clearing auth:",
-              error.message,
-            );
             // Don't throw - just clear auth state gracefully
             setToken(null);
             setIsAuthenticated(false);
@@ -98,7 +84,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         console.error("[CartContext] Auth check error:", error);
       }
 
-      console.log("[CartContext] ⚠️ User not authenticated");
       setToken(null);
       setIsAuthenticated(false);
       setItems([]); // Clear cart on logout
@@ -112,7 +97,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth-expired event from auth error handler
     const handleAuthExpired = () => {
-      console.log("[CartContext] Auth expired event received, clearing cart");
       setToken(null);
       setIsAuthenticated(false);
       setItems([]);

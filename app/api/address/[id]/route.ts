@@ -55,7 +55,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  console.log("[Address Proxy] DELETE request for ID:", id);
 
   try {
     const token = request.headers.get("authorization");
@@ -68,7 +67,6 @@ export async function DELETE(
     }
 
     const backendUrl = `${BACKEND_URL}/addresses/${id}`;
-    console.log("[Address Proxy] Calling backend:", backendUrl);
 
     const response = await fetch(backendUrl, {
       method: "DELETE",
@@ -78,10 +76,8 @@ export async function DELETE(
       },
     });
 
-    console.log("[Address Proxy] Backend response status:", response.status);
 
     const data = await response.json();
-    console.log("[Address Proxy] Backend response data:", data);
 
     return NextResponse.json(data, { status: response.status });
   } catch (error: any) {

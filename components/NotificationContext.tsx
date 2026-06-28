@@ -80,22 +80,12 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       const refreshToken = getRefreshToken();
 
       if (!token && user && refreshToken) {
-        console.log(
-          "[NotificationContext] Token missing, attempting refresh...",
-        );
         try {
           const result = await refreshAccessToken(refreshToken);
           if (result.accessToken) {
             token = result.accessToken;
-            console.log(
-              "[NotificationContext] ✅ Token refreshed successfully",
-            );
           }
         } catch (error: any) {
-          console.log(
-            "[NotificationContext] Token refresh failed:",
-            error.message,
-          );
           // Don't throw - just set auth to false gracefully
           setIsAuth(false);
           return;
@@ -260,7 +250,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         });
 
         // 🔍 DEBUG: Log device token (REMOVE AFTER VERIFICATION)
-        console.log("✅ Device Token Registered:", result);
         // 🔍 END DEBUG
       } catch (error) {
         console.error("Failed to register device token:", error);

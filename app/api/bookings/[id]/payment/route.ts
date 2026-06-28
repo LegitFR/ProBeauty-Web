@@ -63,12 +63,10 @@ async function tryTriggerMbwayWebhookRecovery(
   });
 
   const webhookUrl = `${backendUrl}/webhooks/ifthenpay/mbway?${searchParams.toString()}`;
-  console.log("Triggering MB WAY webhook recovery for booking:", bookingId);
 
   try {
     await fetch(webhookUrl, { method: "GET" });
   } catch {
-    console.log("MB WAY webhook recovery call failed");
   }
 }
 
@@ -137,7 +135,6 @@ export async function GET(
           );
         }
       } catch {
-        console.log("Booking payment backend unreachable, trying next if available...");
       }
     }
 

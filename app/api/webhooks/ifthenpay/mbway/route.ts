@@ -13,8 +13,6 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const queryString = searchParams.toString();
 
-    console.log("=== MBWAY WEBHOOK PROXY ===");
-    console.log("Query params:", queryString);
 
     // Forward to backend webhook endpoint
     const response = await fetch(
@@ -26,7 +24,6 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    console.log("Backend webhook response:", data);
 
     if (!response.ok) {
       return NextResponse.json(

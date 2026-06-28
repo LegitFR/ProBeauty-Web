@@ -63,12 +63,10 @@ async function tryTriggerMbwayWebhookRecovery(
   });
 
   const webhookUrl = `${backendUrl}/webhooks/ifthenpay/mbway?${searchParams.toString()}`;
-  console.log("Triggering MB WAY webhook recovery for order:", orderId);
 
   try {
     await fetch(webhookUrl, { method: "GET" });
   } catch {
-    console.log("MB WAY webhook recovery call failed");
   }
 }
 
@@ -113,14 +111,11 @@ export async function GET(
 
     const { id } = await params;
     
-    console.log("=== PAYMENT STATUS CHECK ===");
-    console.log("Order ID:", id);
     
     const backendCandidates = getPaymentStatusBackendCandidates();
 
     for (const backendUrl of backendCandidates) {
       try {
-        console.log("Trying payment status backend:", backendUrl);
         const firstFetch = await fetchOrderPayments(backendUrl, id, token);
 
         if (firstFetch.response.ok) {
@@ -129,7 +124,6 @@ export async function GET(
 
           const secondFetch = await fetchOrderPayments(backendUrl, id, token);
           if (secondFetch.response.ok) {
-            console.log("✅ Got payment data from backend:", backendUrl);
             return NextResponse.json(secondFetch.data, { status: 200 });
           }
 
@@ -144,14 +138,11 @@ export async function GET(
           );
         }
 
-        console.log("Backend returned error, trying next if available...");
       } catch {
-        console.log("Backend unreachable, trying next if available...");
       }
     }
 
     const fallbackUrl = backendCandidates[backendCandidates.length - 1];
-    console.log("All backends failed. Returning last backend error from:", fallbackUrl);
     const { response, data } = await fetchOrderPayments(fallbackUrl, id, token);
 
     if (!response.ok) {

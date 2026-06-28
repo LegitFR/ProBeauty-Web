@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
     }
 
     const url = `${API_BASE_URL}/reviews/user/me?page=${page}&limit=${limit}`;
-    console.log("[Reviews API] Fetching user reviews from:", url);
 
     const response = await fetch(url, {
       method: "GET",

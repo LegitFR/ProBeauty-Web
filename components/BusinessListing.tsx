@@ -134,7 +134,6 @@ export function BusinessListing() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Business listing form submitted:", formData);
     toast.success(text.submitToast);
 
     // Reset form

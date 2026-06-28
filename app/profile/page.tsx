@@ -173,29 +173,21 @@ export default function ProfilePage() {
         const userStr =
           typeof window !== "undefined" ? localStorage.getItem("user") : null;
 
-        console.log("[Profile] Authentication check:");
-        console.log("- Access Token:", accessToken ? "Present" : "Missing");
-        console.log("- Refresh Token:", refreshToken ? "Present" : "Missing");
-        console.log("- User Data:", userStr ? "Present" : "Missing");
 
         if (!isAuthenticated()) {
-          console.log("[Profile] Not authenticated, redirecting to home");
           setAuthChecked(true);
           router.replace("/");
           return;
         }
 
         const userData = getUser();
-        console.log("[Profile] User data retrieved:", userData);
 
         if (!userData) {
-          console.log("[Profile] No user data found, redirecting to home");
           setAuthChecked(true);
           router.replace("/");
           return;
         }
 
-        console.log("[Profile] Authentication successful, loading profile");
         setAuthChecked(true);
         setUser(userData);
         setFormData({
@@ -2650,14 +2642,6 @@ export default function ProfilePage() {
                                               variant="ghost"
                                               size="sm"
                                               onClick={() => {
-                                                console.log(
-                                                  "Deleting address with ID:",
-                                                  address.id,
-                                                );
-                                                console.log(
-                                                  "Full address object:",
-                                                  address,
-                                                );
                                                 handleDeleteAddress(address.id);
                                               }}
                                               className="text-red-600 hover:text-red-700 hover:bg-red-50"

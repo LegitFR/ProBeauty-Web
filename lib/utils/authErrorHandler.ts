@@ -51,15 +51,12 @@ export async function attemptTokenRefresh(): Promise<string | null> {
     try {
       const refreshToken = getRefreshToken();
       if (!refreshToken) {
-        console.log("[Auth] No refresh token available");
         return null;
       }
 
-      console.log("[Auth] Attempting to refresh access token...");
       const result = await refreshAccessToken(refreshToken);
 
       if (result.accessToken) {
-        console.log("[Auth] Successfully refreshed access token");
         return result.accessToken;
       }
 
@@ -80,18 +77,15 @@ export async function attemptTokenRefresh(): Promise<string | null> {
  * Handle authentication errors - tries to refresh token first, then logs out if that fails
  */
 export async function handleAuthError(error?: any): Promise<boolean> {
-  console.log("[Auth Error Handler] Detected expired or invalid token");
 
   // Try to refresh the token first
   const newToken = await attemptTokenRefresh();
 
   if (newToken) {
-    console.log("[Auth] Token refreshed successfully, continuing...");
     return true; // Token refreshed successfully
   }
 
   // If refresh failed, logout user
-  console.log("[Auth] Token refresh failed, logging out user");
   logout();
 
   // Store current path for redirect after login

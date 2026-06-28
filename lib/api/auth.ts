@@ -66,9 +66,7 @@ export async function signup(data: SignupData): Promise<AuthResponse> {
     const result = await response.json();
 
     // TODO: REMOVE - Temporary OTP logging for development
-    console.log("🔐 [DEV ONLY] Signup response:", result);
     if (result.otp) {
-      console.log("🔐 [DEV ONLY] OTP received:", result.otp);
     }
     // END TODO: REMOVE
 
@@ -143,19 +141,12 @@ export async function login(data: LoginData): Promise<LoginResponse> {
     // Store tokens in localStorage
     if (result.accessToken) {
       localStorage.setItem("accessToken", result.accessToken);
-      console.log("[Auth] Access token stored successfully");
     }
     if (result.refreshToken) {
       localStorage.setItem("refreshToken", result.refreshToken);
-      console.log("[Auth] Refresh token stored successfully");
     }
     if (result.user) {
       localStorage.setItem("user", JSON.stringify(result.user));
-      console.log(
-        "[Auth] User data stored:",
-        result.user.name,
-        result.user.email,
-      );
     }
 
     return result;
@@ -194,19 +185,12 @@ export async function googleAuth(idToken: string): Promise<LoginResponse> {
     // Store tokens and user info
     if (result.accessToken) {
       localStorage.setItem("accessToken", result.accessToken);
-      console.log("[Auth] Google - Access token stored successfully");
     }
     if (result.refreshToken) {
       localStorage.setItem("refreshToken", result.refreshToken);
-      console.log("[Auth] Google - Refresh token stored successfully");
     }
     if (result.user) {
       localStorage.setItem("user", JSON.stringify(result.user));
-      console.log(
-        "[Auth] Google - User data stored:",
-        result.user.name,
-        result.user.email,
-      );
     }
 
     return result;
@@ -320,7 +304,6 @@ export async function refreshAccessToken(
         result.message?.toLowerCase().includes("expired") ||
         result.message?.toLowerCase().includes("invalid")
       ) {
-        console.log("[Auth] Refresh token invalid/revoked, clearing auth data");
         logout();
       }
       throw new Error(result.message || "Token refresh failed");
@@ -329,7 +312,6 @@ export async function refreshAccessToken(
     // Update stored access token
     if (result.accessToken) {
       localStorage.setItem("accessToken", result.accessToken);
-      console.log("[Auth] Access token refreshed and stored");
     }
 
     return result;
@@ -369,10 +351,6 @@ export async function resendResetOTP(email: string): Promise<AuthResponse> {
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
   const token = localStorage.getItem("accessToken");
-  console.log(
-    "[Auth] getAccessToken called:",
-    token ? "Token exists" : "No token",
-  );
   return token;
 }
 
@@ -385,12 +363,10 @@ export function getUser(): any | null {
   if (typeof window === "undefined") return null;
   const userStr = localStorage.getItem("user");
   if (!userStr) {
-    console.log("[Auth] getUser: No user data in localStorage");
     return null;
   }
   try {
     const user = JSON.parse(userStr);
-    console.log("[Auth] getUser: User found -", user.name, user.email);
     return user;
   } catch (e) {
     console.error("[Auth] getUser: Error parsing user data", e);
@@ -401,13 +377,11 @@ export function getUser(): any | null {
 export function isAuthenticated(): boolean {
   const token = getAccessToken();
   const authenticated = !!token;
-  console.log("[Auth] isAuthenticated:", authenticated);
   return authenticated;
 }
 
 export function logout(): void {
   if (typeof window === "undefined") return;
-  console.log("[Auth] Logging out and clearing all auth data");
   localStorage.removeItem("accessToken");
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("user");

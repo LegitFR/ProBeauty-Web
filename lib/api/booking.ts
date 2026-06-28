@@ -150,8 +150,6 @@ export async function createBooking(
     startTime: string;
   },
 ): Promise<SingleBookingResponse> {
-  console.log("=== Creating Booking ===");
-  console.log("Input data:", data);
 
   // Build request body - backend expects arrays for serviceIds and staffIds
   const requestData: {
@@ -178,11 +176,6 @@ export async function createBooking(
     requestData.staffIds = [data.staffId];
   }
 
-  console.log(
-    "🔍 Request body being sent:",
-    JSON.stringify(requestData, null, 2),
-  );
-  console.log("Sending to:", `${API_BASE_URL} (POST)`);
 
   try {
     const response = await fetchJsonWithAuth<SingleBookingResponse>(
@@ -192,7 +185,6 @@ export async function createBooking(
         body: JSON.stringify(requestData),
       },
     );
-    console.log("✅ Booking created successfully");
     return response;
   } catch (error: unknown) {
     console.error("❌ Booking creation failed");

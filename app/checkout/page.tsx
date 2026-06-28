@@ -112,16 +112,11 @@ function CheckoutContent() {
   // Use API cart if available (authenticated user), otherwise use CartContext
   // No fallback to placeholder products - show empty cart state instead
   const items = React.useMemo(() => {
-    console.log("=== Determining Cart Items Source ===");
-    console.log("API Cart exists:", !!apiCart);
-    console.log("API Cart items:", apiCart?.data?.cart?.cartItems?.length || 0);
-    console.log("CartContext items:", cartItems.length);
 
     if (
       apiCart?.data?.cart?.cartItems &&
       apiCart.data.cart.cartItems.length > 0
     ) {
-      console.log("✅ Using API Cart items");
       const mappedItems = apiCart.data.cart.cartItems.map(
         (item: ApiCartItem) => ({
           id: item.productId,
@@ -135,13 +130,10 @@ function CheckoutContent() {
           salonId: item.product.salonId, // Keep salonId for validation
         }),
       );
-      console.log("Mapped API items:", mappedItems);
       return mappedItems;
     } else if (cartItems.length > 0) {
-      console.log("⚠️ Using CartContext items");
       return cartItems;
     } else {
-      console.log("⚠️ Cart is empty");
       return [];
     }
   }, [apiCart, cartItems]);
@@ -173,27 +165,21 @@ function CheckoutContent() {
         const accessToken = localStorage.getItem("accessToken");
         const userStr = localStorage.getItem("user");
 
-        console.log("=== Checkout Auth Check ===");
-        console.log("Access token:", accessToken ? "exists" : "missing");
-        console.log("User data:", userStr ? "exists" : "missing");
 
         if (accessToken && userStr) {
           const user = JSON.parse(userStr);
-          console.log("User object:", user);
 
           setToken(accessToken);
           setIsAuthenticated(true);
           setFormData((prev) => ({ ...prev, email: user.email || "" }));
           loadAddresses(accessToken);
           loadCartFromAPI(accessToken);
-          console.log("✅ User authenticated successfully");
           return;
         }
       } catch (error) {
         console.error("❌ Auth check error:", error);
       }
 
-      console.log("⚠️ User not authenticated, will show auth modal");
       setIsAuthenticated(false);
       setShowAuthModal(true);
     };
@@ -203,24 +189,9 @@ function CheckoutContent() {
 
   // Load cart from API
   const loadCartFromAPI = async (userToken: string) => {
-    console.log("=== Loading Cart from API ===");
-    console.log(
-      "Token:",
-      userToken ? `${userToken.substring(0, 20)}...` : "none",
-    );
     setIsLoadingCart(true);
     try {
       const cartData = await getCart(userToken);
-      console.log("✅ Cart API Response:", cartData);
-      console.log(
-        "📦 Full response object:",
-        JSON.stringify(cartData, null, 2),
-      );
-      console.log(
-        "Cart items count:",
-        cartData?.data?.cart?.cartItems?.length || 0,
-      );
-      console.log("Cart summary:", cartData?.data?.summary);
 
       // Detailed check
       if (!cartData) {
@@ -234,7 +205,6 @@ function CheckoutContent() {
       } else if (cartData.data.cart.cartItems.length === 0) {
         console.warn("⚠️ cartData.data.cart.cartItems is empty array");
       } else {
-        console.log("✅ Cart has items:", cartData.data.cart.cartItems);
       }
 
       setApiCart(cartData);
@@ -315,7 +285,6 @@ function CheckoutContent() {
     // If user has selected a saved address (not creating a new one)
     if (selectedAddressId && !showNewAddressForm && savedAddresses.length > 0) {
       // Just validate that an address is selected, skip form validation
-      console.log("Using saved address:", selectedAddressId);
       setCurrentStep(2);
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -354,7 +323,6 @@ function CheckoutContent() {
     // Save address if checkbox is checked and user is authenticated
     if (formData.saveAddress && token && isAuthenticated) {
       try {
-        console.log("Saving new address...");
         const newAddress = await createAddress(token, {
           fullName: `${formData.firstName} ${formData.lastName}`,
           phone: formData.phone,
@@ -367,7 +335,6 @@ function CheckoutContent() {
         });
         setSavedAddresses([...savedAddresses, newAddress]);
         setSelectedAddressId(newAddress.id); // Auto-select the newly created address
-        console.log("✅ Address saved successfully:", newAddress);
         toast.success("Address saved successfully!");
       } catch (error) {
         console.error("❌ Failed to save address:", error);
@@ -423,31 +390,12 @@ function CheckoutContent() {
         ),
       );
 
-      console.log("=== FRONTEND SALON VALIDATION ===");
-      console.log(
-        "Number of items in cart:",
-        apiCart.data.cart.cartItems.length,
-      );
-      console.log("Unique salon IDs:", Array.from(salonIds));
-      console.log("Number of unique salons:", salonIds.size);
-      console.log(
-        "Cart items with salon info:",
-        apiCart.data.cart.cartItems.map((item: ApiCartItem) => ({
-          productId: item.productId,
-          title: item.product.title,
-          salonId: item.product.salonId,
-        })),
-      );
     }
 
     setIsProcessing(true);
 
     try {
       // Create checkout session and order with PAYMENT_PENDING status
-      console.log("=== CREATING CHECKOUT SESSION ===");
-      console.log("Address ID:", selectedAddressId);
-      console.log("Payment Method:", selectedPaymentMethod);
-      console.log("Notes:", formData.notes || "(none)");
 
       const requestBody: any = {
         addressId: selectedAddressId,
@@ -457,11 +405,9 @@ function CheckoutContent() {
 
       // Add mobile number for MBWAY
       if (selectedPaymentMethod === "MBWAY" && mobileNumber) {
-        console.log("📱 Adding mobile number for MBWAY:", mobileNumber);
         requestBody.mobileNumber = mobileNumber;
       }
 
-      console.log("📤 REQUEST BODY BEING SENT:", JSON.stringify(requestBody, null, 2));
 
       const response = await fetch("/api/orders/checkout", {
         method: "POST",
@@ -474,10 +420,6 @@ function CheckoutContent() {
 
       const data = await response.json();
 
-      console.log("=== CHECKOUT API RESPONSE ===");
-      console.log("Response status:", response.status);
-      console.log("Response OK:", response.ok);
-      console.log("Response data:", JSON.stringify(data, null, 2));
 
       if (!response.ok) {
         console.error("❌ Backend/Proxy returned error:", data.message);
@@ -519,12 +461,6 @@ function CheckoutContent() {
         return;
       }
 
-      console.log("✅ Checkout session created:", data);
-      console.log("=== PAYMENT METHOD DETECTION ===");
-      console.log("Selected payment method:", selectedPaymentMethod);
-      console.log("Has clientSecret?", !!data.data.clientSecret);
-      console.log("Has payment object?", !!data.data.payment);
-      console.log("Payment object:", data.data.payment);
 
       // Set order ID
       setOrderId(data.data.order.id);
@@ -532,10 +468,6 @@ function CheckoutContent() {
       // Handle different payment methods
       if (data.data.payment) {
         // If-Then Pay payment
-        console.log("📝 Setting up IF-THEN PAY payment");
-        console.log("Payment provider:", data.data.payment.provider);
-        console.log("Payment method:", data.data.payment.method);
-        console.log("Is MBWAY?", isMBWayPayment(data.data.payment));
         setPaymentResponse(data.data.payment);
         if (isMBWayPayment(data.data.payment)) {
           setShowMBWayPopup(true);
@@ -573,12 +505,6 @@ function CheckoutContent() {
 
   // Log whenever items or totals change
   useEffect(() => {
-    console.log("=== Cart State Updated ===");
-    console.log("Items count:", items.length);
-    console.log("Items:", items);
-    console.log("Total Price:", totalPrice);
-    console.log("Total Items:", totalItems);
-    console.log("Final Total:", finalTotal);
   }, [items, totalPrice, totalItems, finalTotal]);
 
   // Expose reload function to window for manual testing
@@ -586,10 +512,8 @@ function CheckoutContent() {
     if (typeof window !== "undefined") {
       (window as any).reloadCart = () => {
         if (token) {
-          console.log("Manually reloading cart...");
           loadCartFromAPI(token);
         } else {
-          console.log("No token available. Please log in first.");
         }
       };
     }
@@ -1242,13 +1166,7 @@ function CheckoutContent() {
 
                         {/* Render appropriate payment form */}
                         {(() => {
-                          console.log("=== PAYMENT FORM RENDERING ===");
-                          console.log("clientSecret exists?", !!clientSecret);
-                          console.log("paymentResponse exists?", !!paymentResponse);
                           if (paymentResponse) {
-                            console.log("paymentResponse.provider:", paymentResponse.provider);
-                            console.log("paymentResponse.method:", (paymentResponse as any).method);
-                            console.log("Is MBWAY?", isMBWayPayment(paymentResponse));
                           }
                           return null;
                         })()}
@@ -1504,14 +1422,12 @@ function CheckoutContent() {
               loadAddresses(accessToken);
               loadCartFromAPI(accessToken);
               setShowAuthModal(false);
-              console.log("✅ User logged in, modal closed");
               return;
             } catch (error) {
               console.error("Error loading user after login:", error);
             }
           }
           // If user closed modal without logging in, redirect to home
-          console.log("⚠️ User closed modal without logging in, redirecting");
           toast.error("Please log in to continue with checkout");
           router.push("/");
         }}

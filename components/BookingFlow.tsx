@@ -196,22 +196,13 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
   const loadServices = async () => {
     setServicesLoading(true);
     try {
-      console.log(`Loading services for salon: ${salon.id}`);
       const response = await getServicesBySalon(salon.id);
       // Ensure response.data is an array
       const allServices = Array.isArray(response.data) ? response.data : [];
-      console.log(`Loaded ${allServices.length} services`);
 
       // Debug: Log each service's salonId
-      console.log("=== SERVICE DEBUGGING ===");
       allServices.forEach((service) => {
-        console.log(`Service: ${service.id} (${service.title})`);
-        console.log(`  - salonId in response: ${service.salonId}`);
-        console.log(`  - Expected salonId: ${salon.id}`);
-        console.log(`  - Match: ${service.salonId === salon.id}`);
-        console.log(`  - Full service object:`, service);
       });
-      console.log("=== END DEBUGGING ===");
 
       // Filter out services that don't belong to this salon
       // This is a workaround for backend data integrity issues
@@ -233,7 +224,6 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         );
       }
 
-      console.log(`Displaying ${validServices.length} valid services`);
       setServices(validServices);
     } catch (error: any) {
       console.error("Error loading services:", error);
@@ -247,35 +237,24 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     setStaffLoading(true);
     try {
       // Always fetch from Staff API to get proper service relationships
-      console.log("=== FETCHING STAFF FROM STAFF API ===");
-      console.log(`Salon ID: ${salon.id}`);
 
       const response = await getStaffBySalon(salon.id);
       const staffData = Array.isArray(response.data) ? response.data : [];
 
-      console.log(`Received ${staffData.length} staff members from API`);
 
       // Debug: Log each staff member's services from API
       staffData.forEach((staff: any, index: number) => {
         const staffName = staff.name || staff.user?.name || "Unknown";
-        console.log(`\n👤 Staff ${index + 1}: ${staffName}`);
-        console.log(`   ID: ${staff.id}`);
 
         if (staff.services && Array.isArray(staff.services)) {
-          console.log(`   Services array (${staff.services.length} items):`);
           staff.services.forEach((s: any, i: number) => {
             const serviceId = s.service?.id || s.id;
             const serviceTitle =
               s.service?.title || s.title || "Unknown Service";
             const servicePrice = s.service?.price || s.price;
-            console.log(`     ${i + 1}. Service ID: ${serviceId}`);
-            console.log(`        Title: ${serviceTitle}`);
-            console.log(`        Price: €${servicePrice}`);
           });
         } else if (staff.serviceIds && Array.isArray(staff.serviceIds)) {
-          console.log(`   Service IDs: ${staff.serviceIds.join(", ")}`);
         } else {
-          console.log(`   ⚠️ No service data found`);
         }
       });
 
@@ -338,9 +317,6 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       }
     }
 
-    console.log(
-      `Filtered slots based on ${getTotalDuration()} min total duration: ${sortedSlots.length} -> ${filtered.length} slots`,
-    );
 
     return filtered;
   };
@@ -355,20 +331,10 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
     setSlotsLoading(true);
     try {
-      console.log("=== FETCHING AVAILABILITY FROM BACKEND API ===");
-      console.log(`Selected Date: ${selectedDate}`);
-      console.log(`Salon ID: ${salon.id}`);
-      console.log(
-        `Service IDs: ${selectedServices.map((s) => s.id).join(", ")}`,
-      );
-      console.log(`Total Duration: ${getTotalDuration()} minutes`);
 
       // Log staff assignments
       selectedServices.forEach((service) => {
         const staff = serviceStaffMap.get(service.id);
-        console.log(
-          `Service "${service.title}" → Staff: ${staff?.user?.name || staff?.name} (ID: ${staff?.id})`,
-        );
       });
 
       // Fetch availability for each staff member separately
@@ -382,9 +348,6 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         });
       });
 
-      console.log(
-        `\n=== FETCHING AVAILABILITY FOR ${selectedServices.length} STAFF MEMBERS ===`,
-      );
       const staffAvailabilityResponses = await Promise.all(
         staffAvailabilityPromises,
       );
@@ -396,11 +359,6 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
           const staff = serviceStaffMap.get(service.id);
           const slots = response.data?.slots || [];
 
-          console.log(`\nStaff: ${staff?.user?.name || staff?.name}`);
-          console.log(`  Service: ${service.title}`);
-          console.log(
-            `  Available slots: ${slots.filter((s) => s.available).length}`,
-          );
 
           return {
             staffId: staff!.id,
@@ -413,13 +371,11 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
       // Find common time slots across all staff members
       // A slot is common if the startTime exists and is available for ALL staff
-      console.log("\n=== FINDING COMMON TIME SLOTS ===");
 
       if (
         allStaffSlots.length === 0 ||
         allStaffSlots.some((s) => s.slots.length === 0)
       ) {
-        console.log("No slots available for one or more staff members");
         setAvailableSlots([]);
         toast.info(
           "No common available time slots found. Please try a different date.",
@@ -447,30 +403,18 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         return isCommonSlot && baseSlot.available;
       });
 
-      console.log(`Total staff members: ${allStaffSlots.length}`);
       allStaffSlots.forEach((staffData) => {
-        console.log(
-          `  ${staffData.staffName}: ${staffData.slots.filter((s) => s.available).length} available slots`,
-        );
       });
-      console.log(`Common available slots: ${commonSlots.length}`);
 
       // Log sample common slots
       if (commonSlots.length > 0) {
-        console.log("\nSample common slots:");
         commonSlots.slice(0, 3).forEach((slot, idx) => {
-          console.log(
-            `  ${idx + 1}. ${formatTime(slot.startTime)} (${slot.startTime})`,
-          );
         });
       }
 
       // Filter slots based on service duration to prevent overlapping bookings
       const durationFilteredSlots = filterSlotsByServiceDuration(commonSlots);
 
-      console.log(
-        `After duration filter: ${durationFilteredSlots.length} slots`,
-      );
 
       if (durationFilteredSlots.length === 0) {
         const [year, month, day] = selectedDate.split("-").map(Number);
@@ -564,12 +508,6 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       const canPerformAll = selectedServices.every((service) =>
         staffServiceIds.includes(service.id),
       );
-      console.log("Staff validation (services field):", {
-        staffName: staff.user?.name || staff.name,
-        staffServiceIds,
-        selectedServiceIds: selectedServices.map((s) => s.id),
-        canPerformAll,
-      });
       return canPerformAll;
     }
 
@@ -578,12 +516,6 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       const canPerformAll = selectedServices.every((service) =>
         (staff.serviceIds || []).includes(service.id),
       );
-      console.log("Staff validation (serviceIds field):", {
-        staffName: staff.user?.name || staff.name,
-        staffServiceIds: staff.serviceIds,
-        selectedServiceIds: selectedServices.map((s) => s.id),
-        canPerformAll,
-      });
       return canPerformAll;
     }
 
@@ -657,14 +589,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         newMap.delete(serviceId);
         return newMap;
       });
-      console.log("=== STAFF ASSIGNMENT REMOVED ===");
-      console.log("Service ID:", serviceId);
       return;
     }
 
-    console.log("=== STAFF ASSIGNED TO SERVICE ===");
-    console.log("Service ID:", serviceId);
-    console.log("Staff:", staffMember.user?.name || staffMember.name);
 
     setServiceStaffMap((prev) => {
       const newMap = new Map(prev);
@@ -739,16 +666,6 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
           return;
         }
 
-        console.log("=== TIME SLOT SELECTED ===");
-        console.log("Slot start time (ISO):", slot.startTime);
-        console.log(
-          "Slot start time (local):",
-          new Date(slot.startTime).toString(),
-        );
-        console.log(
-          "Slot start time (local hours):",
-          new Date(slot.startTime).getHours(),
-        );
         setSelectedTime(slot.startTime);
       } catch (error) {
         toast.error("Could not validate this slot. Please try another time.");
@@ -888,22 +805,6 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
       }
 
       // Log booking data for debugging
-      console.log(
-        "🔍 Payment Checkout booking data:",
-        JSON.stringify(bookingData, null, 2),
-      );
-      console.log(
-        "Service-Staff Mappings:",
-        selectedServices.map((service, index) => ({
-          serviceId: service.id,
-          serviceTitle: service.title,
-          staffId: staffIds[index],
-          staffName:
-            serviceStaffMap.get(service.id)?.user?.name ||
-            serviceStaffMap.get(service.id)?.name ||
-            "Unknown",
-        })),
-      );
 
       // Call booking checkout endpoint
       const response = await fetch("/api/bookings/checkout", {
@@ -917,13 +818,6 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
       const data = await response.json();
 
-      console.log("=== BOOKING CHECKOUT RESPONSE ===");
-      console.log("Response status:", response.status);
-      console.log("Response OK:", response.ok);
-      console.log("Response data:", JSON.stringify(data, null, 2));
-      console.log("Has clientSecret?", !!data?.data?.clientSecret);
-      console.log("Has payment object?", !!data?.data?.payment);
-      console.log("Selected payment method:", paymentMethod);
 
       if (!response.ok) {
         throw new Error(data.message || "Failed to create checkout session");
@@ -990,18 +884,8 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
     setBookingLoading(true);
     try {
-      console.log("=== BOOKING CONFIRMATION ===");
-      console.log("Current time (local):", new Date().toString());
-      console.log("Current time (UTC):", new Date().toISOString());
-      console.log("Selected time (ISO):", selectedTime);
-      console.log("Selected date:", selectedDate);
 
       const selectedTimeObj = new Date(selectedTime);
-      console.log("Selected time (local):", selectedTimeObj.toString());
-      console.log("Selected time (UTC):", selectedTimeObj.toISOString());
-      console.log("Selected time hours (local):", selectedTimeObj.getHours());
-      console.log("Selected time hours (UTC):", selectedTimeObj.getUTCHours());
-      console.log("Is selected time in future?", selectedTimeObj > new Date());
 
       // Prepare booking data with parallel arrays
       // serviceIds[0] is performed by staffIds[0], serviceIds[1] by staffIds[1], etc.
@@ -1011,12 +895,8 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         return staff!.id;
       });
 
-      console.log("\n=== SERVICE-STAFF MAPPING ===");
       selectedServices.forEach((service, index) => {
         const staff = serviceStaffMap.get(service.id);
-        console.log(
-          `${index + 1}. ${service.title} → ${staff?.user?.name || staff?.name}`,
-        );
       });
 
       const bookingData: any = {
@@ -1026,11 +906,9 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
         startTime: selectedTime,
       };
 
-      console.log("\nBooking data:", JSON.stringify(bookingData, null, 2));
 
       const response = await createBooking(token, bookingData);
 
-      console.log("Booking created successfully:", response.data);
 
       toast.success(
         `Booking confirmed! Your appointment is scheduled for ${formatTime(
@@ -1089,7 +967,7 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     });
 
     // Uncomment for debugging:
-    // console.log(`formatTime: ${isoString} -> ${formatted} UTC (ISO: ${date.toISOString()})`);
+    // })`);
 
     return formatted;
   };
@@ -1527,13 +1405,6 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                             const isAssigned = !!assignedStaff;
 
                             // Filter staff who can perform this specific service
-                            console.log(
-                              `\n=== FILTERING STAFF FOR SERVICE: ${service.title} ===`,
-                            );
-                            console.log(`Service ID: ${service.id}`);
-                            console.log(
-                              `Total staff available: ${staff.length}`,
-                            );
 
                             const qualifiedStaff = staff.filter((s) => {
                               const staffName =
@@ -1541,9 +1412,6 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
 
                               // Check if this staff has the services array
                               if (!s.services || !Array.isArray(s.services)) {
-                                console.log(
-                                  `❌ ${staffName}: No services array`,
-                                );
                                 return false;
                               }
 
@@ -1553,28 +1421,16 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
                                 return serviceId;
                               });
 
-                              console.log(
-                                `   ${staffName} can perform services: [${staffServiceIds.join(", ")}]`,
-                              );
 
                               // Check if any of the staff's services match this service
                               const canPerform = staffServiceIds.includes(
                                 service.id,
                               );
-                              console.log(
-                                `   ${canPerform ? "✅" : "❌"} ${staffName} can${canPerform ? "" : "not"} perform "${service.title}"`,
-                              );
 
                               return canPerform;
                             });
 
-                            console.log(
-                              `\nResult: ${qualifiedStaff.length} qualified staff for "${service.title}"`,
-                            );
                             if (qualifiedStaff.length > 0) {
-                              console.log(
-                                `Qualified: ${qualifiedStaff.map((s) => s.user?.name || s.name).join(", ")}`,
-                              );
                             }
 
                             return (

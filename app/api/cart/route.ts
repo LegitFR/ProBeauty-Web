@@ -17,23 +17,16 @@ const BACKEND_URL =
 // DELETE /api/cart - Clear cart
 
 export async function GET(request: NextRequest) {
-  console.log("[Cart Proxy] GET request received");
   try {
     const token = request.headers.get("authorization");
-    console.log(
-      "[Cart Proxy] Token:",
-      token ? `${token.substring(0, 30)}...` : "none",
-    );
 
     if (!token) {
-      console.log("[Cart Proxy] No token provided");
       return NextResponse.json(
         { message: "User not authenticated" },
         { status: 401 },
       );
     }
 
-    console.log("[Cart Proxy] Calling backend:", `${BACKEND_URL}/cart`);
     const response = await fetch(`${BACKEND_URL}/cart`, {
       method: "GET",
       headers: {
@@ -42,15 +35,12 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log("[Cart Proxy] Backend response status:", response.status);
 
     const responseText = await response.text();
-    console.log("[Cart Proxy] Backend raw response:", responseText);
 
     let data;
     try {
       data = JSON.parse(responseText);
-      console.log("[Cart Proxy] Backend parsed data:", data);
     } catch (e) {
       console.error("[Cart Proxy] Failed to parse response as JSON:", e);
       return NextResponse.json(

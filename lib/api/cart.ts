@@ -51,11 +51,6 @@ export interface AddItemResponse {
  * Get the current user's cart
  */
 export async function getCart(token: string): Promise<CartResponse | null> {
-  console.log("[Cart API] Fetching cart from:", API_BASE_URL);
-  console.log(
-    "[Cart API] Using token:",
-    token ? `${token.substring(0, 20)}...` : "none",
-  );
 
   try {
     const response = await fetchWithAuth(`${API_BASE_URL}`, {
@@ -66,11 +61,9 @@ export async function getCart(token: string): Promise<CartResponse | null> {
       cache: "no-store",
     });
 
-    console.log("[Cart API] Response status:", response.status);
 
     if (!response.ok) {
       if (response.status === 404) {
-        console.log("[Cart API] Cart doesn't exist yet (404)");
         return null;
       }
       const errorText = await response.text();
@@ -79,7 +72,6 @@ export async function getCart(token: string): Promise<CartResponse | null> {
     }
 
     const data = await response.json();
-    console.log("[Cart API] Success! Data:", data);
     return data;
   } catch (error) {
     console.error("[Cart API] Exception:", error);
