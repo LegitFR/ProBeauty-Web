@@ -137,13 +137,13 @@ export function Footer() {
                 <div className="flex items-start gap-2.5">
                   <Mail className="h-4 w-4 text-[#F44A01] flex-shrink-0 mt-0.5" />
                   <span className="text-[#ECE3DC] text-sm">
-                    info@probeautyapp.net
+                    suporte@probeautyapp.net
                   </span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <Phone className="h-4 w-4 text-[#F44A01] flex-shrink-0 mt-0.5" />
                   <span className="text-[#ECE3DC] text-sm">
-                    00351 965091300
+                    00351 913746748
                   </span>
                 </div>
                 <div className="flex items-start gap-2.5">
