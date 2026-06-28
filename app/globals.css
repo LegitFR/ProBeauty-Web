@@ -5529,3 +5529,22 @@ html {
  .VIpgJd-ZVi9od-ORHb-OEVmcd {
     display: none; 
   }
+
+.bg-explore-section { background-color: #ECE3DC !important; }
+.text-explore-dark { color: #1e1e1e !important; }
+.text-explore-gray { color: #616161 !important; }
+.text-explore-loader { color: #F44A01 !important; }
+.bg-gradient-explore-primary { background-image: linear-gradient(to bottom right, #F44A01, #FF6A00) !important; }
+.bg-gradient-explore-secondary { background-image: linear-gradient(to top right, #FF8C42, #F44A01) !important; }
+.text-gradient-explore {
+  background-image: linear-gradient(to right, #F44A01, #FF8C42) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+.border-explore-btn { border-color: #E5E5E5 !important; }
+.hover\:border-explore-btn-hover:hover { border-color: #F44A01 !important; }
+.hover\:text-explore-btn-hover:hover { color: #F44A01 !important; }
+.bg-explore-btn-dark { background-color: #1E1E1E !important; }
+.hover\:bg-explore-btn-dark-hover:hover { background-color: #2a2a2a !important; }
+

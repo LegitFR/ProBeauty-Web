@@ -7,6 +7,7 @@ import { FeaturesOverview } from "../components/FeaturesOverview";
 import { Shop } from "../components/Shop";
 import { SalonBooking } from "../components/SalonBooking";
 import { BusinessListing } from "../components/BusinessListing";
+import { ExploreOffers } from "../components/ExploreOffers";
 import { AppDownload } from "../components/AppDownload";
 import { Testimonials } from "../components/Testimonials";
 import { Newsletter } from "../components/Newsletter";
@@ -33,6 +34,7 @@ export default function HomeClient() {
           <main className="overflow-x-hidden">
             <Hero />
             <FeaturesOverview />
+            <ExploreOffers />
             <div className="bg-body">
               <Shop />
               <SalonBooking onBookAppointment={handleBookAppointment} />
