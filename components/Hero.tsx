@@ -179,28 +179,11 @@ export function Hero() {
           >
             <div className="hero-svg-wrap relative">
               <img
-                src="/probeauty-hero-desktop-svg.svg"
+                src="/probeauty-hero.png"
                 alt="Beauty service showcase"
                 className="hero-svg-image"
               />
-              <div className="absolute -left-3 top-1/2 -translate-y-1/2 sm:-left-6 rounded-xl sm:rounded-2xl bg-white/15 px-4 py-3 sm:px-6 sm:py-4 min-w-[170px] sm:min-w-[210px] text-white backdrop-blur-2xl border border-white/20 shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
-                <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-white/70">
-                  {text.hairSpa}
-                </div>
-                <div className="mt-1 flex items-center gap-2 text-[11px] sm:text-sm font-semibold">
-                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-[#FF6A00]" />
-                  <span>{text.todayTime}</span>
-                </div>
-              </div>
-              <div className="absolute bottom-8 -right-3 sm:bottom-12 sm:-right-6 rounded-xl sm:rounded-2xl bg-white/15 px-4 py-3 sm:px-6 sm:py-4 min-w-[170px] sm:min-w-[210px] text-white backdrop-blur-2xl border border-white/20 shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
-                <div className="flex items-center gap-2 text-[11px] sm:text-sm font-semibold">
-                  <span className="flex items-center gap-1">
-                    <Star className="h-3 w-3 sm:h-4 sm:w-4 text-[#FF6A00]" />
-                    4.9
-                  </span>
-                  <span className="text-white/70">{text.ratingLabel}</span>
-                </div>
-              </div>
+
             </div>
           </motion.div>
         </div>
