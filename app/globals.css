@@ -5548,3 +5548,11 @@ html {
 .bg-explore-btn-dark { background-color: #1E1E1E !important; }
 .hover\:bg-explore-btn-dark-hover:hover { background-color: #2a2a2a !important; }
 
+
+
+
+/* Custom offer box sizing classes */
+.custom-offer-wrapper { display: flex; flex-direction: column; }
+.custom-offer-card { height: 100%; display: flex; flex-direction: column; flex: 1; }
+.custom-offer-content { flex: 1; display: flex; flex-direction: column; }
+

@@ -131,12 +131,12 @@ export function ExploreOffers() {
           {displayOffers.map((offer) => (
             <div 
               key={offer.id} 
-              className="flex-none w-[85vw] md:w-[350px] lg:w-[400px] snap-center"
+              className="flex-none w-[85vw] md:w-[350px] lg:w-[400px] snap-center custom-offer-wrapper"
             >
               <OfferCard 
                 offer={offer} 
                 showDetails={true} 
-                className="h-full"
+                className="custom-offer-card"
               />
             </div>
           ))}

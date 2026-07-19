@@ -66,7 +66,7 @@ export function OfferCard({
     >
       <Card
         className={`
-          relative overflow-hidden border-2 transition-all duration-300
+          relative overflow-hidden border-2 transition-all duration-300 custom-offer-card
           ${
             isSelected
               ? "border-[#F44A01] shadow-lg bg-gradient-to-br from-[#FFF5F0] to-[#ECE3DC]"
@@ -80,8 +80,8 @@ export function OfferCard({
         {/* Decorative Corner */}
         <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#F44A01] to-[#FF6A00] opacity-10 rounded-bl-full" />
 
-        <CardContent className="p-4">
-          <div className="flex gap-4">
+        <CardContent className="p-4 custom-offer-content">
+          <div className="flex gap-4 flex-1">
             {/* Offer Image or Icon */}
             <div className="flex-shrink-0">
               {offer.image ? (
