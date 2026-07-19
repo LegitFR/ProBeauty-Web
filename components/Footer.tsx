@@ -46,8 +46,8 @@ export function Footer() {
                 { name: "devoluções", href: "#" },
               ],
               legal: [
-                { name: "Política de privacidade", href: "privacy_policy" },
-                { name: "Termos do serviço", href: "#" },
+                { name: "Política de privacidade", href: "/privacy_policy" },
+                { name: "Termos do serviço", href: "/terms_of_service" },
                 { name: "Política de cookies", href: "#" },
                 { name: "RGPD", href: "#" },
               ],
@@ -87,8 +87,8 @@ export function Footer() {
               { name: "Returns", href: "#" },
             ],
             legal: [
-              { name: "Privacy Policy", href: "privacy_policy" },
-              { name: "Terms of Service", href: "#" },
+              { name: "Privacy Policy", href: "/privacy_policy" },
+              { name: "Terms of Service", href: "/terms_of_service" },
               { name: "Cookie Policy", href: "#" },
               { name: "GDPR", href: "#" },
             ],

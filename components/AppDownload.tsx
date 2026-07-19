@@ -11,32 +11,69 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 import probeautyMobile from "/probeauty-mobile.png";
 
 export function AppDownload() {
-  const features = [
-    {
-      icon: Calendar,
-      title: "Instant Booking",
-      description: "Book appointments in just 3 taps",
-    },
-    {
-      icon: Brain,
-      title: "AI Recommendations",
-      description: "Personalized product suggestions",
-    },
-    {
-      icon: Users,
-      title: "Community Reviews",
-      description: "Real reviews from beauty enthusiasts",
-    },
-  ];
+  const language = useLanguage();
 
-  const stats = [
-    { value: "4.7★", label: `App Store Rating` },
-    { value: "100K+", label: "Downloads" },
-    { value: "3K+", label: "Reviews" },
-  ];
+  const content = language === "pt" ? {
+    features: [
+      {
+        icon: Calendar,
+        title: "Reserva Instantânea",
+        description: "Reserve os seus compromissos em apenas 3 toques",
+      },
+      {
+        icon: Brain,
+        title: "Recomendações por IA",
+        description: "Sugestões de produtos personalizados",
+      },
+      {
+        icon: Users,
+        title: "Reviews da comunidade",
+        description: "Reviews reais de entusiastas de beleza",
+      },
+    ],
+    stats: [
+      { value: "4.7★", label: `Avaliação na App Store` },
+      { value: "100K+", label: "Downloads" },
+      { value: "3K+", label: "Reviews" },
+    ],
+    title1: "Descarregue a App Móvel",
+    title2: "ProbeautyApp",
+    subtitle: "Tenha a sua jornada de beleza consigo! Compre, reserve e descubra novos looks onde quer que esteja",
+    downloadIos: "Download para iOS",
+    downloadAndroid: "Download para Android",
+  } : {
+    features: [
+      {
+        icon: Calendar,
+        title: "Instant Booking",
+        description: "Book appointments in just 3 taps",
+      },
+      {
+        icon: Brain,
+        title: "AI Recommendations",
+        description: "Personalized product suggestions",
+      },
+      {
+        icon: Users,
+        title: "Community Reviews",
+        description: "Real reviews from beauty enthusiasts",
+      },
+    ],
+    stats: [
+      { value: "4.7★", label: `App Store Rating` },
+      { value: "100K+", label: "Downloads" },
+      { value: "3K+", label: "Reviews" },
+    ],
+    title1: "Get the ProBeauty",
+    title2: "Mobile App",
+    subtitle: "Take your beauty journey with you! Shop, book, and discover new looks wherever you are.",
+    downloadIos: "Download for iOS",
+    downloadAndroid: "Download for Android",
+  };
 
   return (
     <section
@@ -61,15 +98,14 @@ export function AppDownload() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight text-[#F8F7FA]">
-                Get the ProBeauty
+                {content.title1}
               </h2>
               <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                <span className="text-[#F44A01]">Mobile App</span>
+                <span className="text-[#F44A01]">{content.title2}</span>
               </h2>
 
               <p className="text-base sm:text-lg text-[#F1E5D5] mb-6 sm:mb-10 leading-relaxed max-w-lg">
-                Take your beauty journey with you! Shop, book, and discover new
-                looks wherever you are.
+                {content.subtitle}
               </p>
             </motion.div>
 
@@ -81,7 +117,7 @@ export function AppDownload() {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="space-y-6 sm:space-y-8 mb-6 sm:mb-10"
             >
-              {features.map((feature, index) => (
+              {content.features.map((feature, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: -30 }}
@@ -123,7 +159,7 @@ export function AppDownload() {
               >
                 <Download className="h-5 w-5 sm:h-6 sm:w-6 mr-2.5 sm:mr-3 text-white flex-shrink-0" />
                 <div className="text-left">
-                  <div className="text-xs text-gray-300">Download for iOS</div>
+                  <div className="text-xs text-gray-300">{content.downloadIos}</div>
                 </div>
               </Button>
 
@@ -137,7 +173,7 @@ export function AppDownload() {
                 <Download className="h-5 w-5 sm:h-6 sm:w-6 mr-2.5 sm:mr-3 text-white flex-shrink-0" />
                 <div className="text-left">
                   <div className="text-xs text-gray-300">
-                    Download for Android
+                    {content.downloadAndroid}
                   </div>
                 </div>
               </Button>
@@ -151,7 +187,7 @@ export function AppDownload() {
               transition={{ duration: 0.8, delay: 1 }}
               className="flex flex-wrap justify-center sm:justify-start items-center gap-10 sm:gap-16"
             >
-              {stats.map((stat, index) => (
+              {content.stats.map((stat, index) => (
                 <motion.div
                   key={index}
                   initial={{ scale: 0 }}

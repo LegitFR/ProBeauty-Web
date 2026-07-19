@@ -6,6 +6,7 @@ import { useOffers } from "@/lib/hooks/useOffers";
 import { OfferCard } from "./OfferCard";
 import { useRouter } from "next/navigation";
 import { navigateWithTranslate } from "@/lib/utils/translateNavigation";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 import { Button } from "./ui/button";
 
 export function ExploreOffers() {
@@ -13,6 +14,21 @@ export function ExploreOffers() {
   const [isHovered, setIsHovered] = useState(false);
   const { offers, loading } = useOffers();
   const router = useRouter();
+  const language = useLanguage();
+
+  const content = language === "pt" ? {
+    titleStart: "Explore as nossas",
+    titleHighlight: "ofertas",
+    description: "Descubra descontos exclusivos em produtos e serviços de beleza Premium. Aproveite antes que esgote!",
+    viewAll: "Veja todas",
+    viewAllOffers: "Veja todas as ofertas"
+  } : {
+    titleStart: "Explore Our",
+    titleHighlight: "Offers",
+    description: "Discover exclusive discounts on premium beauty products and services. Grab them before they're gone!",
+    viewAll: "View All",
+    viewAllOffers: "View All Offers"
+  };
 
   // Get up to 5 real offers to show in the carousel
   const displayOffers = offers.slice(0, 5);
@@ -75,10 +91,10 @@ export function ExploreOffers() {
         <div className="flex flex-col items-center text-center mb-12">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-4xl md:text-5xl font-bold text-explore-dark mb-4 font-display">
-              Explore Our <span className="text-gradient-explore">Offers</span>
+              {content.titleStart} <span className="text-gradient-explore">{content.titleHighlight}</span>
             </h2>
             <p className="text-explore-gray text-lg font-body mb-8">
-              Discover exclusive discounts on premium beauty products and services. Grab them before they're gone!
+              {content.description}
             </p>
           </div>
           <div className="hidden md:flex space-x-3 mt-2">
@@ -100,7 +116,7 @@ export function ExploreOffers() {
               onClick={() => navigateWithTranslate(router, '/offers')}
               className="ml-4 bg-explore-btn-dark hover:bg-explore-btn-dark-hover text-white font-body rounded-full px-6 h-[50px]"
             >
-              View All
+              {content.viewAll}
             </Button>
           </div>
         </div>
@@ -132,7 +148,7 @@ export function ExploreOffers() {
             onClick={() => navigateWithTranslate(router, '/offers')}
             className="bg-explore-btn-dark hover:bg-explore-btn-dark-hover text-white font-body rounded-full px-8 py-6 w-full max-w-sm"
           >
-            View All Offers
+            {content.viewAllOffers}
           </Button>
         </div>
       </div>

@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useOffers } from "@/lib/hooks/useOffers";
 import { OfferCard } from "@/components/OfferCard";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 import {
   Gift,
   Search,
@@ -34,6 +35,71 @@ export default function OffersPage() {
   >("all");
 
   const { offers, loading, error } = useOffers();
+  const language = useLanguage();
+
+  const t = language === "pt" ? {
+    title1: "Ofertas Especiais",
+    title2: "& Promoções",
+    subtitle1: "Descubra ",
+    subtitle2: "descontos exclusivos",
+    subtitle3: " em produtos e serviços de beleza Premium",
+    hotDeals: "Ofertas Quentes",
+    saveUpTo: "Poupe até 70%",
+    limitedTime: "Tempo Limitado",
+    searchPlaceholder: "Pesquisar ofertas...",
+    filterBy: "Filtrar por",
+    filters: {
+      all: "Todas as Ofertas",
+      salon: "Em todo o Salão",
+      product: "Produtos",
+      service: "Serviços"
+    },
+    discountTypes: {
+      all: "Todos os Tipos",
+      percentage: "% de Desconto",
+      flat: "€ de Desconto"
+    },
+    showing: "A mostrar",
+    of: "de",
+    offersText: "ofertas",
+    filtersApplied: "(filtros aplicados)",
+    loading: "A carregar ofertas...",
+    failed: "Falha ao Carregar Ofertas",
+    noOffers: "Nenhuma Oferta Encontrada",
+    tryAdjusting: "Tente ajustar os seus filtros ou pesquisa",
+    clearFilters: "Limpar Filtros"
+  } : {
+    title1: "Special Offers",
+    title2: "& Deals",
+    subtitle1: "Discover ",
+    subtitle2: "exclusive discounts",
+    subtitle3: " on premium beauty products and services",
+    hotDeals: "Hot Deals",
+    saveUpTo: "Save up to 70%",
+    limitedTime: "Limited Time",
+    searchPlaceholder: "Search offers...",
+    filterBy: "Filter by",
+    filters: {
+      all: "All Offers",
+      salon: "Salon Wide",
+      product: "Products",
+      service: "Services"
+    },
+    discountTypes: {
+      all: "All Types",
+      percentage: "% Off",
+      flat: "£ Off"
+    },
+    showing: "Showing",
+    of: "of",
+    offersText: "offers",
+    filtersApplied: "(filters applied)",
+    loading: "Loading offers...",
+    failed: "Failed to Load Offers",
+    noOffers: "No Offers Found",
+    tryAdjusting: "Try adjusting your filters or search query",
+    clearFilters: "Clear Filters"
+  };
 
   // Filter offers based on search and filters
   const filteredOffers = offers.filter((offer) => {
@@ -174,10 +240,10 @@ export default function OffersPage() {
                     transition={{ delay: 0.4 }}
                     className="text-5xl md:text-7xl font-bold mb-6 font-['Poppins'] leading-tight"
                   >
-                    <span className="inline-block">Special Offers</span>
+                    <span className="inline-block">{t.title1}</span>
                     <br />
                     <span className="inline-block bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent">
-                      & Deals
+                      {t.title2}
                     </span>
                   </motion.h1>
 
@@ -188,11 +254,11 @@ export default function OffersPage() {
                     transition={{ delay: 0.6 }}
                     className="text-lg md:text-2xl text-white/95 max-w-3xl mx-auto font-['Poppins'] mb-8 leading-relaxed"
                   >
-                    Discover{" "}
+                    {t.subtitle1}
                     <span className="font-bold text-yellow-100">
-                      exclusive discounts
-                    </span>{" "}
-                    on premium beauty products and services
+                      {t.subtitle2}
+                    </span>
+                    {t.subtitle3}
                   </motion.p>
 
                   {/* Badges */}
@@ -216,7 +282,7 @@ export default function OffersPage() {
                       >
                         <Sparkles className="w-5 h-5" />
                       </motion.div>
-                      <span>{offers.length} Hot Deals</span>
+                      <span>{offers.length} {t.hotDeals}</span>
                     </motion.div>
 
                     <motion.div
@@ -224,7 +290,7 @@ export default function OffersPage() {
                       className="bg-white/10 backdrop-blur-md text-white px-6 py-3 rounded-full font-semibold text-lg border-2 border-white/30 flex items-center gap-2 shadow-xl"
                     >
                       <Percent className="w-5 h-5" />
-                      <span>Save up to 70%</span>
+                      <span>{t.saveUpTo}</span>
                     </motion.div>
 
                     <motion.div
@@ -243,7 +309,7 @@ export default function OffersPage() {
                       >
                         <Tag className="w-5 h-5" />
                       </motion.div>
-                      <span>Limited Time</span>
+                      <span>{t.limitedTime}</span>
                     </motion.div>
                   </motion.div>
                 </motion.div>
@@ -292,7 +358,7 @@ export default function OffersPage() {
                           <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#F44A01] z-10" />
                           <Input
                             type="text"
-                            placeholder="Search offers..."
+                            placeholder={t.searchPlaceholder}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="search-input-with-icon pr-6 h-16 bg-[#ECE3DC] border-2 border-[#E5E5E5] rounded-2xl text-[#1E1E1E] placeholder:text-[#616161] font-['Poppins'] text-base
@@ -309,7 +375,7 @@ export default function OffersPage() {
                             <Filter className="w-4 h-4 text-white" />
                           </div>
                           <span className="text-base font-semibold text-[#1E1E1E] font-['Poppins']">
-                            Filter by
+                            {t.filterBy}
                           </span>
                           <div className="flex-1 h-px bg-gradient-to-r from-[#E5E5E5] to-transparent"></div>
                         </div>
@@ -319,20 +385,20 @@ export default function OffersPage() {
                           {/* Offer Type Filter */}
                           <div className="flex flex-wrap gap-2">
                             {[
-                              { value: "all", label: "All Offers", icon: Tag },
+                              { value: "all", label: t.filters.all, icon: Tag },
                               {
                                 value: "salon",
-                                label: "Salon Wide",
+                                label: t.filters.salon,
                                 icon: Sparkles,
                               },
                               {
                                 value: "product",
-                                label: "Products",
+                                label: t.filters.product,
                                 icon: Gift,
                               },
                               {
                                 value: "service",
-                                label: "Services",
+                                label: t.filters.service,
                                 icon: Sparkles,
                               },
                             ].map(({ value, label, icon: Icon }) => (
@@ -374,15 +440,15 @@ export default function OffersPage() {
                           {/* Discount Type Filter */}
                           <div className="flex flex-wrap gap-2">
                             {[
-                              { value: "all", label: "All Types", icon: Tag },
+                              { value: "all", label: t.discountTypes.all, icon: Tag },
                               {
                                 value: "percentage",
-                                label: "% Off",
+                                label: t.discountTypes.percentage,
                                 icon: Percent,
                               },
                               {
                                 value: "flat",
-                                label: "£ Off",
+                                label: t.discountTypes.flat,
                                 icon: TrendingDown,
                               },
                             ].map(({ value, label, icon: Icon }) => (
@@ -428,13 +494,13 @@ export default function OffersPage() {
                         <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#F44A01]/10 to-[#FF6A00]/10 rounded-full border border-[#F44A01]/20">
                           <div className="w-2 h-2 bg-[#F44A01] rounded-full animate-pulse"></div>
                           <span className="text-sm font-semibold text-[#1E1E1E] font-['Poppins']">
-                            Showing {filteredOffers.length} of {offers.length}{" "}
-                            offers
+                            {t.showing} {filteredOffers.length} {t.of} {offers.length}{" "}
+                            {t.offersText}
                           </span>
                         </div>
                         {filteredOffers.length < offers.length && (
                           <span className="text-xs text-[#9CA3AF] font-['Poppins']">
-                            (filters applied)
+                            {t.filtersApplied}
                           </span>
                         )}
                       </motion.div>
@@ -451,7 +517,7 @@ export default function OffersPage() {
                   <div className="text-center">
                     <Loader2 className="w-12 h-12 animate-spin text-[#F44A01] mx-auto mb-4" />
                     <p className="text-[#616161] font-['Poppins']">
-                      Loading offers...
+                      {t.loading}
                     </p>
                   </div>
                 </div>
@@ -462,7 +528,7 @@ export default function OffersPage() {
                       <Gift className="h-16 w-16 mx-auto" />
                     </div>
                     <h3 className="text-2xl font-semibold text-[#1E1E1E] mb-2 font-['Poppins']">
-                      Failed to Load Offers
+                      {t.failed}
                     </h3>
                     <p className="text-[#616161] font-['Poppins']">{error}</p>
                   </CardContent>
@@ -474,10 +540,10 @@ export default function OffersPage() {
                       <Search className="h-16 w-16 mx-auto" />
                     </div>
                     <h3 className="text-2xl font-semibold text-[#1E1E1E] mb-2 font-['Poppins']">
-                      No Offers Found
+                      {t.noOffers}
                     </h3>
                     <p className="text-[#616161] font-['Poppins']">
-                      Try adjusting your filters or search query
+                      {t.tryAdjusting}
                     </p>
                     <Button
                       onClick={() => {
@@ -487,7 +553,7 @@ export default function OffersPage() {
                       }}
                       className="mt-4 bg-[#F44A01] hover:bg-[#FF6A00] text-white font-['Poppins']"
                     >
-                      Clear Filters
+                      {t.clearFilters}
                     </Button>
                   </CardContent>
                 </Card>

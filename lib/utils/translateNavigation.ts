@@ -1,6 +1,6 @@
 const STORAGE_KEY = "pb_lang";
 const DEFAULT_LANG = "en";
-const TRANSLATE_LANGS = ["fr", "de", "es"];
+const TRANSLATE_LANGS = ["fr", "de", "es", "pt"];
 
 type RouterLike = {
   push: (href: string) => void;

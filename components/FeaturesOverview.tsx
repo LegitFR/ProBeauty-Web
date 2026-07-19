@@ -11,7 +11,7 @@ export function FeaturesOverview() {
       language === "pt"
         ? {
             title: "Tudo o que precisa para se sentir ainda mais",
-            highlight: "bonita(o)",
+            highlight: "atraente",
             subtitle:
               "Experimente o futuro da beleza com a nossa plataforma completa que combina tecnologia de IA, produtos premium e serviços profissionais.",
             features: [
