@@ -154,7 +154,7 @@ export function FeaturesOverview() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-8"
+          className="grid grid-cols-2 md:grid-cols-4 gap-8 shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-10 rounded-lg"
         >
           {content.stats.map((stat, index) => (
             <motion.div
