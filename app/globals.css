@@ -5556,3 +5556,92 @@ html {
 .custom-offer-card { height: 100%; display: flex; flex-direction: column; flex: 1; }
 .custom-offer-content { flex: 1; display: flex; flex-direction: column; }
 
+
+
+/* Custom Stats Layout Classes */
+.stat-card-offset-0 { transform: translateY(0); }
+.stat-card-offset-1 { transform: translateY(2.5rem); }
+.stat-card-offset-2 { transform: translateY(0); }
+.stat-card-offset-3 { transform: translateY(2.5rem); }
+
+@media (max-width: 767px) {
+  .stat-card-offset-0, .stat-card-offset-1, .stat-card-offset-2, .stat-card-offset-3 {
+    transform: translateY(0);
+  }
+}
+
+.stat-card-inner {
+  background-color: #ECE3DC !important;
+  /* border-radius: 1.5rem; */
+  padding: 1.5rem 2rem;
+  /* box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06); */
+  /* border: 1px solid rgba(255, 106, 0, 0.1); */
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.stat-card-inner:hover {
+  box-shadow: 0 8px 30px rgba(255, 106, 0, 0.15);
+  transform: translateY(-8px);
+}
+.stat-value-text {
+  font-family: Playfair Display, serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #FF6A00, #FF9D4D);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+}
+@media (min-width: 768px) {
+  .stat-value-text {
+    font-size: 3rem;
+  }
+}
+.stat-label-text {
+  color: #4b5563;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+@media (min-width: 768px) {
+  .stat-label-text {
+    font-size: 1rem;
+  }
+}
+
+
+
+/* Decorative elements for stats section to fill empty space */
+.stats-decorative-bg {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, #000 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, #000 30%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.stats-glow-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 106, 0, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.stats-connecting-line {
+  position: absolute;
+  top: 50%;
+  left: 5%;
+  right: 5%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 106, 0, 0.2), transparent);
+  transform: translateY(-50%);
+  z-index: 0;
+}
+

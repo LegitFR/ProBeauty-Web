@@ -32,6 +32,7 @@ import { SalonReviewsSection } from "./SalonReviewsSection";
 import { getReviewsBySalon } from "@/lib/api/review";
 import { OfferSelector } from "./OfferSelector";
 import type { Offer } from "@/lib/types/offer";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 import type { PaymentMethod } from "@/lib/types/ifthenpay";
 import { MBWayPaymentForm } from "./MBWayPaymentForm";
 import {
@@ -47,6 +48,8 @@ interface BookingFlowProps {
 }
 
 export function BookingFlow({ salon, onClose }: BookingFlowProps) {
+  const language = useLanguage() as 'en' | 'pt';
+
   // Step management
   const [currentStep, setCurrentStep] = useState<BookingStep>("services");
 
@@ -104,6 +107,13 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     setUserAuthenticated(isAuthenticated());
   }, []);
 
+  // Update selectedFilter when language changes
+  useEffect(() => {
+    if (selectedFilter === "Featured" || selectedFilter === "Destaque") {
+      setSelectedFilter(language === 'pt' ? "Destaque" : "Featured");
+    }
+  }, [language]);
+
   // Load services when component mounts
   useEffect(() => {
     loadServices();
@@ -128,44 +138,36 @@ export function BookingFlow({ salon, onClose }: BookingFlowProps) {
     }
   }, [selectedServices, serviceStaffMap, selectedDate]);
 
-  // Filter categories and their keyword mappings
   const filterCategories = [
-    { label: "Featured", keywords: [] }, // Show all for Featured
-    { label: "Hair styling and kids", keywords: ["kids", "children", "child"] },
+    { label: language === 'pt' ? "Destaque" : "Featured", keywords: [] },
+    { label: language === 'pt' ? "Crianças" : "Hair styling and kids", keywords: ["kids", "children", "child", "criança", "menino", "menina"] },
     {
-      label: "Hair styling and woman",
+      label: language === 'pt' ? "Senhora" : "Hair styling and woman",
       keywords: [
-        "women",
-        "woman",
-        "ladies",
-        "female",
-        "haircut",
-        "hair",
-        "styling",
-        "color",
-        "highlights",
-        "balayage",
-        "blowout",
+        "women", "woman", "ladies", "female", "haircut", "hair", "styling", "color", "highlights", "balayage", "blowout",
+        "senhora", "mulher", "feminino", "corte", "coloração", "madeixas", "ondulações", "penteado", "alisamento", "noiva"
       ],
     },
     {
-      label: "Hair styling and men",
-      keywords: ["men", "man", "male", "beard", "shave", "gentlemen"],
+      label: language === 'pt' ? "Homem" : "Hair styling and men",
+      keywords: ["men", "man", "male", "beard", "shave", "gentlemen", "homem", "masculino", "barba"],
     },
     {
-      label: "Facials and skin care",
-      keywords: ["facial", "skin", "face", "massage", "spa"],
+      label: language === 'pt' ? "Tratamento facial e pele" : "Facials and skin care",
+      keywords: ["facial", "skin", "face", "massage", "spa", "rosto", "pele", "massagem"],
     },
     {
-      label: "Smoothing and Straightening",
-      keywords: ["smoothing", "straightening", "keratin", "rebonding"],
+      label: language === 'pt' ? "Alisamentos" : "Smoothing and Straightening",
+      keywords: ["smoothing", "straightening", "keratin", "rebonding", "alisamento", "queratina"],
     },
-    { label: "Makeup", keywords: ["makeup", "make-up", "cosmetic", "bridal"] },
+    { label: language === 'pt' ? "Maquilhagem" : "Makeup", keywords: ["makeup", "make-up", "cosmetic", "bridal", "maquilhagem", "cosmético", "noiva"] },
+    { label: language === 'pt' ? "Unhas" : "Nails", keywords: ["nails", "manicure", "pedicure", "unhas", "gel", "podologia"] },
   ];
 
   // Filter services based on selected filter
   const getFilteredServices = () => {
-    if (selectedFilter === "Featured") {
+    const featuredLabel = language === 'pt' ? "Destaque" : "Featured";
+    if (selectedFilter === "Featured" || selectedFilter === "Destaque") {
       return services;
     }
 

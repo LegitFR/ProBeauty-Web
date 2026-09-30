@@ -36,9 +36,11 @@ interface SalonBookingProps {
   onBookAppointment?: (salon: Salon) => void;
 }
 
+import { serviceCategories } from "@/lib/constants/services";
+
 export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
   const router = useRouter();
-  const language = useLanguage();
+  const language = useLanguage() as 'en' | 'pt';
   const { isSalonInWishlist, addSalonToWishlist, removeSalonFromWishlist } = useWishlist();
 
   const text =
@@ -46,14 +48,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
         ? {
             removedFromFavorites: "Removido dos favoritos",
             addedToFavorites: "Adicionado aos favoritos",
-            services: [
-              { id: "haircut", name: "Corte e penteado", icon: "✂️" },
-              { id: "facial", name: "Tratamento facial e pele", icon: "✨" },
-              { id: "massage", name: "Massagem terapêutica", icon: "💆" },
-              { id: "nails", name: "Manicure e pedicure", icon: "💅" },
-              { id: "bridal", name: "Pacote para noivas", icon: "👰" },
-              { id: "makeup", name: "Maquilhagem profissional", icon: "💄" },
-            ],
+            services: serviceCategories.pt.map(c => ({ id: c.id, name: c.name, icon: c.icon })),
             titleLead: "Reserve já a sua",
             titleHighlight: "experiência de beleza perfeita",
             subtitle:
@@ -68,14 +63,7 @@ export function SalonBooking({ onBookAppointment }: SalonBookingProps) {
       : {
           removedFromFavorites: "Removed from favorites",
           addedToFavorites: "Added to favorites",
-          services: [
-            { id: "haircut", name: "Hair Cut & Style", icon: "✂️" },
-            { id: "facial", name: "Facial & Skincare", icon: "✨" },
-            { id: "massage", name: "Massage Therapy", icon: "💆" },
-            { id: "nails", name: "Manicure & Pedicure", icon: "💅" },
-            { id: "bridal", name: "Bridal Package", icon: "👰" },
-            { id: "makeup", name: "Professional Makeup", icon: "💄" },
-          ],
+          services: serviceCategories.en.map(c => ({ id: c.id, name: c.name, icon: c.icon })),
           titleLead: "Book Your Perfect",
           titleHighlight: "Beauty Experience",
           subtitle:

@@ -32,18 +32,13 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
-const CATEGORIES = [
-  { id: "all", name: "All", icon: "🎯" },
-  { id: "haircut", name: "Haircut", icon: "✂️" },
-  { id: "spa", name: "Spa", icon: "💆" },
-  { id: "eyebrows", name: "Eyebrows", icon: "👁️" },
-  { id: "makeup", name: "Makeup", icon: "💄" },
-  { id: "tattoo", name: "Tattoo", icon: "🎨" },
-  { id: "fitness", name: "Fitness", icon: "💪" },
-];
+import { serviceCategories } from "@/lib/constants/services";
+import { useLanguage } from "@/lib/hooks/useLanguage";
 
 export default function BookingHomePage() {
   const router = useRouter();
+  const language = useLanguage() as 'en' | 'pt';
+  const categories = [{ id: "all", name: language === "pt" ? "Todos" : "All", icon: "🎯" }, ...serviceCategories[language]];
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchLocation, setSearchLocation] = useState("");
   const [searchTime, setSearchTime] = useState("");
@@ -337,7 +332,7 @@ export default function BookingHomePage() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="flex gap-4 mb-8 overflow-x-auto pb-2 px-2 scrollbar-hide"
         >
-          {CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <div
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
